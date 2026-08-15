@@ -1,0 +1,154 @@
+/*!***************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./components/auth/auth.module.css ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************/
+/* ─── Unified Authentication Landing Page CSS Module ─── */
+
+.auth_authWrapper__hwKHD {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  background: radial-gradient(circle at 50% 20%, rgba(248, 240, 224, 0.9) 0%, rgba(235, 224, 202, 0.95) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth_brandHeader__DNMzW {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth_logoBadge__qg2NY {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  background: rgba(31, 77, 58, 0.08);
+  border: 1px solid rgba(31, 77, 58, 0.15);
+  margin-bottom: 1rem;
+}
+
+.auth_title__5UmYV {
+  font-family: var(--font-serif);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--color-chalk-green);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.auth_subtitle__H44GI {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--color-ink-muted);
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.auth_authCard__qTrxP {
+  width: 100%;
+  max-width: 460px;
+  background: rgba(255, 253, 248, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid var(--color-tan-border);
+  border-radius: 1.5rem;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 20px 40px -15px rgba(31, 77, 58, 0.12),
+              0 0 0 1px rgba(222, 210, 180, 0.4);
+}
+
+.auth_roleDetectorBadge__5O9q9 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1rem;
+  border-radius: 0.875rem;
+  background: rgba(222, 210, 180, 0.25);
+  border: 1px solid rgba(222, 210, 180, 0.5);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.auth_roleTag__hhpoi {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+}
+
+.auth_formGroup__RIFRE {
+  margin-bottom: 1.25rem;
+}
+
+.auth_label__Fmj0L {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--color-ink);
+  margin-bottom: 0.375rem;
+}
+
+.auth_input__GHS_0 {
+  width: 100%;
+  height: 2.875rem;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--color-ink);
+  background: #FFFFFF;
+  border: 1.5px solid var(--color-tan-border);
+  transition: all 0.2s ease;
+}
+
+.auth_input__GHS_0:focus {
+  outline: none;
+  border-color: var(--color-marigold);
+  box-shadow: 0 0 0 3px rgba(232, 135, 58, 0.15);
+}
+
+.auth_submitBtn__bUwTW {
+  width: 100%;
+  height: 2.875rem;
+  border-radius: 9999px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #FFFDF8;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.auth_submitBtn__bUwTW:hover {
+  transform: translateY(-0.125rem);
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.15);
+}
+
+.auth_submitBtn__bUwTW:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.auth_footerNote__MAW6G {
+  margin-top: 2rem;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
