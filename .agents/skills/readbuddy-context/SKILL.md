@@ -88,6 +88,7 @@ Always respect these — reference by number when relevant:
 - **R-15:** JWT in httpOnly cookies ONLY — never localStorage/sessionStorage. Non-negotiable for minors.
 - **R-16:** Students do NOT self-register — only teachers create student accounts.
 - **R-17:** Teachers must verify email before first login.
+- **R-22:** Portal login is role-locked — teachers cannot sign in on the Student portal; students cannot sign in on the Teacher portal. Wrong-portal attempts fail; no silent redirect or role spoofing.
 
 ### Design & Visual Standards
 - **R-18:** No raw unicode emojis or country flag icons in production UI components. Languages labeled explicitly as "English" and "Tagalog".

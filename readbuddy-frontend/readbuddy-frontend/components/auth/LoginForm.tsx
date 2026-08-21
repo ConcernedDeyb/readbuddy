@@ -1,95 +1,72 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './auth.module.css';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 export type UserRole = 'student' | 'teacher' | 'admin';
+type LoginPortal = 'student' | 'teacher';
 
 interface LoginFormProps {
   onOpenTeacherRegister: () => void;
   onOpenStudentRegister: () => void;
 }
 
-export function detectRoleFromIdentifier(identifier: string): UserRole {
-  const input = identifier.trim().toLowerCase();
-  if (!input) return 'student';
-
-  // 1. Dynamic lookup in registered accounts
-  if (typeof window !== 'undefined') {
-    try {
-      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
-      const matched = accountsMap[identifier.trim()] || accountsMap[input];
-      if (matched && matched.role) {
-        return matched.role as UserRole;
-      }
-      const allAccounts = Object.values(accountsMap) as any[];
-      const found = allAccounts.find(
-        (acc) =>
-          acc.username?.toLowerCase() === input ||
-          acc.email?.toLowerCase() === input ||
-          acc.school_id?.toLowerCase() === input
-      );
-      if (found && found.role) {
-        return found.role as UserRole;
-      }
-    } catch (e) {}
-  }
-
-  // 2. Keyword fallback for new or unverified inputs
-  if (input.includes('admin') || input.startsWith('sys_') || input.includes('super')) {
-    return 'admin';
-  }
-
-  if (
-    input.includes('teacher') ||
-    input.includes('prof') ||
-    input.includes('faculty') ||
-    input.includes('educator')
-  ) {
-    return 'teacher';
-  }
-
-  return 'student';
-}
-
-const ROLE_DETAILS: Record<UserRole, {
+const PORTAL_DETAILS: Record<LoginPortal, {
   name: string;
-  badgeBg: string;
-  badgeFg: string;
-  btnGradient: string;
   redirectUrl: string;
-  icon: string;
 }> = {
   student: {
     name: 'Student Portal',
-    badgeBg: '#FBEBD3',
-    badgeFg: '#8A5A16',
-    btnGradient: 'linear-gradient(135deg, #E8873A, #F0A35C)',
     redirectUrl: '/student',
-    icon: '📖',
   },
   teacher: {
     name: 'Teacher Portal',
-    badgeBg: '#EBF3F8',
-    badgeFg: '#3D6B8A',
-    btnGradient: 'linear-gradient(135deg, #3D6B8A, #2C4E66)',
     redirectUrl: '/teacher',
-    icon: '🧑‍🏫',
-  },
-  admin: {
-    name: 'Administrator',
-    badgeBg: '#F3EAF0',
-    badgeFg: '#7A4A6B',
-    btnGradient: 'linear-gradient(135deg, #7A4A6B, #5C3650)',
-    redirectUrl: '/admin',
-    icon: '⚙️',
   },
 };
 
+const PORTAL_MISMATCH: Record<LoginPortal, string> = {
+  student: 'Teacher accounts cannot sign in through the Student portal. Switch to the Teacher tab.',
+  teacher: 'Student accounts cannot sign in through the Teacher portal. Switch to the Student tab.',
+};
+
+function portalMismatchMessage(accountRole: string, selectedPortal: LoginPortal): string {
+  if (accountRole === 'teacher' && selectedPortal === 'student') {
+    return PORTAL_MISMATCH.student;
+  }
+  if (accountRole === 'student' && selectedPortal === 'teacher') {
+    return PORTAL_MISMATCH.teacher;
+  }
+  return `This account cannot sign in through the ${PORTAL_DETAILS[selectedPortal].name}.`;
+}
+
+function findRegisteredAccount(identifier: string): any | null {
+  try {
+    const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+    const trimmedId = identifier.trim();
+    const lowerId = trimmedId.toLowerCase();
+
+    const direct = accountsMap[trimmedId] || accountsMap[lowerId];
+    if (direct) return direct;
+
+    const allAccounts = Object.values(accountsMap) as any[];
+    return allAccounts.find(
+      (acc) =>
+        acc.username?.toLowerCase() === lowerId ||
+        acc.email?.toLowerCase() === lowerId ||
+        acc.school_id?.toLowerCase() === lowerId ||
+        acc.display_name?.toLowerCase() === lowerId
+    ) || null;
+  } catch {
+    return null;
+  }
+}
+
 export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: LoginFormProps) {
   const router = useRouter();
+  const [selectedPortal, setSelectedPortal] = useState<LoginPortal>('student');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -97,8 +74,7 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
   const [loading, setLoading] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
-  const detectedRole = useMemo(() => detectRoleFromIdentifier(identifier), [identifier]);
-  const roleConfig = ROLE_DETAILS[detectedRole];
+  const portalConfig = PORTAL_DETAILS[selectedPortal];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -112,9 +88,16 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
 
     setLoading(true);
 
+    const localAccount = findRegisteredAccount(identifier);
+    if (localAccount?.role && localAccount.role !== selectedPortal) {
+      setError(portalMismatchMessage(localAccount.role, selectedPortal));
+      setLoading(false);
+      return;
+    }
+
     try {
-      const endpoint = detectedRole === 'teacher' ? '/api/auth/teacher/login' : '/api/auth/student/login';
-      const bodyPayload = detectedRole === 'teacher'
+      const endpoint = selectedPortal === 'teacher' ? '/api/auth/teacher/login' : '/api/auth/student/login';
+      const bodyPayload = selectedPortal === 'teacher'
         ? { school_id: identifier.trim(), password }
         : { username: identifier.trim(), password };
 
@@ -131,7 +114,22 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         data = await res.json();
       }
 
+      const apiDetail = typeof data.detail === 'string' ? data.detail : '';
+
+      if (res.status === 403 && apiDetail) {
+        setError(apiDetail);
+        setLoading(false);
+        return;
+      }
+
       if (res.ok) {
+        const apiRole = data.role || selectedPortal;
+        if (apiRole !== selectedPortal) {
+          setError(portalMismatchMessage(apiRole, selectedPortal));
+          setLoading(false);
+          return;
+        }
+
         const cleanIdent = identifier.trim().replace(/_\d+$/, '').replace(/\d+$/, '');
         const displayName = data.display_name || cleanIdent.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
         const trimmedIdent = identifier.trim();
@@ -140,41 +138,44 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
           display_name: displayName,
           username: data.username || trimmedIdent.split('@')[0],
           email: emailFromResponse,
-          role: detectedRole,
+          role: selectedPortal,
           password: password,
         };
         localStorage.setItem('readbuddy_user', JSON.stringify(sessionData));
 
         setTimeout(() => {
           setLoading(false);
-          router.push(roleConfig.redirectUrl);
+          router.push(portalConfig.redirectUrl);
         }, 400);
         return;
       }
     } catch (err) {}
 
-    // Check local accounts registry fallback
     try {
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
       const passwordsMap = JSON.parse(localStorage.getItem('readbuddy_passwords') || '{}');
 
       const trimmedId = identifier.trim();
       const lowerId = trimmedId.toLowerCase();
+      const matchedAccount = localAccount;
 
-      // Search registered account by username or email
-      let matchedAccount = accountsMap[trimmedId] || accountsMap[lowerId];
       if (!matchedAccount) {
-        // Search values in accountsMap
-        const allAccounts = Object.values(accountsMap) as any[];
-        matchedAccount = allAccounts.find(
-          (acc) =>
-            acc.username?.toLowerCase() === lowerId ||
-            acc.email?.toLowerCase() === lowerId ||
-            acc.display_name?.toLowerCase() === lowerId
+        setError(
+          selectedPortal === 'teacher'
+            ? 'Incorrect school ID, email, or password.'
+            : 'Incorrect username, email, or password.'
         );
+        setLoading(false);
+        return;
       }
 
-      const registeredPassword = passwordsMap[trimmedId] || passwordsMap[lowerId] || (matchedAccount ? matchedAccount.password : null);
+      if (matchedAccount.role && matchedAccount.role !== selectedPortal) {
+        setError(portalMismatchMessage(matchedAccount.role, selectedPortal));
+        setLoading(false);
+        return;
+      }
+
+      const registeredPassword = passwordsMap[trimmedId] || passwordsMap[lowerId] || matchedAccount.password || null;
 
       if (registeredPassword && password !== registeredPassword) {
         setError('Incorrect password. Please enter the correct password for your account.');
@@ -182,21 +183,17 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         return;
       }
 
-      // Format clean display name (e.g. darrieldave_abad@smccnasipit.edu.ph -> Darriel Dave Abad)
-      let nameSeed = matchedAccount?.display_name;
+      let nameSeed = matchedAccount.display_name;
       if (!nameSeed) {
         const rawName = trimmedId.split('@')[0];
         const cleanName = rawName.replace(/_\d+$/, '').replace(/\d+$/, '').replace(/[._]/g, ' ');
         nameSeed = cleanName.replace(/\b\w/g, (c) => c.toUpperCase());
       }
 
-      const userRole = matchedAccount?.role || detectedRole;
-
-      // Enforce RBAC security policy: Teacher accounts must be approved by an administrator before login
-      if (userRole === 'teacher') {
-        const isApproved = matchedAccount?.admin_approved === true;
+      if (matchedAccount.role === 'teacher') {
+        const isApproved = matchedAccount.admin_approved === true;
         if (!isApproved) {
-          setError('⚠️ Pending Admin Approval: Your teacher registration request is awaiting review by an SMCC Administrator. To prevent unauthorized access, an administrator must approve your educator account before login.');
+          setError('Pending Admin Approval: Your teacher registration request is awaiting review by an SMCC Administrator. An administrator must approve your educator account before login.');
           setLoading(false);
           return;
         }
@@ -204,69 +201,65 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
 
       const sessionData = {
         display_name: nameSeed,
-        username: matchedAccount?.username || trimmedId.split('@')[0],
-        email: trimmedId.includes('@') ? trimmedId : (matchedAccount?.email || ''),
-        school_id: matchedAccount?.school_id || undefined,
-        role: userRole,
+        username: matchedAccount.username || trimmedId.split('@')[0],
+        email: trimmedId.includes('@') ? trimmedId : (matchedAccount.email || ''),
+        school_id: matchedAccount.school_id || undefined,
+        role: selectedPortal,
         password: password,
       };
 
       localStorage.setItem('readbuddy_user', JSON.stringify(sessionData));
-      
-      // Update local registries with active credentials
+
       passwordsMap[trimmedId] = password;
       passwordsMap[sessionData.username] = password;
       if (sessionData.email) passwordsMap[sessionData.email] = password;
       localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
 
-      accountsMap[trimmedId] = sessionData;
-      accountsMap[sessionData.username] = sessionData;
-      if (sessionData.email) accountsMap[sessionData.email] = sessionData;
+      accountsMap[trimmedId] = { ...matchedAccount, ...sessionData };
+      accountsMap[sessionData.username] = { ...matchedAccount, ...sessionData };
+      if (sessionData.email) accountsMap[sessionData.email] = { ...matchedAccount, ...sessionData };
       localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
 
       setTimeout(() => {
         setLoading(false);
-        router.push(roleConfig.redirectUrl);
+        router.push(portalConfig.redirectUrl);
       }, 400);
       return;
     } catch (e) {}
 
-    // Fallback login
-    const rawName = identifier.trim().split('@')[0];
-    const cleanName = rawName.replace(/_\d+$/, '').replace(/\d+$/, '').replace(/[._]/g, ' ');
-    const displayName = cleanName.replace(/\b\w/g, (c) => c.toUpperCase());
-
-    const sessionData = {
-      display_name: displayName,
-      username: identifier.trim().split('@')[0],
-      email: identifier.trim().includes('@') ? identifier.trim() : '',
-      role: detectedRole,
-      password: password,
-    };
-    localStorage.setItem('readbuddy_user', JSON.stringify(sessionData));
-
-    setTimeout(() => {
-      setLoading(false);
-      router.push(roleConfig.redirectUrl);
-    }, 400);
+    setError(
+      selectedPortal === 'teacher'
+        ? 'Incorrect school ID, email, or password.'
+        : 'Incorrect username, email, or password.'
+    );
+    setLoading(false);
   }
 
   return (
     <>
       <form onSubmit={handleSubmit} className="rb-fade-in-up">
-        {/* RBAC Role Auto-Recognition Indicator */}
-        <div className={styles.roleDetectorBadge}>
-          <span className="text-xs font-sans text-gray-600 flex items-center gap-1.5">
-            <span>{roleConfig.icon}</span>
-            <span>Accessing Portal:</span>
-          </span>
-          <span
-            className={styles.roleTag}
-            style={{ background: roleConfig.badgeBg, color: roleConfig.badgeFg }}
+        <div className={styles.roleTabs} role="tablist" aria-label="Sign in as">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedPortal === 'student'}
+            className={`${styles.roleTab} ${selectedPortal === 'student' ? styles.roleTabActive : ''}`}
+            onClick={() => setSelectedPortal('student')}
           >
-            {roleConfig.name}
-          </span>
+            Student
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedPortal === 'teacher'}
+            className={`${styles.roleTab} ${selectedPortal === 'teacher' ? styles.roleTabActive : ''}`}
+            onClick={() => setSelectedPortal('teacher')}
+          >
+            Teacher
+          </button>
         </div>
+
+        <p className={styles.portalHint}>Accessing {portalConfig.name}</p>
 
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-[#FDF2E9] border border-[#F0C99A] text-[#B4602E] text-xs font-sans">
@@ -339,9 +332,8 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
           type="submit"
           disabled={loading}
           className={styles.submitBtn}
-          style={{ background: roleConfig.btnGradient }}
         >
-          {loading ? 'Authenticating Credentials...' : `Sign In to ${roleConfig.name}`}
+          {loading ? 'Signing in...' : `Sign In to ${portalConfig.name}`}
         </button>
       </form>
 
@@ -353,4 +345,3 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
     </>
   );
 }
-

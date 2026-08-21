@@ -123,6 +123,13 @@ mistyped or fraudulent teacher account gaining access to create/manage real stud
 `architecture.md` §7 for the mechanism; note R-2 does not apply to the plain transactional SMTP
 this requires, since it's not an AI inference call.
 
+**R-22. Portal login is role-locked — no cross-portal sign-in.**
+A teacher account must not authenticate through the Student portal, and a student account must not
+authenticate through the Teacher portal. Wrong-portal attempts fail with an explicit error (switch
+to the matching tab); they must not silently succeed, auto-redirect into the other portal, or
+create a session under the selected tab's role. Enforce this in the login API, the login form, and
+dashboard route guards.
+
 ## Design & UI/UX Rules
 
 **R-18. No raw unicode emojis or country flag icons in production UI components.**

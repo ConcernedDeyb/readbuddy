@@ -19,7 +19,7 @@ export default function UnifiedAuthLanding() {
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
           </svg>
-          <span className="text-xs font-mono font-bold text-[#1F4D3A] tracking-wider uppercase">
+          <span className="text-[11px] font-sans font-semibold text-[#1A3A32] tracking-[0.08em] uppercase">
             SMCC Basic Education
           </span>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   DashboardShell,
   TeacherOverview,
@@ -44,6 +45,7 @@ interface SchoolClass {
 type TeacherSection = 'overview' | 'classes' | 'students' | 'passages' | 'author' | 'tests' | 'settings';
 
 export default function TeacherDashboardPage() {
+  const router = useRouter();
   const [section, setSection] = useState<TeacherSection>('overview');
   const [teacherName, setTeacherName] = useState('Teacher');
   const [teacherEmail, setTeacherEmail] = useState('');
@@ -62,6 +64,10 @@ export default function TeacherDashboardPage() {
         const savedUser = localStorage.getItem('readbuddy_user');
         if (savedUser) {
           const parsed = JSON.parse(savedUser);
+          if (parsed.role && parsed.role !== 'teacher') {
+            router.replace('/');
+            return;
+          }
           if (parsed.display_name) {
             setTeacherName(parsed.display_name);
           }

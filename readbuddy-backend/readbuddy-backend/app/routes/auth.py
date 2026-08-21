@@ -14,6 +14,13 @@ from app.auth.email import send_verification_email, send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+WRONG_PORTAL_TEACHER = (
+    "Teacher accounts cannot sign in through the Student portal. Switch to the Teacher tab."
+)
+WRONG_PORTAL_STUDENT = (
+    "Student accounts cannot sign in through the Teacher portal. Switch to the Student tab."
+)
+
 
 class TeacherRegisterRequest(BaseModel):
     display_name: str
@@ -89,15 +96,23 @@ async def verify_teacher_email(token: str, db: AsyncSession = Depends(get_db)):
 
 @router.post("/teacher/login")
 async def login_teacher(body: TeacherLoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
-    teacher = await db.scalar(select(Teacher).where(or_(Teacher.school_id == body.school_id, Teacher.email == body.school_id)))
-    if not teacher or not verify_password(body.password, teacher.password_hash):
-        raise HTTPException(status_code=401, detail="Incorrect school ID, email, or password.")
-    if not teacher.email_verified:
-        raise HTTPException(status_code=403, detail="Please verify your email before logging in.")
+    ident = body.school_id.strip()
+    teacher = await db.scalar(select(Teacher).where(or_(Teacher.school_id == ident, Teacher.email == ident)))
+    if teacher:
+        if not verify_password(body.password, teacher.password_hash):
+            raise HTTPException(status_code=401, detail="Incorrect school ID, email, or password.")
+        if not teacher.email_verified:
+            raise HTTPException(status_code=403, detail="Please verify your email before logging in.")
 
-    token = create_session_token(user_id=str(teacher.id), role="teacher")
-    response.set_cookie("session_token", token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 7)
-    return {"display_name": teacher.display_name, "role": "teacher"}
+        token = create_session_token(user_id=str(teacher.id), role="teacher")
+        response.set_cookie("session_token", token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 7)
+        return {"display_name": teacher.display_name, "role": "teacher"}
+
+    student = await db.scalar(select(Student).where(or_(Student.username == ident, Student.email == ident)))
+    if student:
+        raise HTTPException(status_code=403, detail=WRONG_PORTAL_STUDENT)
+
+    raise HTTPException(status_code=401, detail="Incorrect school ID, email, or password.")
 
 
 @router.post("/student/register", status_code=status.HTTP_201_CREATED)
@@ -128,13 +143,21 @@ async def register_student(body: CreateStudentRequest, db: AsyncSession = Depend
 
 @router.post("/student/login")
 async def login_student(body: StudentLoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
-    student = await db.scalar(select(Student).where(or_(Student.username == body.username, Student.email == body.username)))
-    if not student or not verify_password(body.password, student.password_hash):
-        raise HTTPException(status_code=401, detail="Incorrect username, email, or password.")
+    ident = body.username.strip()
+    student = await db.scalar(select(Student).where(or_(Student.username == ident, Student.email == ident)))
+    if student:
+        if not verify_password(body.password, student.password_hash):
+            raise HTTPException(status_code=401, detail="Incorrect username, email, or password.")
 
-    token = create_session_token(user_id=str(student.id), role="student")
-    response.set_cookie("session_token", token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 7)
-    return {"display_name": student.display_name, "role": "student"}
+        token = create_session_token(user_id=str(student.id), role="student")
+        response.set_cookie("session_token", token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 7)
+        return {"display_name": student.display_name, "role": "student"}
+
+    teacher = await db.scalar(select(Teacher).where(or_(Teacher.school_id == ident, Teacher.email == ident)))
+    if teacher:
+        raise HTTPException(status_code=403, detail=WRONG_PORTAL_TEACHER)
+
+    raise HTTPException(status_code=401, detail="Incorrect username, email, or password.")
 
 
 @router.post("/logout")
@@ -278,4 +301,4 @@ async def list_my_students(
 ):
     result = await db.execute(select(Student).where(Student.teacher_id == teacher_session["sub"]))
     students = result.scalars().all()
-    return [{"id": str(s.id), "display_name": s.display_name, "username": s.username} for s in students]
+    return [{"id": str(s.id), "display_name": s.display_name, "username": s.username} for s in students]

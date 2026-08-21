@@ -79,6 +79,10 @@ export default function StudentDashboardPage() {
 
         if (saved) {
           const parsed = JSON.parse(saved);
+          if (parsed.role && parsed.role !== 'student') {
+            router.replace('/');
+            return;
+          }
           if (parsed.display_name) {
             currentDisplayName = parsed.display_name;
             setStudent((prev) => ({
