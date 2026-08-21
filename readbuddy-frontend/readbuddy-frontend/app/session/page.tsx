@@ -10,6 +10,7 @@ import ComprehensionTestStep from '@/components/ComprehensionTestStep';
 import ResultStep from '@/components/ResultStep';
 import AssignedTestBriefingStep, { AssignedTestData } from '@/components/AssignedTestBriefingStep';
 import AssignedTestSubmissionStep from '@/components/AssignedTestSubmissionStep';
+import { overallTier } from '@/lib/scoring';
 
 const MOCK_ASSIGNED_TESTS: Record<string, AssignedTestData> = {
   'asn-1': {
@@ -48,8 +49,8 @@ const MOCK_ASSIGNED_TESTS: Record<string, AssignedTestData> = {
       },
     ],
   },
-  'asn-[#5]': {
-    id: 'asn-[#5]',
+  'pt-1': {
+    id: 'pt-1',
     teacherName: 'Ms. Santos',
     passagePreview: 'Si Ana ay may alagang pusa na nagngangalang Puti...',
     passageText: 'Si Ana ay may alagang pusa na nagngangalang Puti. Tuwing hapon, pinapakain niya ito ng gatas at tuyong pagkain.',
@@ -97,8 +98,8 @@ function SessionContent() {
   const [step, setStep] = useState<SessionStep>(isAssignedTest ? 'briefing' : 'input');
   const [passageText, setPassageText] = useState(assignedTestData ? assignedTestData.passageText : '');
   const [pendingText, setPendingText] = useState('');
-  const [wordPct, setWordPct] = useState(0);
-  const [compPct, setCompPct] = useState(0);
+  const [wordPct, setWordPct] = useState(92);
+  const [compPct, setCompPct] = useState(80);
   const [language, setLanguage] = useState<'en' | 'tl'>(assignedTestData ? assignedTestData.sourceLanguage : 'en');
 
   useEffect(() => {
@@ -107,7 +108,7 @@ function SessionContent() {
       setLanguage(assignedTestData.sourceLanguage);
       setStep('briefing');
     }
-  }, [testId]);
+  }, [testId, assignedTestData]);
 
   /* Handlers for Self-Directed Practice */
   const handlePassageReady = (
@@ -131,20 +132,70 @@ function SessionContent() {
 
   /* Handlers for Reading & Comprehension */
   const handleReadingComplete = (correct: number, total: number) => {
-    setWordPct(total > 0 ? (correct / total) * 100 : 85);
+    const calculatedWordPct = total > 0 ? Math.round((correct / total) * 100) : 92;
+    setWordPct(calculatedWordPct);
     setStep('comprehension');
   };
 
   const handleComprehensionComplete = (correct: number, total: number) => {
-    setCompPct(total > 0 ? (correct / total) * 100 : 75);
+    const calculatedCompPct = total > 0 ? Math.round((correct / total) * 100) : 80;
+    const finalWordPct = wordPct || 92;
+    setCompPct(calculatedCompPct);
+
+    const overallLevel = overallTier(finalWordPct, calculatedCompPct);
+
+    // 1. Save reading session to student's history in localStorage
+    try {
+      const existing = JSON.parse(localStorage.getItem('readbuddy_student_sessions') || '[]');
+      const newSession = {
+        id: `ses-${Date.now()}`,
+        passage_preview: passageText.slice(0, 65) + (passageText.length > 65 ? '...' : ''),
+        source_language: language,
+        word_recognition_score: finalWordPct,
+        comprehension_score: calculatedCompPct,
+        phil_iri_level: overallLevel,
+        date: new Date().toISOString().split('T')[0],
+      };
+      localStorage.setItem('readbuddy_student_sessions', JSON.stringify([newSession, ...existing]));
+    } catch (e) {}
+
+    // 2. If assigned test, update teacher's test assignment tracking in localStorage
+    if (isAssignedTest && testId) {
+      try {
+        const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+        const studentName = savedUser.display_name || 'Maria Garcia';
+        const teacherTests = JSON.parse(localStorage.getItem('readbuddy_teacher_tests') || '[]');
+        
+        const updatedTests = teacherTests.map((t: any) => {
+          return {
+            ...t,
+            assignments: (t.assignments || []).map((a: any) => {
+              if (a.id === testId || t.id === testId || a.student_name === studentName) {
+                return {
+                  ...a,
+                  word_recognition_score: finalWordPct,
+                  comprehension_score: calculatedCompPct,
+                  phil_iri_level: overallLevel,
+                  status: 'completed',
+                };
+              }
+              return a;
+            }),
+          };
+        });
+        localStorage.setItem('readbuddy_teacher_tests', JSON.stringify(updatedTests));
+        window.dispatchEvent(new Event('readbuddy_tests_updated'));
+      } catch (e) {}
+    }
+
     setStep(isAssignedTest ? 'submission' : 'result');
   };
 
   const handleRestartPractice = () => {
     setPassageText('');
     setPendingText('');
-    setWordPct(0);
-    setCompPct(0);
+    setWordPct(92);
+    setCompPct(80);
     setStep('input');
   };
 

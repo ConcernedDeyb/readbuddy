@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { SectionHeader, Card, Badge, EmptyState, Avatar, PhilIRIBadge, FONT_MONO, FONT_SERIF, MUTED, CHALK_GREEN, PhilIRILevel } from '../_shared';
 
 const ADMIN_ACCENT = '#7A4A6B';
@@ -26,13 +27,51 @@ interface Student {
   latest_phil_iri?: PhilIRILevel;
 }
 
-export function AdminStudents({ students }: { students: Student[] }) {
+export function AdminStudents({ students: initialStudents = [] }: { students?: Student[] }) {
+  const [students, setStudents] = useState<Student[]>(initialStudents);
+
+  useEffect(() => {
+    try {
+      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+      const allAccounts = Object.values(accountsMap) as any[];
+      const registeredStudents = allAccounts
+        .filter((acc) => acc.role === 'student')
+        .map((acc, idx) => ({
+          id: `std-reg-${idx + 1}`,
+          display_name: acc.display_name,
+          username: acc.username,
+          teacher_name: 'Faculty',
+          grade_level: acc.grade_level || 4,
+          session_count: 0,
+        }));
+
+      const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
+      const teacherStudentList = teacherStudents.map((s: any) => ({
+        id: s.id,
+        display_name: s.display_name,
+        username: s.username,
+        teacher_name: 'Faculty',
+        grade_level: s.grade_level || 4,
+        session_count: 0,
+      }));
+
+      const combined: Student[] = [];
+      [...registeredStudents, ...teacherStudentList].forEach((st) => {
+        if (!combined.some((s) => s.username === st.username || s.display_name === st.display_name)) {
+          combined.push(st);
+        }
+      });
+
+      setStudents(combined);
+    } catch (e) {}
+  }, [initialStudents]);
+
   return (
     <div>
       <SectionHeader title="Students" subtitle="Every student account across all classrooms." accent={ADMIN_ACCENT} />
 
       {students.length === 0 ? (
-        <EmptyState message="No student accounts yet." />
+        <EmptyState message="No student accounts registered yet." />
       ) : (
         <div className="flex flex-col gap-3">
           {students.map((s) => (

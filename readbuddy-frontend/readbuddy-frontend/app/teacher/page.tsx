@@ -1,100 +1,129 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DashboardShell, TeacherOverview, TeacherClasses, TeacherStudents, TeacherPassages, TeacherAuthorPassage, TeacherTests, AccountSettings, type ReadingTest } from '@/components/dashboard';
+import {
+  DashboardShell,
+  TeacherOverview,
+  TeacherClasses,
+  TeacherStudents,
+  TeacherPassages,
+  TeacherAuthorPassage,
+  TeacherTests,
+  AccountSettings,
+} from '@/components/dashboard';
 
-const MOCK_TEACHER_NAME = 'Ms. Santos';
-const MOCK_STUDENTS = [
-  { id: '1', display_name: 'Maria', username: 'maria_g', grade_level: 7, class_name: 'St. Jude', preferred_language: 'en' as const },
-  { id: '2', display_name: 'Jun', username: 'jun_r', grade_level: 3, class_name: 'St. Mark', preferred_language: 'tl' as const },
-  { id: '3', display_name: 'Ana', username: 'ana_c', grade_level: 7, class_name: 'St. Jude', preferred_language: 'en' as const },
-  { id: '4', display_name: 'Carlos', username: 'carlos_m', grade_level: 10, class_name: 'St. Luke', preferred_language: 'tl' as const },
-];
-const MOCK_PASSAGES = [
-  {
-    id: 'p1',
-    confirmed_text: 'The sun was setting over the quiet village. Maria walked home from school, thinking about the science project due tomorrow.',
-    source_language: 'en' as const,
-    is_published: true,
-    word_count: 42,
-    created_at: '2026-07-20',
-  },
-  {
-    id: 'p2',
-    confirmed_text: 'Si Ana ay may alagang pusa na nagngangalang Puti. Tuwing hapon, pinapakain niya ito ng gatas at tuyong pagkain.',
-    source_language: 'tl' as const,
-    is_published: true,
-    word_count: 38,
-    created_at: '2026-07-22',
-  },
-];
+interface Passage {
+  id: string;
+  confirmed_text: string;
+  source_language: 'en' | 'tl';
+  is_published: boolean;
+  word_count: number;
+  created_at: string;
+}
 
-const MOCK_TESTS: ReadingTest[] = [
-  {
-    id: 'test-1',
-    passage_id: 'p1',
-    passage_preview: 'The sun was setting over the quiet village. Maria walked home...',
-    source_language: 'en',
-    created_at: '2026-08-03',
-    assignments: [
-      {
-        id: 'asn-1',
-        student_id: '1',
-        student_name: 'Maria',
-        status: 'graded',
-        word_recognition_score: 98,
-        comprehension_score: 85,
-        phil_iri_level: 'independent',
-        teacher_grade: 'independent',
-        completed_at: '2026-08-04',
-      },
-    ],
-  },
-];
+interface Student {
+  id: string;
+  display_name: string;
+  username: string;
+  school_id?: string;
+  email?: string;
+  grade_level: number;
+  class_name?: string;
+  preferred_language: 'en' | 'tl';
+}
 
-const MOCK_TEACHER_PROFILE = {
-  displayName: 'Prof. Maria Santos',
-  email: 'teacher@smcc.edu.ph',
-  username: 'teacher_santos',
-  role: 'teacher' as const,
-  schoolId: 'SMCC-2024-001',
-};
-
-const MOCK_CLASSES = [
-  { id: 'c1', name: 'Section St. Jude', grade_level: 7, class_code: 'SMCC-G7-STJUDE', student_count: 24 },
-  { id: 'c2', name: 'Section St. Mark', grade_level: 3, class_code: 'SMCC-G3-STMARK', student_count: 18 },
-  { id: 'c3', name: 'Section St. Luke', grade_level: 10, class_code: 'SMCC-G10-STLUK', student_count: 20 },
-];
-
+interface SchoolClass {
+  id: string;
+  name: string;
+  grade_level: number;
+  class_code: string;
+  student_count: number;
+  created_at?: string;
+}
 
 type TeacherSection = 'overview' | 'classes' | 'students' | 'passages' | 'author' | 'tests' | 'settings';
 
 export default function TeacherDashboardPage() {
   const [section, setSection] = useState<TeacherSection>('overview');
-  const [teacherName, setTeacherName] = useState('Prof. Maria Santos');
-  const [teacherEmail, setTeacherEmail] = useState('santos@smccnasipit.edu.ph');
+  const [teacherName, setTeacherName] = useState('Teacher');
+  const [teacherEmail, setTeacherEmail] = useState('');
+  const [teacherUsername, setTeacherUsername] = useState('');
+  const [schoolId, setSchoolId] = useState('');
+
+  // Live state tracking
+  const [passages, setPassages] = useState<Passage[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [classes, setClasses] = useState<SchoolClass[]>([]);
+  const [tests, setTests] = useState<any[]>([]);
 
   useEffect(() => {
-    function loadUser() {
+    function loadData() {
       try {
-        const saved = localStorage.getItem('readbuddy_user');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed.display_name && parsed.role === 'teacher') {
+        const savedUser = localStorage.getItem('readbuddy_user');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          if (parsed.display_name) {
             setTeacherName(parsed.display_name);
+          }
+          if (parsed.username) {
+            setTeacherUsername(parsed.username);
+          }
+          if (parsed.school_id) {
+            setSchoolId(parsed.school_id);
           }
           if (parsed.email) {
             setTeacherEmail(parsed.email);
+          } else if (parsed.username) {
+            setTeacherEmail(`${parsed.username}@smccnasipit.edu.ph`);
           }
+        }
+
+        const savedPassages = localStorage.getItem('readbuddy_teacher_passages');
+        if (savedPassages) {
+          const p = JSON.parse(savedPassages);
+          if (Array.isArray(p)) setPassages(p);
+        } else {
+          setPassages([]);
+        }
+
+        const savedStudents = localStorage.getItem('readbuddy_teacher_students');
+        if (savedStudents) {
+          const s = JSON.parse(savedStudents);
+          if (Array.isArray(s)) setStudents(s);
+        } else {
+          setStudents([]);
+        }
+
+        const savedClasses = localStorage.getItem('readbuddy_teacher_classes');
+        if (savedClasses) {
+          const c = JSON.parse(savedClasses);
+          if (Array.isArray(c)) setClasses(c);
+        } else {
+          setClasses([]);
+        }
+
+        const savedTests = localStorage.getItem('readbuddy_teacher_tests');
+        if (savedTests) {
+          const t = JSON.parse(savedTests);
+          if (Array.isArray(t)) setTests(t);
+        } else {
+          setTests([]);
         }
       } catch (e) {}
     }
-    loadUser();
-    window.addEventListener('readbuddy_user_updated', loadUser);
-    return () => window.removeEventListener('readbuddy_user_updated', loadUser);
+
+    loadData();
+    window.addEventListener('readbuddy_user_updated', loadData);
+    window.addEventListener('readbuddy_passages_updated', loadData);
+    window.addEventListener('readbuddy_tests_updated', loadData);
+    return () => {
+      window.removeEventListener('readbuddy_user_updated', loadData);
+      window.removeEventListener('readbuddy_passages_updated', loadData);
+      window.removeEventListener('readbuddy_tests_updated', loadData);
+    };
   }, []);
 
-  const testAssignmentCount = MOCK_TESTS.reduce((sum, t) => sum + t.assignments.length, 0);
+  const testAssignmentCount = tests.reduce((sum, t) => sum + (t.assignments ? t.assignments.length : 0), 0);
 
   return (
     <DashboardShell
@@ -110,9 +139,9 @@ export default function TeacherDashboardPage() {
       {section === 'overview' && (
         <TeacherOverview
           teacherName={teacherName}
-          studentCount={MOCK_STUDENTS.length}
-          passageCount={MOCK_PASSAGES.length}
-          publishedCount={MOCK_PASSAGES.filter((p) => p.is_published).length}
+          studentCount={students.length}
+          passageCount={passages.length}
+          publishedCount={passages.filter((p) => p.is_published).length}
           testCount={testAssignmentCount}
           onNavigate={(s) => setSection(s as TeacherSection)}
         />
@@ -120,16 +149,16 @@ export default function TeacherDashboardPage() {
 
       {section === 'classes' && (
         <TeacherClasses
-          initialClasses={MOCK_CLASSES}
+          initialClasses={classes}
           onSelectClass={() => setSection('students')}
         />
       )}
 
-      {section === 'students' && <TeacherStudents initialStudents={MOCK_STUDENTS} />}
+      {section === 'students' && <TeacherStudents initialStudents={students} />}
 
       {section === 'passages' && (
         <TeacherPassages
-          passages={MOCK_PASSAGES}
+          passages={passages}
           onAuthorNew={() => setSection('author')}
           onEdit={(id) => {
             console.log('edit passage', id);
@@ -142,18 +171,20 @@ export default function TeacherDashboardPage() {
 
       {section === 'tests' && (
         <TeacherTests
-          tests={MOCK_TESTS}
-          passages={MOCK_PASSAGES}
-          students={MOCK_STUDENTS.map((s) => ({ id: s.id, display_name: s.display_name }))}
+          tests={tests}
+          passages={passages}
+          students={students.map((s) => ({ id: s.id, display_name: s.display_name }))}
         />
       )}
 
       {section === 'settings' && (
         <AccountSettings
           profile={{
-            ...MOCK_TEACHER_PROFILE,
             displayName: teacherName,
-            email: teacherEmail,
+            email: teacherEmail || (teacherUsername ? `${teacherUsername}@smccnasipit.edu.ph` : 'teacher@smccnasipit.edu.ph'),
+            username: teacherUsername || 'teacher',
+            role: 'teacher',
+            schoolId: schoolId || 'SMCC-FACULTY',
           }}
           accent="#3D6B8A"
         />

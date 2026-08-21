@@ -43,6 +43,36 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
       return;
     }
 
+    // Persist teacher account to localStorage with pending approval status
+    const username = schoolId.trim();
+    const accountData = {
+      display_name: displayName.trim(),
+      username: username,
+      school_id: schoolId.trim(),
+      email: email.trim(),
+      password: password,
+      role: 'teacher',
+      admin_approved: false,
+      email_verified: false,
+      created_at: new Date().toISOString().split('T')[0],
+    };
+
+    try {
+      // Save to accounts map (indexed by school_id, email, and username)
+      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+      accountsMap[username] = accountData;
+      accountsMap[email.trim()] = accountData;
+      accountsMap[email.trim().toLowerCase()] = accountData;
+      localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
+
+      // Save to passwords map
+      const passwordsMap = JSON.parse(localStorage.getItem('readbuddy_passwords') || '{}');
+      passwordsMap[username] = password;
+      passwordsMap[email.trim()] = password;
+      passwordsMap[email.trim().toLowerCase()] = password;
+      localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
+    } catch (e) {}
+
     setSubmitted(true);
   }
 
@@ -57,7 +87,7 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
     onClose();
   }
 
-  const modalJSX = (
+  return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto rb-fade-in-up">
       <div className="w-full max-w-lg bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-6 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col">
         {/* Header with non-overlapping close button */}
@@ -207,8 +237,8 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
-
-  return createPortal(modalJSX, document.body);
 }
+

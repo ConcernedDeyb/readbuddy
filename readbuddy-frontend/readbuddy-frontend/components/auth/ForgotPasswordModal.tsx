@@ -94,7 +94,7 @@ export function ForgotPasswordModal({ open, onClose, onSuccess }: ForgotPassword
       }
 
       const generatedCode = String(Math.floor(100000 + Math.random() * 900000));
-      const targetEmail = found?.email || (trimmedId.includes('@') ? trimmedId : `${trimmedId}@student.smcc.edu.ph`);
+      const targetEmail = found?.email || (trimmedId.includes('@') ? trimmedId : `${trimmedId}@smccnasipit.edu.ph`);
 
       setResetToken(generatedCode);
       setVerifiedEmail(targetEmail);
@@ -157,27 +157,50 @@ export function ForgotPasswordModal({ open, onClose, onSuccess }: ForgotPassword
   function updateLocalPasswordRegistry(pwd: string) {
     try {
       const passwordsMap = JSON.parse(localStorage.getItem('readbuddy_passwords') || '{}');
-      if (identifier) passwordsMap[identifier.trim()] = pwd;
-      if (verifiedEmail) passwordsMap[verifiedEmail] = pwd;
+      if (identifier) {
+        passwordsMap[identifier.trim()] = pwd;
+        passwordsMap[identifier.trim().toLowerCase()] = pwd;
+      }
+      if (verifiedEmail) {
+        passwordsMap[verifiedEmail] = pwd;
+        passwordsMap[verifiedEmail.toLowerCase()] = pwd;
+      }
       localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
 
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
       const targetKey = verifiedEmail || identifier.trim();
       if (accountsMap[targetKey]) {
         accountsMap[targetKey].password = pwd;
-        localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
       }
+      if (accountsMap[targetKey.toLowerCase()]) {
+        accountsMap[targetKey.toLowerCase()].password = pwd;
+      }
+      // Also update any matching account object
+      Object.keys(accountsMap).forEach((k) => {
+        if (
+          accountsMap[k]?.email?.toLowerCase() === verifiedEmail.toLowerCase() ||
+          accountsMap[k]?.username?.toLowerCase() === identifier.trim().toLowerCase()
+        ) {
+          accountsMap[k].password = pwd;
+        }
+      });
+      localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
 
       const savedUser = localStorage.getItem('readbuddy_user');
       if (savedUser) {
         const userObj = JSON.parse(savedUser);
-        userObj.password = pwd;
-        localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
+        if (
+          userObj.email?.toLowerCase() === verifiedEmail.toLowerCase() ||
+          userObj.username?.toLowerCase() === identifier.trim().toLowerCase()
+        ) {
+          userObj.password = pwd;
+          localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
+        }
       }
     } catch (e) {}
   }
 
-  const modalJSX = (
+  return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto rb-fade-in-up">
       <div className="w-full max-w-md bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-6 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col">
         <div className="flex items-start justify-between gap-3 mb-1 shrink-0">
@@ -221,7 +244,7 @@ export function ForgotPasswordModal({ open, onClose, onSuccess }: ForgotPassword
               <label className={styles.label}>Registered Email, Username, or School ID</label>
               <input
                 type="text"
-                placeholder="e.g. darriel_dave_abad@smccnasipit.edu.ph"
+                placeholder="e.g. teacher@smccnasipit.edu.ph"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className={styles.input}
@@ -302,8 +325,7 @@ export function ForgotPasswordModal({ open, onClose, onSuccess }: ForgotPassword
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
-
-  return createPortal(modalJSX, document.body);
 }

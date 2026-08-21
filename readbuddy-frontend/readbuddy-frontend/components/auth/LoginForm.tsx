@@ -16,17 +16,37 @@ export function detectRoleFromIdentifier(identifier: string): UserRole {
   const input = identifier.trim().toLowerCase();
   if (!input) return 'student';
 
+  // 1. Dynamic lookup in registered accounts
+  if (typeof window !== 'undefined') {
+    try {
+      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+      const matched = accountsMap[identifier.trim()] || accountsMap[input];
+      if (matched && matched.role) {
+        return matched.role as UserRole;
+      }
+      const allAccounts = Object.values(accountsMap) as any[];
+      const found = allAccounts.find(
+        (acc) =>
+          acc.username?.toLowerCase() === input ||
+          acc.email?.toLowerCase() === input ||
+          acc.school_id?.toLowerCase() === input
+      );
+      if (found && found.role) {
+        return found.role as UserRole;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Keyword fallback for new or unverified inputs
   if (input.includes('admin') || input.startsWith('sys_') || input.includes('super')) {
     return 'admin';
   }
 
   if (
-    input.includes('@smcc.edu.ph') ||
-    input.startsWith('smcc-') ||
     input.includes('teacher') ||
-    input.includes('santos') ||
-    input.includes('cruz') ||
-    input.includes('reyes')
+    input.includes('prof') ||
+    input.includes('faculty') ||
+    input.includes('educator')
   ) {
     return 'teacher';
   }
@@ -114,9 +134,12 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
       if (res.ok) {
         const cleanIdent = identifier.trim().replace(/_\d+$/, '').replace(/\d+$/, '');
         const displayName = data.display_name || cleanIdent.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        const trimmedIdent = identifier.trim();
+        const emailFromResponse = data.email || (trimmedIdent.includes('@') ? trimmedIdent : `${trimmedIdent}@smccnasipit.edu.ph`);
         const sessionData = {
           display_name: displayName,
-          username: identifier.trim(),
+          username: data.username || trimmedIdent.split('@')[0],
+          email: emailFromResponse,
           role: detectedRole,
           password: password,
         };
@@ -167,11 +190,24 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         nameSeed = cleanName.replace(/\b\w/g, (c) => c.toUpperCase());
       }
 
+      const userRole = matchedAccount?.role || detectedRole;
+
+      // Enforce RBAC security policy: Teacher accounts must be approved by an administrator before login
+      if (userRole === 'teacher') {
+        const isApproved = matchedAccount?.admin_approved === true;
+        if (!isApproved) {
+          setError('⚠️ Pending Admin Approval: Your teacher registration request is awaiting review by an SMCC Administrator. To prevent unauthorized access, an administrator must approve your educator account before login.');
+          setLoading(false);
+          return;
+        }
+      }
+
       const sessionData = {
         display_name: nameSeed,
         username: matchedAccount?.username || trimmedId.split('@')[0],
         email: trimmedId.includes('@') ? trimmedId : (matchedAccount?.email || ''),
-        role: matchedAccount?.role || detectedRole,
+        school_id: matchedAccount?.school_id || undefined,
+        role: userRole,
         password: password,
       };
 

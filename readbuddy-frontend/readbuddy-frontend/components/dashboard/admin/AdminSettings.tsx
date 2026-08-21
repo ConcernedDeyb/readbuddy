@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SectionHeader, Card, PrimaryButton, FONT_SANS, FONT_MONO, FONT_SERIF, MUTED, INK, CHALK_GREEN, TAN_BORDER, CREAM } from '../_shared';
 
 const ADMIN_ACCENT = '#7A4A6B';
@@ -32,18 +32,43 @@ export function AdminSettings({
   const [ollamaModel, setOllamaModel] = useState('gemma3:4b');
   const [cachePurged, setCachePurged] = useState(false);
 
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem('readbuddy_admin_settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.enabled !== undefined) setEnabled(parsed.enabled);
+        if (parsed.maxVramMb !== undefined) setMaxVramMb(parsed.maxVramMb);
+        if (parsed.ollamaModel) setOllamaModel(parsed.ollamaModel);
+      }
+    } catch (e) {}
+  }, []);
+
   const b = finetunedAdapterBenchmark;
-  const relativeGain = ((b.realAudioWerStock - b.realAudioWerFinetuned) / b.realAudioWerStock) * 100;
   const maxWer = Math.max(b.fleursWer, b.realAudioWerStock, b.realAudioWerFinetuned);
   const barScale = (v: number) => `${Math.round((v / (maxWer * 1.2)) * 100)}%`;
 
   function handleSave() {
-    setSaved(false);
-    setTimeout(() => setSaved(true), 300);
+    try {
+      localStorage.setItem(
+        'readbuddy_admin_settings',
+        JSON.stringify({
+          enabled,
+          maxVramMb,
+          ollamaModel,
+        })
+      );
+    } catch (e) {}
+
+    setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
 
   function handlePurgeCache() {
+    try {
+      // Clear temporary session caches without deleting user profiles
+      sessionStorage.clear();
+    } catch (e) {}
     setCachePurged(true);
     setTimeout(() => setCachePurged(false), 2500);
   }
@@ -143,7 +168,20 @@ export function AdminSettings({
             <Card className="rb-fade-in-up">
               <h3 className="text-base font-semibold mb-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>GPU Memory & VRAM Limits</h3>
               <p className="text-xs mb-4" style={{ fontFamily: FONT_SANS, color: MUTED }}>ReadBuddy is constrained to run on RTX 4070 (8GB VRAM) target GPUs (Rule R-5).</p>
-              <PrimaryButton accent={ADMIN_ACCENT} onClick={handleSave}>Update VRAM Limits</PrimaryButton>
+              
+              <div className="mb-4">
+                <label className="block text-xs font-semibold mb-1 text-gray-700 font-sans">Max VRAM Budget (MB)</label>
+                <input
+                  type="number"
+                  value={maxVramMb}
+                  onChange={(e) => setMaxVramMb(Number(e.target.value))}
+                  className="rb-input max-w-xs text-xs"
+                />
+              </div>
+
+              <PrimaryButton accent={ADMIN_ACCENT} onClick={handleSave}>
+                {saved ? '✓ VRAM Limits Saved' : 'Update VRAM Limits'}
+              </PrimaryButton>
             </Card>
           )}
 
@@ -151,8 +189,11 @@ export function AdminSettings({
             <Card className="rb-fade-in-up">
               <h3 className="text-base font-semibold mb-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>System Maintenance</h3>
               <p className="text-xs mb-4" style={{ fontFamily: FONT_SANS, color: MUTED }}>Perform cache operations and review database status.</p>
-              <button onClick={handlePurgeCache} className="px-4 py-2 rounded-xl text-xs font-semibold border cursor-pointer">
-                {cachePurged ? '✓ Cache Purged' : 'Purge Cache'}
+              <button
+                onClick={handlePurgeCache}
+                className="px-4 py-2 rounded-xl text-xs font-semibold border border-gray-300 hover:bg-gray-50 transition-all cursor-pointer font-sans"
+              >
+                {cachePurged ? '✓ Session Cache Purged' : 'Purge Session Cache'}
               </button>
             </Card>
           )}

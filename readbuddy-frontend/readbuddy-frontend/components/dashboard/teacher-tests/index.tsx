@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   SectionHeader,
   Card,
@@ -37,21 +37,41 @@ function scoreColor(pct: number): string {
 }
 
 export default function TeacherTests({
-  tests: initialTests,
-  passages,
-  students,
+  tests: initialTests = [],
+  passages = [],
+  students = [],
 }: {
-  tests: ReadingTest[];
-  passages: Passage[];
-  students: Student[];
+  tests?: ReadingTest[];
+  passages?: Passage[];
+  students?: Student[];
 }) {
-  const [tests, setTests] = useState<ReadingTest[]>(initialTests);
+  const [tests, setTests] = useState<ReadingTest[]>(initialTests || []);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedPassageId, setSelectedPassageId] = useState<string>('');
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
   const [gradingAssignment, setGradingAssignment] = useState<{ test: ReadingTest; assignment: TestAssignment } | null>(null);
   const [gradeOverride, setGradeOverride] = useState<PhilIRILevel | ''>('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed' | 'graded'>('all');
+
+  // Load from localStorage & listen to cross-session updates
+  useEffect(() => {
+    function loadTests() {
+      try {
+        const saved = localStorage.getItem('readbuddy_teacher_tests');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setTests(parsed);
+            return;
+          }
+        }
+        setTests(initialTests || []);
+      } catch (e) {}
+    }
+    loadTests();
+    window.addEventListener('readbuddy_tests_updated', loadTests);
+    return () => window.removeEventListener('readbuddy_tests_updated', loadTests);
+  }, [initialTests]);
 
   const publishedPassages = passages.filter((p) => p.word_count > 0);
 
@@ -77,7 +97,13 @@ export default function TeacherTests({
       }),
     };
 
-    setTests((prev) => [newTest, ...prev]);
+    const updated = [newTest, ...tests];
+    setTests(updated);
+    try {
+      localStorage.setItem('readbuddy_teacher_tests', JSON.stringify(updated));
+      window.dispatchEvent(new Event('readbuddy_tests_updated'));
+    } catch (e) {}
+
     setShowCreate(false);
     setSelectedPassageId('');
     setSelectedStudentIds(new Set());
@@ -88,20 +114,25 @@ export default function TeacherTests({
     const grade = gradeOverride || gradingAssignment.assignment.phil_iri_level;
     if (!grade) return;
 
-    setTests((prev) =>
-      prev.map((t) =>
-        t.id === gradingAssignment.test.id
-          ? {
-              ...t,
-              assignments: t.assignments.map((a) =>
-                a.id === gradingAssignment.assignment.id
-                  ? { ...a, status: 'graded' as const, teacher_grade: grade as PhilIRILevel }
-                  : a
-              ),
-            }
-          : t
-      )
+    const updated = tests.map((t) =>
+      t.id === gradingAssignment.test.id
+        ? {
+            ...t,
+            assignments: t.assignments.map((a) =>
+              a.id === gradingAssignment.assignment.id
+                ? { ...a, status: 'graded' as const, teacher_grade: grade as PhilIRILevel }
+                : a
+            ),
+          }
+        : t
     );
+
+    setTests(updated);
+    try {
+      localStorage.setItem('readbuddy_teacher_tests', JSON.stringify(updated));
+      window.dispatchEvent(new Event('readbuddy_tests_updated'));
+    } catch (e) {}
+
     setGradingAssignment(null);
     setGradeOverride('');
   }

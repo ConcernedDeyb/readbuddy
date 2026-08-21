@@ -109,7 +109,7 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
     onClose();
   }
 
-  const modalJSX = (
+  return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto rb-fade-in-up">
       <div className="w-full max-w-md bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-6 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col">
         <div className="flex items-start justify-between gap-3 mb-1 shrink-0">
@@ -266,9 +266,7 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
-
-  return createPortal(modalJSX, document.body);
 }
-

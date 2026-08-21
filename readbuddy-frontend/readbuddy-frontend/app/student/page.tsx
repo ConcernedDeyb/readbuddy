@@ -26,95 +26,25 @@ import {
 const STUDENT_ACCENT = '#E8873A';
 const LANG_LABEL: Record<string, string> = { en: 'English', tl: 'Tagalog' };
 
-// Mock Student Profile
-const MOCK_STUDENT = {
-  id: 's1',
-  name: 'Maria Garcia',
-  username: 'maria_g',
-  gradeLevel: 4,
-  teacherName: 'Ms. Santos',
-  schoolName: 'St. Michael\'s College of Caraga',
-};
+interface ReadingSession {
+  id: string;
+  passage_preview: string;
+  source_language: 'en' | 'tl';
+  word_recognition_score: number;
+  comprehension_score: number;
+  phil_iri_level: PhilIRILevel;
+  date: string;
+}
 
-// Mock Reading Sessions
-const MOCK_SESSIONS = [
-  {
-    id: 's1',
-    passage_preview: 'The sun was setting over the quiet village. Maria walked home from school...',
-    source_language: 'en' as const,
-    word_recognition_score: 98,
-    comprehension_score: 85,
-    phil_iri_level: 'independent' as const,
-    date: '2026-08-08',
-  },
-  {
-    id: 's2',
-    passage_preview: 'Si Ana ay may alagang pusa na nagngangalang Puti. Tuwing hapon...',
-    source_language: 'tl' as const,
-    word_recognition_score: 92,
-    comprehension_score: 70,
-    phil_iri_level: 'instructional' as const,
-    date: '2026-08-06',
-  },
-  {
-    id: 's3',
-    passage_preview: 'The forest was alive with the sound of birds singing their morning songs...',
-    source_language: 'en' as const,
-    word_recognition_score: 95,
-    comprehension_score: 75,
-    phil_iri_level: 'instructional' as const,
-    date: '2026-08-04',
-  },
-  {
-    id: 's4',
-    passage_preview: 'Every morning, Lito would wake up early to help his grandmother sell bread...',
-    source_language: 'en' as const,
-    word_recognition_score: 88,
-    comprehension_score: 55,
-    phil_iri_level: 'frustration' as const,
-    date: '2026-08-01',
-  },
-  {
-    id: 's5',
-    passage_preview: 'Ang dagat ay kulay bughaw na parang langit. Sa tabi ng dagat ay may...',
-    source_language: 'tl' as const,
-    word_recognition_score: 90,
-    comprehension_score: 62,
-    phil_iri_level: 'instructional' as const,
-    date: '2026-07-29',
-  },
-  {
-    id: 's6',
-    passage_preview: 'Rain was falling softly on the tin roof. Inside, the family gathered...',
-    source_language: 'en' as const,
-    word_recognition_score: 86,
-    comprehension_score: 48,
-    phil_iri_level: 'frustration' as const,
-    date: '2026-07-25',
-  },
-];
-
-// Mock Assigned Tests
-const MOCK_PENDING_TESTS = [
-  {
-    id: 'pt-1',
-    passage_preview: 'Si Ana ay may alagang pusa na nagngangalang Puti. Tuwing hapon...',
-    source_language: 'tl' as const,
-    teacher_name: 'Ms. Santos',
-    assigned_at: '2026-08-07',
-    status: 'pending' as const,
-    instructions: 'Read aloud cleanly and answer all 5 comprehension questions carefully.',
-  },
-  {
-    id: 'pt-2',
-    passage_preview: 'The quiet village of San Isidro was known for its tall mahogany trees...',
-    source_language: 'en' as const,
-    teacher_name: 'Ms. Santos',
-    assigned_at: '2026-08-09',
-    status: 'pending' as const,
-    instructions: 'Take your time pronouncing each word clearly.',
-  },
-];
+interface PendingTest {
+  id: string;
+  passage_preview: string;
+  source_language: 'en' | 'tl';
+  teacher_name: string;
+  assigned_at: string;
+  status: 'pending' | 'completed';
+  instructions?: string;
+}
 
 type StudentSection = 'overview' | 'tests' | 'history' | 'settings';
 
@@ -128,42 +58,99 @@ export default function StudentDashboardPage() {
   const router = useRouter();
   const [section, setSection] = useState<StudentSection>('overview');
   const [student, setStudent] = useState({
-    id: 's1',
-    name: 'Maria Garcia',
-    username: 'maria_g',
-    gradeLevel: 4,
-    teacherName: 'Ms. Santos',
+    id: '',
+    name: 'Student',
+    username: '',
+    gradeLevel: 1,
+    teacherName: '',
     schoolName: "St. Michael's College of Caraga",
   });
 
   const [studentEmail, setStudentEmail] = useState('');
+  const [sessions, setSessions] = useState<ReadingSession[]>([]);
+  const [pendingTests, setPendingTests] = useState<PendingTest[]>([]);
 
   useEffect(() => {
-    function loadUser() {
+    function loadData() {
       try {
         const saved = localStorage.getItem('readbuddy_user');
+        let currentUsername = '';
+        let currentDisplayName = '';
+
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed.email) setStudentEmail(parsed.email);
           if (parsed.display_name) {
+            currentDisplayName = parsed.display_name;
             setStudent((prev) => ({
               ...prev,
               name: parsed.display_name,
               username: parsed.username || prev.username,
+              gradeLevel: parsed.grade_level || prev.gradeLevel,
             }));
           }
+          if (parsed.username) {
+            currentUsername = parsed.username;
+          }
+          if (parsed.email) {
+            setStudentEmail(parsed.email);
+          } else if (parsed.username) {
+            setStudentEmail(`${parsed.username}@smccnasipit.edu.ph`);
+          }
+        }
+
+        // Load sessions from student history
+        const savedSessions = localStorage.getItem('readbuddy_student_sessions');
+        if (savedSessions) {
+          const parsedSes = JSON.parse(savedSessions);
+          if (Array.isArray(parsedSes)) {
+            setSessions(parsedSes);
+          }
+        } else {
+          setSessions([]);
+        }
+
+        // Load assigned tests from teacher tests for this specific student
+        const teacherTests = localStorage.getItem('readbuddy_teacher_tests');
+        if (teacherTests) {
+          const parsedTests = JSON.parse(teacherTests);
+          if (Array.isArray(parsedTests)) {
+            const studentAssigned: PendingTest[] = [];
+            parsedTests.forEach((t: any) => {
+              (t.assignments || []).forEach((a: any) => {
+                const isMatch =
+                  (currentDisplayName && a.student_name?.toLowerCase() === currentDisplayName.toLowerCase()) ||
+                  (currentUsername && (a.student_id === currentUsername || a.student_name?.toLowerCase() === currentUsername.toLowerCase()));
+
+                if (isMatch && a.status === 'pending') {
+                  studentAssigned.push({
+                    id: a.id,
+                    passage_preview: t.passage_preview || 'Assigned reading passage',
+                    source_language: t.source_language || 'en',
+                    teacher_name: 'Teacher',
+                    assigned_at: t.created_at || 'Today',
+                    status: 'pending',
+                    instructions: 'Read clearly and answer all comprehension questions.',
+                  });
+                }
+              });
+            });
+
+            setPendingTests(studentAssigned);
+          }
+        } else {
+          setPendingTests([]);
         }
       } catch (e) {}
     }
-    loadUser();
-    window.addEventListener('readbuddy_user_updated', loadUser);
-    return () => window.removeEventListener('readbuddy_user_updated', loadUser);
-  }, []);
 
-  // Preferences State
-  const [preferredLang, setPreferredLang] = useState<'en' | 'tl'>('en');
-  const [speechSpeed, setSpeechSpeed] = useState<number>(1.0);
-  const [showPhonicsHint, setShowPhonicsHint] = useState<boolean>(true);
+    loadData();
+    window.addEventListener('readbuddy_user_updated', loadData);
+    window.addEventListener('readbuddy_tests_updated', loadData);
+    return () => {
+      window.removeEventListener('readbuddy_user_updated', loadData);
+      window.removeEventListener('readbuddy_tests_updated', loadData);
+    };
+  }, []);
 
   return (
     <DashboardShell
@@ -180,11 +167,10 @@ export default function StudentDashboardPage() {
       {section === 'overview' && (
         <StudentDashboard
           studentName={student.name.split(' ')[0]}
-          sessions={MOCK_SESSIONS}
-          pendingTests={MOCK_PENDING_TESTS}
+          sessions={sessions}
+          pendingTests={pendingTests}
           onStartSession={() => router.push('/session')}
           onStartTest={(testId) => {
-            console.log('Starting assigned test:', testId);
             router.push(`/session?testId=${testId}`);
           }}
         />
@@ -199,7 +185,7 @@ export default function StudentDashboardPage() {
             accent={STUDENT_ACCENT}
           />
 
-          {MOCK_PENDING_TESTS.length === 0 ? (
+          {pendingTests.length === 0 ? (
             <EmptyState
               message="You have no assigned tests right now. You can start a practice reading session anytime!"
               actionLabel="Start Practice Session"
@@ -207,12 +193,12 @@ export default function StudentDashboardPage() {
             />
           ) : (
             <div className="flex flex-col gap-4">
-              {MOCK_PENDING_TESTS.map((test, i) => (
+              {pendingTests.map((test, i) => (
                 <Card key={test.id} hoverable className="rb-fade-in-up" style={{ animationDelay: `${i * 60}ms` }}>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge tone="accent">From {test.teacher_name}</Badge>
+                        <Badge tone="accent">Assigned Test</Badge>
                         <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-700" style={{ fontFamily: FONT_MONO }}>
                           {LANG_LABEL[test.source_language]}
                         </span>
@@ -225,7 +211,7 @@ export default function StudentDashboardPage() {
                       </h3>
                       {test.instructions && (
                         <p className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED }}>
-                          Teacher note: {test.instructions}
+                          Note: {test.instructions}
                         </p>
                       )}
                     </div>
@@ -253,7 +239,7 @@ export default function StudentDashboardPage() {
             accent={STUDENT_ACCENT}
           />
 
-          {MOCK_SESSIONS.length === 0 ? (
+          {sessions.length === 0 ? (
             <EmptyState
               message="No reading sessions completed yet."
               actionLabel="Start First Session"
@@ -261,7 +247,7 @@ export default function StudentDashboardPage() {
             />
           ) : (
             <div className="flex flex-col gap-3">
-              {MOCK_SESSIONS.map((session, i) => (
+              {sessions.map((session, i) => (
                 <Card key={session.id} hoverable className="rb-fade-in-up" style={{ animationDelay: `${i * 40}ms` }}>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
@@ -313,8 +299,8 @@ export default function StudentDashboardPage() {
           <AccountSettings
             profile={{
               displayName: student.name,
-              email: studentEmail || `${student.username}@smccnasipit.edu.ph`,
-              username: student.username,
+              email: studentEmail || (student.username ? `${student.username}@smccnasipit.edu.ph` : 'student@smccnasipit.edu.ph'),
+              username: student.username || 'student',
               role: 'student',
               gradeLevel: student.gradeLevel,
               teacherName: student.teacherName,

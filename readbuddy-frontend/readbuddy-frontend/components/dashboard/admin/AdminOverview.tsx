@@ -36,6 +36,7 @@ export function AdminOverview({
   studentCount,
   passageCount,
   testCount,
+  pendingTeacherCount = 0,
   vramStatus,
   recentActivity,
   onNavigate,
@@ -44,6 +45,7 @@ export function AdminOverview({
   studentCount: number;
   passageCount: number;
   testCount: number;
+  pendingTeacherCount?: number;
   vramStatus: VramStatus;
   recentActivity: RecentActivity[];
   onNavigate: (section: string) => void;
@@ -52,6 +54,31 @@ export function AdminOverview({
     <div>
       <SectionHeader title="System Overview" subtitle="ReadBuddy at a glance across every classroom." accent={ADMIN_ACCENT} />
 
+      {pendingTeacherCount > 0 && (
+        <div
+          onClick={() => onNavigate('teachers')}
+          className="mb-6 p-4 rounded-2xl border border-[#F0C99A] bg-[#FFF8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-[#FFF3E6] transition-all rb-fade-in-up"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">⏳</span>
+            <div>
+              <div className="text-sm font-bold text-[#B4602E] font-sans">
+                {pendingTeacherCount} Teacher Account Creation Request{pendingTeacherCount === 1 ? '' : 's'} Pending Approval
+              </div>
+              <p className="text-xs text-[#8A5A1E] font-sans">
+                Institutional educator registrations require verification before access is granted.
+              </p>
+            </div>
+          </div>
+          <button
+            className="px-3.5 py-1.5 rounded-xl text-xs font-sans font-bold text-white shrink-0 self-start sm:self-auto cursor-pointer"
+            style={{ background: 'linear-gradient(135deg, #B4602E, #8A5A1E)' }}
+          >
+            Review & Approve →
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-4 mb-6">
         <StatCard label="Teachers" value={teacherCount} accent={ADMIN_ACCENT} icon="🧑‍🏫" onClick={() => onNavigate('teachers')} />
         <StatCard label="Students" value={studentCount} accent={ADMIN_ACCENT} icon="🧒" onClick={() => onNavigate('students')} />
@@ -59,79 +86,76 @@ export function AdminOverview({
         <StatCard label="Tests" value={testCount} accent={ADMIN_ACCENT} icon="📋" onClick={() => onNavigate('content')} />
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4 mb-6">
-        <Card>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            <div className="shrink-0">
-              <ProgressRing
-                value={vramStatus.usedMb}
-                max={vramStatus.budgetMb}
-                size={100}
-                strokeWidth={8}
-                color={ADMIN_ACCENT}
-                label="VRAM"
-              />
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* VRAM / Model State Card */}
+        <Card className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
+              GPU Memory Budget
+            </h3>
+            <span className="text-xs px-2.5 py-1 rounded-full font-mono font-medium border" style={{ background: '#FAF7F2', borderColor: TAN_BORDER, color: MUTED }}>
+              RTX 4070 · 8GB
+            </span>
+          </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2.5 mb-2">
-                <h2 className="text-lg" style={{ fontFamily: FONT_SERIF, fontWeight: 600, color: CHALK_GREEN }}>
-                  VRAM Status
-                </h2>
-                <span
-                  className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
-                  style={{ fontFamily: FONT_MONO, fontWeight: 700, background: '#F3EAF0', color: ADMIN_ACCENT }}
-                >
-                  <span aria-hidden>{PHASE_ICON[vramStatus.activePhase]}</span>
-                  {PHASE_LABEL[vramStatus.activePhase]}
-                </span>
+          <div className="flex items-center gap-6 my-2">
+            <ProgressRing
+              value={Math.round((vramStatus.usedMb / vramStatus.budgetMb) * 100)}
+              size={88}
+              strokeWidth={8}
+              color={ADMIN_ACCENT}
+            />
+            <div className="flex flex-col gap-1">
+              <div className="text-2xl font-bold" style={{ fontFamily: FONT_MONO, color: CHALK_GREEN }}>
+                {(vramStatus.usedMb / 1024).toFixed(1)} GB
               </div>
-              <p className="text-xs mb-3" style={{ fontFamily: FONT_SANS, color: MUTED }}>
-                Per Rules.md R-5, ASR and LLM models never hold VRAM simultaneously.
-              </p>
-
-              <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: TAN_BORDER }}>
-                <div
-                  className="h-full rounded-full transition-all duration-700 ease-out"
-                  style={{
-                    width: `${Math.min(100, Math.round((vramStatus.usedMb / vramStatus.budgetMb) * 100))}%`,
-                    background: `linear-gradient(90deg, ${ADMIN_ACCENT}, ${ADMIN_ACCENT}BB)`,
-                  }}
-                />
+              <div className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED }}>
+                of {(vramStatus.budgetMb / 1024).toFixed(0)} GB VRAM used
               </div>
-
-              <div className="flex justify-between text-[11px]" style={{ fontFamily: FONT_MONO, color: MUTED }}>
-                <span>{vramStatus.usedMb} MB used</span>
-                <span>Budget: {vramStatus.budgetMb} MB (8GB target)</span>
+              <div className="flex items-center gap-1.5 text-xs font-medium mt-1" style={{ color: CHALK_GREEN }}>
+                <span>{PHASE_ICON[vramStatus.activePhase]}</span>
+                <span>{PHASE_LABEL[vramStatus.activePhase]}</span>
               </div>
             </div>
+          </div>
+
+          <div className="text-xs pt-3 border-t flex items-center justify-between" style={{ borderColor: TAN_BORDER, color: MUTED, fontFamily: FONT_SANS }}>
+            <span>Tagalog ASR Model: MMS-1B-All (FLEURS Fine-tuned)</span>
+            <span className="font-mono text-[11px] text-[#2E7D4F] font-bold">Active</span>
           </div>
         </Card>
 
-        <Card>
-          <h2 className="text-lg mb-3" style={{ fontFamily: FONT_SERIF, fontWeight: 600, color: CHALK_GREEN }}>
+        {/* Recent Session Activity */}
+        <Card className="flex flex-col gap-3">
+          <h3 className="text-base font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
             Recent Activity
-          </h2>
-          <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
-            {recentActivity.map((act) => (
-              <div key={act.id} className="flex items-center justify-between py-1.5 border-b last:border-0" style={{ borderColor: TAN_BORDER + '66' }}>
-                <div>
-                  <span className="text-xs font-semibold block" style={{ fontFamily: FONT_SANS, color: CHALK_GREEN }}>
-                    {act.student_name}
-                  </span>
-                  <span className="text-[11px]" style={{ fontFamily: FONT_SANS, color: MUTED }}>
-                    {act.action} by {act.teacher_name}
-                  </span>
+          </h3>
+
+          {recentActivity.length === 0 ? (
+            <div className="text-xs py-8 text-center" style={{ fontFamily: FONT_SANS, color: MUTED }}>
+              No reading sessions or assessment activity recorded yet.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {recentActivity.map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between py-2 border-b last:border-0 text-xs"
+                  style={{ borderColor: TAN_BORDER }}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-semibold" style={{ fontFamily: FONT_SANS, color: CHALK_GREEN }}>
+                      {a.student_name} ({a.action})
+                    </span>
+                    <span style={{ fontFamily: FONT_MONO, color: MUTED, fontSize: '10px' }}>
+                      Teacher: {a.teacher_name} · {a.date}
+                    </span>
+                  </div>
+                  <PhilIRIBadge level={a.phil_iri_level} showIcon={false} />
                 </div>
-                <div className="text-right shrink-0">
-                  <PhilIRIBadge level={act.phil_iri_level} />
-                  <span className="text-[10px] block mt-0.5" style={{ fontFamily: FONT_MONO, color: MUTED }}>
-                    {act.date}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
     </div>
