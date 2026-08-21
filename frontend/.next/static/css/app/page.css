@@ -1,0 +1,169 @@
+/*!***************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[3]!./components/auth/auth.module.css ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************/
+/* ─── Unified Authentication Landing Page CSS Module ─── */
+
+.auth_authWrapper__hwKHD {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  background: #F8F6EF;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth_brandHeader__DNMzW {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth_logoBadge__qg2NY {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 9999px;
+  background: #E4EDE6;
+  margin-bottom: 1.1rem;
+}
+
+.auth_title__5UmYV {
+  font-family: var(--font-serif);
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: #1A3A32;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.auth_subtitle__H44GI {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--color-ink-muted);
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.auth_authCard__qTrxP {
+  width: 100%;
+  max-width: 460px;
+  background: #FFFFFF;
+  border: none;
+  border-radius: 1.75rem;
+  padding: 1.75rem 1.75rem 2rem;
+  box-shadow: 0 18px 40px -18px rgba(40, 36, 28, 0.18);
+}
+
+.auth_roleTabs__wzbHZ {
+  display: flex;
+  width: 100%;
+  padding: 0.3rem;
+  border-radius: 9999px;
+  background: #F3EDE3;
+  margin-bottom: 1.15rem;
+  gap: 0.2rem;
+}
+
+.auth_roleTab__8nPAa {
+  flex: 1;
+  border: none;
+  background: transparent;
+  height: 2.5rem;
+  border-radius: 9999px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: #8A5A16;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth_roleTabActive__LFlZy {
+  background: #2D4A48;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px -4px rgba(45, 74, 72, 0.55);
+}
+
+.auth_portalHint__pRiku {
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2F2A24;
+  margin-bottom: 1.35rem;
+}
+
+.auth_formGroup__RIFRE {
+  margin-bottom: 1.25rem;
+}
+
+.auth_label__Fmj0L {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--color-ink);
+  margin-bottom: 0.375rem;
+}
+
+.auth_input__GHS_0 {
+  width: 100%;
+  height: 2.875rem;
+  padding: 0 1rem;
+  border-radius: 0.7rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--color-ink);
+  background: #FFFFFF;
+  border: 1.5px solid #E4DDD0;
+  transition: all 0.2s ease;
+}
+
+.auth_input__GHS_0:focus {
+  outline: none;
+  border-color: var(--color-marigold);
+  box-shadow: 0 0 0 3px rgba(232, 135, 58, 0.15);
+}
+
+.auth_submitBtn__bUwTW {
+  width: 100%;
+  height: 3rem;
+  border-radius: 9999px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(180deg, #E9A066 0%, #E08942 100%);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.15rem;
+}
+
+.auth_submitBtn__bUwTW:hover {
+  transform: translateY(-0.125rem);
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.15);
+}
+
+.auth_submitBtn__bUwTW:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.auth_footerNote__MAW6G {
+  margin-top: 2rem;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
