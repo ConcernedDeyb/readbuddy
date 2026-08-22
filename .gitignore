@@ -1,4 +1,11 @@
 node_modules/
 mms-tgl-finetuned/
-readbuddy-frontend/readbuddy-frontend/.next/
-node_modules/
+frontend/.next/
+frontend/node_modules/
+backend/venv/
+backend/node_modules/
+backend/logs/
+**/__pycache__/
+*.pyc
+.env
+.env.local
