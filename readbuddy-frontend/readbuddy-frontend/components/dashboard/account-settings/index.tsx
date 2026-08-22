@@ -49,7 +49,7 @@ export default function AccountSettings({
                 <h2 className="text-lg font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>{profile.displayName}</h2>
                 <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-bold" style={{ background: `${accent}15`, color: accent, fontFamily: FONT_MONO }}>{profile.role}</span>
               </div>
-              <p className="text-xs mt-0.5" style={{ fontFamily: FONT_MONO, color: MUTED }}>@{profile.username} · {profile.email}</p>
+              <p className="text-xs mt-0.5" style={{ fontFamily: FONT_MONO, color: MUTED }}>School ID: {profile.schoolId || profile.username} · {profile.email}</p>
             </div>
           </div>
         </Card>

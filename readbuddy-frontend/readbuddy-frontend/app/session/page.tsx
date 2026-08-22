@@ -12,103 +12,73 @@ import AssignedTestBriefingStep, { AssignedTestData } from '@/components/Assigne
 import AssignedTestSubmissionStep from '@/components/AssignedTestSubmissionStep';
 import { overallTier } from '@/lib/scoring';
 
-const MOCK_ASSIGNED_TESTS: Record<string, AssignedTestData> = {
-  'asn-1': {
-    id: 'asn-1',
-    teacherName: 'Ms. Santos',
-    passagePreview: 'The sun was setting over the quiet village. Maria walked home from school...',
-    passageText: 'The sun was setting over the quiet village. Maria walked home from school, thinking about the science project due tomorrow.',
-    sourceLanguage: 'en',
-    wordCount: 42,
-    instructions: 'Read slowly and pronounce each word clearly. Answer all questions after reading.',
-    assignedAt: 'Today',
-    customQuestions: [
-      {
-        id: 'q1',
-        question_text: 'Where was Maria walking home from?',
-        question_type: 'literal',
-        choices: ['From the market', 'From school', 'From her friend’s house', 'From the library'],
-        correct_choice_index: 1,
-        order_index: 0,
-      },
-      {
-        id: 'q2',
-        question_text: 'Why was Maria thinking deeply on her walk home?',
-        question_type: 'inferential',
-        choices: ['She lost her homework', 'She was worried about her science project due tomorrow', 'She forgot her lunchbox', 'She was excited for a party'],
-        correct_choice_index: 1,
-        order_index: 1,
-      },
-      {
-        id: 'q3',
-        question_text: 'What should Maria do first when she arrives home to be responsible?',
-        question_type: 'critical',
-        choices: ['Watch television', 'Start working on her science project', 'Go out to play', 'Take a long nap'],
-        correct_choice_index: 1,
-        order_index: 2,
-      },
-    ],
-  },
-  'pt-1': {
-    id: 'pt-1',
-    teacherName: 'Ms. Santos',
-    passagePreview: 'Si Ana ay may alagang pusa na nagngangalang Puti...',
-    passageText: 'Si Ana ay may alagang pusa na nagngangalang Puti. Tuwing hapon, pinapakain niya ito ng gatas at tuyong pagkain.',
-    sourceLanguage: 'tl',
-    wordCount: 38,
-    instructions: 'Basahin nang malinaw at sagutan ang mga tanong sa pag-unawa.',
-    assignedAt: 'Yesterday',
-    customQuestions: [
-      {
-        id: 'q1',
-        question_text: 'Ano ang pangalan ng alagang pusa ni Ana?',
-        question_type: 'literal',
-        choices: ['Muning', 'Puti', 'Buntot', 'Kuting'],
-        correct_choice_index: 1,
-        order_index: 0,
-      },
-      {
-        id: 'q2',
-        question_text: 'Kailan pinapakain ni Ana ang kaniyang alaga?',
-        question_type: 'inferential',
-        choices: ['Tuwing umaga', 'Tuwing tanghali', 'Tuwing hapon', 'Tuwing gabi'],
-        correct_choice_index: 2,
-        order_index: 1,
-      },
-      {
-        id: 'q3',
-        question_text: 'Bakit mahalagang pakainin at alagaan nang maayos ang ating mga alagang hayop?',
-        question_type: 'critical',
-        choices: ['Upang sila ay manatiling malusog at masaya', 'Upang sila ay makapagtago', 'Upang hindi sila maingay', 'Upang makatrabaho sila'],
-        correct_choice_index: 0,
-        order_index: 2,
-      },
-    ],
-  },
-};
-
 function SessionContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const testId = searchParams.get('testId');
 
   const isAssignedTest = Boolean(testId);
-  const assignedTestData = testId ? MOCK_ASSIGNED_TESTS[testId] || MOCK_ASSIGNED_TESTS['asn-1'] : null;
+  const [assignedTestData, setAssignedTestData] = useState<AssignedTestData | null>(null);
 
   const [step, setStep] = useState<SessionStep>(isAssignedTest ? 'briefing' : 'input');
-  const [passageText, setPassageText] = useState(assignedTestData ? assignedTestData.passageText : '');
+  const [passageText, setPassageText] = useState('');
   const [pendingText, setPendingText] = useState('');
   const [wordPct, setWordPct] = useState(92);
   const [compPct, setCompPct] = useState(80);
-  const [language, setLanguage] = useState<'en' | 'tl'>(assignedTestData ? assignedTestData.sourceLanguage : 'en');
+  const [language, setLanguage] = useState<'en' | 'tl'>('en');
 
   useEffect(() => {
-    if (assignedTestData) {
-      setPassageText(assignedTestData.passageText);
-      setLanguage(assignedTestData.sourceLanguage);
+    if (testId) {
+      try {
+        const teacherTests = JSON.parse(localStorage.getItem('readbuddy_teacher_tests') || '[]');
+        const teacherPassages = JSON.parse(localStorage.getItem('readbuddy_teacher_passages') || '[]');
+
+        for (const t of teacherTests) {
+          const assignment = (t.assignments || []).find((a: any) => a.id === testId || t.id === testId);
+          if (assignment || t.id === testId) {
+            const passage = teacherPassages.find((p: any) => p.id === t.passage_id);
+            const fullText = passage?.confirmed_text || t.passage_preview || 'Assigned reading passage';
+            const lang = (passage?.source_language || t.source_language || 'en') as 'en' | 'tl';
+            const questions = passage?.questions || [];
+
+            const dynamicData: AssignedTestData = {
+              id: testId,
+              teacherName: t.teacher_name || 'Assigned Educator',
+              passagePreview: t.passage_preview || fullText.slice(0, 60),
+              passageText: fullText,
+              sourceLanguage: lang,
+              wordCount: fullText.split(/\s+/).length,
+              instructions: 'Read slowly and pronounce each word clearly. Answer all questions after reading.',
+              assignedAt: t.created_at || 'Today',
+              customQuestions: questions.length > 0 ? questions : undefined,
+            };
+
+            setAssignedTestData(dynamicData);
+            setPassageText(dynamicData.passageText);
+            setLanguage(dynamicData.sourceLanguage);
+            setStep('briefing');
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // Generic dynamic fallback
+      const dynamicFallback: AssignedTestData = {
+        id: testId,
+        teacherName: 'Assigned Educator',
+        passagePreview: 'Assigned Reading Assessment',
+        passageText: 'Reading is an essential skill that empowers learning, critical thinking, and communication across all basic education subjects.',
+        sourceLanguage: 'en',
+        wordCount: 18,
+        instructions: 'Read slowly and pronounce each word clearly. Answer all questions after reading.',
+        assignedAt: 'Today',
+      };
+      setAssignedTestData(dynamicFallback);
+      setPassageText(dynamicFallback.passageText);
+      setLanguage(dynamicFallback.sourceLanguage);
       setStep('briefing');
     }
-  }, [testId, assignedTestData]);
+  }, [testId]);
 
   /* Handlers for Self-Directed Practice */
   const handlePassageReady = (
@@ -144,11 +114,19 @@ function SessionContent() {
 
     const overallLevel = overallTier(finalWordPct, calculatedCompPct);
 
-    // 1. Save reading session to student's history in localStorage
+    // 1. Save reading session to student's history in localStorage with full attribution
     try {
+      const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+      const currentStudentName = savedUser.display_name || 'Student';
+      const currentStudentId = savedUser.school_id || savedUser.username || '';
+      const currentTeacherName = assignedTestData?.teacherName || 'Self-Paced Practice';
+
       const existing = JSON.parse(localStorage.getItem('readbuddy_student_sessions') || '[]');
       const newSession = {
         id: `ses-${Date.now()}`,
+        student_name: currentStudentName,
+        student_id: currentStudentId,
+        teacher_name: currentTeacherName,
         passage_preview: passageText.slice(0, 65) + (passageText.length > 65 ? '...' : ''),
         source_language: language,
         word_recognition_score: finalWordPct,
@@ -157,26 +135,34 @@ function SessionContent() {
         date: new Date().toISOString().split('T')[0],
       };
       localStorage.setItem('readbuddy_student_sessions', JSON.stringify([newSession, ...existing]));
+      window.dispatchEvent(new Event('readbuddy_student_sessions_updated'));
     } catch (e) {}
 
     // 2. If assigned test, update teacher's test assignment tracking in localStorage
     if (isAssignedTest && testId) {
       try {
         const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
-        const studentName = savedUser.display_name || 'Maria Garcia';
+        const studentName = (savedUser.display_name || '').toLowerCase();
+        const studentId = (savedUser.school_id || savedUser.username || '').toLowerCase();
         const teacherTests = JSON.parse(localStorage.getItem('readbuddy_teacher_tests') || '[]');
-        
+
         const updatedTests = teacherTests.map((t: any) => {
           return {
             ...t,
             assignments: (t.assignments || []).map((a: any) => {
-              if (a.id === testId || t.id === testId || a.student_name === studentName) {
+              const isMatch =
+                a.id === testId ||
+                (a.student_id && a.student_id.toLowerCase() === studentId) ||
+                (a.student_name && a.student_name.toLowerCase() === studentName);
+
+              if (isMatch) {
                 return {
                   ...a,
                   word_recognition_score: finalWordPct,
                   comprehension_score: calculatedCompPct,
                   phil_iri_level: overallLevel,
                   status: 'completed',
+                  completed_at: new Date().toISOString(),
                 };
               }
               return a;

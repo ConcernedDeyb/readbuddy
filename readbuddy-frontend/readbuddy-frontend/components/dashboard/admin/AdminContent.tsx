@@ -27,6 +27,7 @@ export function AdminContent({ passages: initialPassages = [], onUnpublish }: { 
     setPassages(updated);
     try {
       localStorage.setItem('readbuddy_teacher_passages', JSON.stringify(updated));
+      window.dispatchEvent(new Event('readbuddy_passages_updated'));
     } catch (e) {}
     if (onUnpublish) onUnpublish(id);
   }
@@ -37,6 +38,7 @@ export function AdminContent({ passages: initialPassages = [], onUnpublish }: { 
     setPassages(updated);
     try {
       localStorage.setItem('readbuddy_teacher_passages', JSON.stringify(updated));
+      window.dispatchEvent(new Event('readbuddy_passages_updated'));
     } catch (e) {}
   }
 

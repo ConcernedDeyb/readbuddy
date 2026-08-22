@@ -50,12 +50,18 @@ function scoreColor(pct: number): string {
 
 export function StudentDashboard({
   studentName,
+  sectionName,
+  gradeLevel,
+  teacherName,
   sessions,
   pendingTests,
   onStartSession,
   onStartTest,
 }: {
   studentName: string;
+  sectionName?: string;
+  gradeLevel?: number;
+  teacherName?: string;
   sessions: ReadingSession[];
   pendingTests: PendingTest[];
   onStartSession: () => void;
@@ -67,19 +73,30 @@ export function StudentDashboard({
     : 0;
 
   const currentLevel: PhilIRILevel = sessions.length > 0 ? sessions[0].phil_iri_level : 'instructional';
+  const isAssigned = sectionName && sectionName !== 'Unassigned';
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <SectionHeader title={`Hello, ${studentName}!`} subtitle="Ready to practice reading today?" accent={STUDENT_ACCENT} />
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+        <div>
+          <SectionHeader
+            title={`Hello, ${studentName}!`}
+            subtitle={
+              isAssigned
+                ? `Section ${sectionName} (Grade ${gradeLevel || 7})${teacherName ? ` · Teacher: ${teacherName}` : ''}`
+                : 'Account Status: Unassigned (Not yet enrolled in a section)'
+            }
+            accent={STUDENT_ACCENT}
+          />
+        </div>
         <PrimaryButton accent={STUDENT_ACCENT} onClick={onStartSession}>
           + Start Practice
         </PrimaryButton>
       </div>
 
       <div className="flex flex-wrap gap-4 mb-6">
-        <StatCard label="Total Sessions" value={totalSessions} accent={STUDENT_ACCENT} icon="📖" />
-        <StatCard label="Avg. Recognition" value={`${avgWordRecognition}%`} accent={STUDENT_ACCENT} icon="🎯" />
+        <StatCard label="Total Sessions" value={totalSessions} accent={STUDENT_ACCENT} />
+        <StatCard label="Avg. Recognition" value={`${avgWordRecognition}%`} accent={STUDENT_ACCENT} />
         <Card className="flex-1 min-w-[180px] flex items-center gap-3">
           <div>
             <span className="text-xs uppercase tracking-wide block mb-1" style={{ fontFamily: FONT_SANS, color: MUTED }}>Current Level</span>

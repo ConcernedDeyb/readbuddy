@@ -60,7 +60,7 @@ export default function AdminDashboardPage() {
               uniqueTeacherMap.set(key, {
                 id: `t-${idx + 1}`,
                 display_name: acc.display_name,
-                school_id: acc.school_id || acc.username || 'SMCC-FACULTY',
+                school_id: acc.school_id || acc.username || '',
                 email: acc.email || `${acc.username}@smccnasipit.edu.ph`,
                 email_verified: Boolean(acc.email_verified),
                 student_count: Number(acc.student_count) || 0,
@@ -75,38 +75,60 @@ export default function AdminDashboardPage() {
         setTeachers(teacherList);
 
         // 2. Load registered students from accounts map & teacher roster
-        const uniqueStudentMap = new Map<string, any>();
+        const deletedIds = new Set(
+          (JSON.parse(localStorage.getItem('readbuddy_deleted_student_ids') || '[]') as string[]).map((x) =>
+            x.toLowerCase().trim()
+          )
+        );
 
+        const uniqueStudentMap = new Map<string, any>();
         allAccounts
-          .filter((acc) => acc.role === 'student')
-          .forEach((acc, idx) => {
-            const key = (acc.username || acc.email || acc.school_id || `s-${idx}`).toLowerCase();
-            if (!uniqueStudentMap.has(key)) {
+          .filter((acc: any) => {
+            if (acc.role !== 'student') return false;
+            const sid = (acc.school_id || '').toLowerCase();
+            const un = (acc.username || '').toLowerCase();
+            const dn = (acc.display_name || '').toLowerCase();
+            return !deletedIds.has(sid) && !deletedIds.has(un) && !deletedIds.has(dn);
+          })
+          .forEach((acc: any, idx: number) => {
+            const key = (acc.school_id || acc.username || acc.display_name).toLowerCase();
+            if (key && !deletedIds.has(key) && !uniqueStudentMap.has(key)) {
               uniqueStudentMap.set(key, {
-                id: `s-${idx + 1}`,
+                id: `std-${idx + 1}`,
                 display_name: acc.display_name,
                 username: acc.username,
-                teacher_name: 'Faculty',
-                grade_level: acc.grade_level || 4,
+                school_id: acc.school_id || acc.username,
+                class_name: acc.section_name || acc.class_name,
+                teacher_name: acc.teacher_name && acc.teacher_name !== 'Faculty' ? acc.teacher_name : (acc.section_name ? `Section ${acc.section_name}` : 'SMCC Basic Ed'),
+                grade_level: Number(acc.grade_level) || 7,
                 session_count: 0,
               });
             }
           });
 
         const teacherRoster = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
-        teacherRoster.forEach((ts: any) => {
-          const key = (ts.username || ts.display_name).toLowerCase();
-          if (!uniqueStudentMap.has(key)) {
-            uniqueStudentMap.set(key, {
-              id: ts.id,
-              display_name: ts.display_name,
-              username: ts.username,
-              teacher_name: 'Faculty',
-              grade_level: ts.grade_level || 4,
-              session_count: 0,
-            });
-          }
-        });
+        teacherRoster
+          .filter((ts: any) => {
+            const sid = (ts.school_id || '').toLowerCase();
+            const un = (ts.username || '').toLowerCase();
+            const dn = (ts.display_name || '').toLowerCase();
+            return !deletedIds.has(ts.id) && !deletedIds.has(sid) && !deletedIds.has(un) && !deletedIds.has(dn);
+          })
+          .forEach((ts: any) => {
+            const key = (ts.school_id || ts.username || ts.display_name).toLowerCase();
+            if (key && !deletedIds.has(key) && !uniqueStudentMap.has(key)) {
+              uniqueStudentMap.set(key, {
+                id: ts.id,
+                display_name: ts.display_name,
+                username: ts.username,
+                school_id: ts.school_id || ts.username,
+                class_name: ts.class_name || ts.section_name,
+                teacher_name: ts.teacher_name && ts.teacher_name !== 'Faculty' ? ts.teacher_name : (ts.class_name ? `Section ${ts.class_name}` : 'SMCC Basic Ed'),
+                grade_level: Number(ts.grade_level) || 7,
+                session_count: 0,
+              });
+            }
+          });
         setStudents(Array.from(uniqueStudentMap.values()));
 
         // 3. Load passages
@@ -117,8 +139,8 @@ export default function AdminDashboardPage() {
         const studentSessions = JSON.parse(localStorage.getItem('readbuddy_student_sessions') || '[]');
         const activityList = studentSessions.slice(0, 5).map((ses: any, i: number) => ({
           id: `act-${i + 1}`,
-          student_name: 'Student',
-          teacher_name: 'Faculty',
+          student_name: ses.student_name || 'Student',
+          teacher_name: ses.teacher_name || 'Teacher',
           phil_iri_level: ses.phil_iri_level,
           date: ses.date,
           action: 'Completed session',
@@ -132,11 +154,17 @@ export default function AdminDashboardPage() {
     window.addEventListener('readbuddy_passages_updated', loadData);
     window.addEventListener('readbuddy_tests_updated', loadData);
     window.addEventListener('readbuddy_accounts_updated', loadData);
+    window.addEventListener('readbuddy_students_updated', loadData);
+    window.addEventListener('readbuddy_student_sessions_updated', loadData);
+    window.addEventListener('storage', loadData);
     return () => {
       window.removeEventListener('readbuddy_user_updated', loadData);
       window.removeEventListener('readbuddy_passages_updated', loadData);
       window.removeEventListener('readbuddy_tests_updated', loadData);
       window.removeEventListener('readbuddy_accounts_updated', loadData);
+      window.removeEventListener('readbuddy_students_updated', loadData);
+      window.removeEventListener('readbuddy_student_sessions_updated', loadData);
+      window.removeEventListener('storage', loadData);
     };
   }, []);
 

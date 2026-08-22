@@ -35,10 +35,10 @@ export function TeacherOverview({
       <SectionHeader title={teacherName ? `Welcome, ${teacherName}` : 'Teacher Dashboard'} subtitle="Overview of your students' reading progress and assignments." accent={TEACHER_ACCENT} />
 
       <div className="flex flex-wrap gap-4 mb-6">
-        <StatCard label="My Students" value={studentCount} accent={TEACHER_ACCENT} icon="🧒" onClick={() => onNavigate('students')} />
-        <StatCard label="Passages" value={passageCount} accent={TEACHER_ACCENT} icon="📖" onClick={() => onNavigate('passages')} />
-        <StatCard label="Reading Tests" value={testCount} accent={TEACHER_ACCENT} icon="📋" onClick={() => onNavigate('tests')} />
-        <StatCard label="Pending Grading" value={pendingGradingCount} accent={TEACHER_ACCENT} icon="⏳" onClick={() => onNavigate('tests')} />
+        <StatCard label="My Students" value={studentCount} accent={TEACHER_ACCENT} onClick={() => onNavigate('students')} />
+        <StatCard label="Passages" value={passageCount} accent={TEACHER_ACCENT} onClick={() => onNavigate('passages')} />
+        <StatCard label="Reading Tests" value={testCount} accent={TEACHER_ACCENT} onClick={() => onNavigate('tests')} />
+        <StatCard label="Pending Grading" value={pendingGradingCount} accent={TEACHER_ACCENT} onClick={() => onNavigate('tests')} />
       </div>
 
       <Card>

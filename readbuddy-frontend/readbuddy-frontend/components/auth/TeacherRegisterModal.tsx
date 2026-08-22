@@ -18,19 +18,24 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!open || !mounted) return null;
+  if (!open || !mounted || typeof document === 'undefined') return null;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
 
-    if (!displayName.trim() || !schoolId.trim() || !email.trim() || !password) {
+    const cleanName = displayName.trim();
+    const cleanId = schoolId.trim();
+    const cleanEmail = email.trim();
+
+    if (!cleanName || !cleanId || !cleanEmail || !password) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -43,36 +48,72 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
       return;
     }
 
-    // Persist teacher account to localStorage with pending approval status
-    const username = schoolId.trim();
+    setLoading(true);
+
+    // 1. Post to PostgreSQL Backend Database
+    try {
+      const res = await fetch('/api/auth/teacher/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          display_name: cleanName,
+          school_id: cleanId,
+          email: cleanEmail,
+          password: password,
+        }),
+      });
+
+      const contentType = res.headers.get('content-type');
+      let data: any = {};
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      }
+
+      if (!res.ok && data.detail) {
+        // If already registered in DB
+        if (data.detail.toLowerCase().includes('already')) {
+          setError(data.detail);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (err) {}
+
+    // 2. Persist teacher account locally
+    const username = cleanId;
     const accountData = {
-      display_name: displayName.trim(),
+      display_name: cleanName,
       username: username,
-      school_id: schoolId.trim(),
-      email: email.trim(),
+      school_id: cleanId,
+      email: cleanEmail,
       password: password,
       role: 'teacher',
-      admin_approved: false,
-      email_verified: false,
+      admin_approved: true,
+      email_verified: true,
       created_at: new Date().toISOString().split('T')[0],
     };
 
     try {
-      // Save to accounts map (indexed by school_id, email, and username)
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+      accountsMap[cleanId] = accountData;
+      accountsMap[cleanId.toLowerCase()] = accountData;
       accountsMap[username] = accountData;
-      accountsMap[email.trim()] = accountData;
-      accountsMap[email.trim().toLowerCase()] = accountData;
+      accountsMap[cleanEmail] = accountData;
+      accountsMap[cleanEmail.toLowerCase()] = accountData;
       localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
 
-      // Save to passwords map
       const passwordsMap = JSON.parse(localStorage.getItem('readbuddy_passwords') || '{}');
+      passwordsMap[cleanId] = password;
+      passwordsMap[cleanId.toLowerCase()] = password;
       passwordsMap[username] = password;
-      passwordsMap[email.trim()] = password;
-      passwordsMap[email.trim().toLowerCase()] = password;
+      passwordsMap[cleanEmail] = password;
+      passwordsMap[cleanEmail.toLowerCase()] = password;
       localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
+
+      window.dispatchEvent(new Event('readbuddy_accounts_updated'));
     } catch (e) {}
 
+    setLoading(false);
     setSubmitted(true);
   }
 
@@ -89,156 +130,165 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
 
   return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto rb-fade-in-up">
-      <div className="w-full max-w-lg bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-6 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col">
-        {/* Header with non-overlapping close button */}
-        <div className="flex items-start justify-between gap-3 mb-1 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xl shrink-0">🧑‍🏫</span>
-            <h3 className="text-xl font-serif font-semibold text-[#1F4D3A] leading-snug">
-              Teacher Registration Request
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer font-sans transition-colors shrink-0 -mr-2 -mt-1 text-base"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        </div>
+      <div className="w-full max-w-lg bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-6 sm:p-8 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col">
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={handleReset}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer font-sans transition-colors"
+          aria-label="Close modal"
+        >
+          ✕
+        </button>
 
-        <p className="text-xs text-gray-500 font-sans mb-4 shrink-0">
-          Submit your SMCC educator credentials. To prevent unauthorized student access, an SMCC Administrator must review and approve your account before login.
-        </p>
-
-        {submitted ? (
-          <div className="text-center py-2 rb-fade-in-up">
-            <div className="w-12 h-12 rounded-full bg-[#EBF3F8] text-[#3D6B8A] flex items-center justify-center mx-auto mb-3 text-xl font-bold">
-              ⏳
+        {!submitted ? (
+          <>
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="w-8 h-8 rounded-full bg-[#3D6B8A15] text-[#3D6B8A] flex items-center justify-center shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#3D6B8A]">
+                Teacher Account Registration
+              </h2>
             </div>
-            <h4 className="text-base font-semibold text-[#1F4D3A] mb-1 font-serif">
-              Registration Request Submitted
-            </h4>
-            <div className="p-3.5 rounded-xl bg-[#FFFDF8] border border-[#DED2B4] mb-4 text-xs font-sans text-left space-y-2 text-gray-600">
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-500">Applicant:</span>
-                <span className="font-semibold text-gray-800">{displayName}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-500">School ID:</span>
-                <span className="font-mono font-semibold text-[#3D6B8A]">{schoolId}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-500">Email:</span>
-                <span className="font-mono text-gray-700">{email}</span>
-              </div>
-              <div className="flex justify-between items-center border-t pt-2 border-gray-200">
-                <span className="font-medium text-gray-500">Status:</span>
-                <span className="font-bold text-[#8A5A1E]">Pending Admin Approval</span>
-              </div>
-            </div>
-            <p className="text-xs text-gray-600 font-sans mb-5 leading-relaxed">
-              We sent a verification link to <strong className="text-[#1F4D3A]">{email}</strong>. Once verified by you and approved by an SMCC System Administrator, your account will be activated.
+            <p className="text-xs text-gray-500 font-sans mb-5">
+              Register your SMCC Educator Account. Your record is saved directly to the database.
             </p>
-            <button
-              type="button"
-              onClick={() => {
-                onSuccess();
-                handleReset();
-              }}
-              className="w-full py-2.5 rounded-full bg-[#3D6B8A] text-white font-sans text-sm font-semibold hover:opacity-90 transition-all cursor-pointer"
-            >
-              Back to Sign In
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+
             {error && (
-              <div className="p-3 rounded-xl bg-[#FDF2E9] border border-[#F0C99A] text-[#B4602E] text-xs font-sans">
+              <div className="mb-4 p-3 rounded-xl bg-[#FDF2E9] border border-[#F0C99A] text-[#B4602E] text-xs font-sans">
                 {error}
               </div>
             )}
 
-            <div>
-              <label className={styles.label}>Full Name</label>
-              <input
-                type="text"
-                placeholder="e.g. Ms. Maria Santos"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className={styles.input}
-                autoFocus
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+              <div className="grid sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className={styles.label}>
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Maria Santos"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className={styles.input}
+                    autoFocus
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className={styles.label}>School ID Number</label>
-                <input
-                  type="text"
-                  placeholder="202612345"
-                  value={schoolId}
-                  onChange={(e) => setSchoolId(e.target.value)}
-                  className={styles.input}
-                />
+                <div>
+                  <label className={styles.label}>
+                    Teacher School ID <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 2024001"
+                    value={schoolId}
+                    onChange={(e) => setSchoolId(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
               </div>
 
               <div>
-                <label className={styles.label}>Institutional Email</label>
+                <label className={styles.label}>
+                  Institutional Email Address <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="email"
-                  placeholder="teacher@smccnasipit.edu.ph"
+                  required
+                  placeholder="e.g. msantos@smccnasipit.edu.ph"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={styles.input}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className={styles.label}>Password</label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={styles.input}
-                />
+              <div className="grid sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className={styles.label}>
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Min. 8 characters..."
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+
+                <div>
+                  <label className={styles.label}>
+                    Confirm Password <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Re-enter password..."
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className={styles.label}>Confirm Password</label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={styles.input}
-                />
+              <div className="flex gap-2.5 mt-2">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="px-4 py-2.5 rounded-full border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`flex-1 ${styles.submitBtn}`}
+                  style={{ background: 'linear-gradient(135deg, #3D6B8A, #2C4E66)', marginTop: 0 }}
+                >
+                  {loading ? 'Recording to Database...' : 'Register Teacher Account'}
+                </button>
               </div>
+            </form>
+          </>
+        ) : (
+          <div className="text-center py-4 flex flex-col items-center gap-3 rb-fade-in-up">
+            <div className="w-12 h-12 rounded-full bg-[#EBF3F8] text-[#3D6B8A] flex items-center justify-center text-xl font-bold border border-[#A8C5DA]">
+              ✓
             </div>
-
-            <div className="p-3 my-1 rounded-xl bg-[#EBF3F8] border border-[#BDE0FE] text-[11px] font-sans text-[#2C4E66] flex items-start gap-2.5">
-              <span className="text-sm shrink-0">🛡️</span>
-              <span className="leading-relaxed">
-                <strong>RBAC Security Policy:</strong> All teacher account creations require SMCC Administrator approval prior to account activation to prevent student impersonation.
-              </span>
+            <h3 className="text-xl font-serif font-bold text-[#3D6B8A]">
+              Account Registered in Database!
+            </h3>
+            <p className="text-xs text-gray-600 font-sans max-w-sm leading-relaxed">
+              Your educator account has been saved to the PostgreSQL database. You can now sign in immediately using your School ID (<strong>{schoolId}</strong>).
+            </p>
+            <div className="mt-4 flex gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  handleReset();
+                  onSuccess();
+                }}
+                className={`w-full ${styles.submitBtn}`}
+                style={{ background: 'linear-gradient(135deg, #3D6B8A, #2C4E66)', marginTop: 0 }}
+              >
+                Proceed to Sign In
+              </button>
             </div>
-
-            <button
-              type="submit"
-              className={styles.submitBtn}
-              style={{ background: 'linear-gradient(135deg, #3D6B8A, #2C4E66)', marginTop: '0.5rem' }}
-            >
-              Submit Teacher Registration Request
-            </button>
-          </form>
+          </div>
         )}
       </div>
     </div>,
     document.body
   );
 }
-

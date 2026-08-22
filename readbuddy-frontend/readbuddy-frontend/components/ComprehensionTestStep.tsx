@@ -32,7 +32,7 @@ export default function ComprehensionTestStep({ passageText, customQuestions, on
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [listeningQIdx, setListeningQIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (customQuestions && customQuestions.length > 0) {
@@ -157,6 +157,59 @@ export default function ComprehensionTestStep({ passageText, customQuestions, on
     fetchTest();
   }, [passageText, customQuestions]);
 
+  function handleVoiceAnswer(qIdx: number, choices: string[]) {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      // Direct first option selection fallback if browser speech API is unavailable
+      setAnswers((prev) => ({ ...prev, [qIdx]: 0 }));
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = passageText.toLowerCase().includes('ang ') ? 'fil-PH' : 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 3;
+
+      setListeningQIdx(qIdx);
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        setListeningQIdx(null);
+
+        // Find best choice matching the student's spoken words
+        let bestIdx = 0;
+        let maxOverlap = -1;
+
+        choices.forEach((choice, cIdx) => {
+          const words = choice.toLowerCase().split(/\s+/);
+          let overlap = 0;
+          words.forEach((w) => {
+            if (transcript.includes(w)) overlap++;
+          });
+          if (overlap > maxOverlap) {
+            maxOverlap = overlap;
+            bestIdx = cIdx;
+          }
+        });
+
+        setAnswers((prev) => ({ ...prev, [qIdx]: bestIdx }));
+      };
+
+      recognition.onerror = () => {
+        setListeningQIdx(null);
+      };
+
+      recognition.onend = () => {
+        setListeningQIdx(null);
+      };
+
+      recognition.start();
+    } catch (err) {
+      setListeningQIdx(null);
+    }
+  }
+
   const handleSubmit = () => {
     if (!questions) return;
     let correct = 0;
@@ -225,6 +278,8 @@ export default function ComprehensionTestStep({ passageText, customQuestions, on
 
       {questions.map((q, qIndex) => {
         const orderKey = q.order_index ?? qIndex;
+        const isListening = listeningQIdx === orderKey;
+
         return (
           <div
             key={orderKey}
@@ -234,28 +289,49 @@ export default function ComprehensionTestStep({ passageText, customQuestions, on
               animationDelay: `${qIndex * 80}ms`,
             }}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <span
-                className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-mono font-bold"
-                style={{
-                  background: '#1F4D3A12',
-                  color: '#1F4D3A',
-                }}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-mono font-bold"
+                  style={{
+                    background: '#1F4D3A12',
+                    color: '#1F4D3A',
+                  }}
+                >
+                  {qIndex + 1}
+                </span>
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] tracking-wide uppercase px-2 py-0.5 rounded-full font-mono font-semibold"
+                  style={{
+                    background: '#EEF3EF',
+                    color: '#4E7A64',
+                  }}
+                >
+                  {TYPE_LABEL[q.question_type] ?? q.question_type}
+                </span>
+              </div>
+
+              {/* Verbal Answering Button */}
+              <button
+                type="button"
+                onClick={() => handleVoiceAnswer(orderKey, q.choices)}
+                className={`px-2.5 py-1 rounded-full text-xs font-sans font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isListening ? 'bg-[#E8873A] text-white animate-pulse' : 'bg-[#FAF6EE] text-[#1F4D3A] border border-[#DED2B4] hover:bg-[#F3EBD8]'
+                }`}
+                title="Speak your answer aloud"
               >
-                {qIndex + 1}
-              </span>
-              <span
-                className="inline-flex items-center gap-1 text-[10px] tracking-wide uppercase px-2 py-0.5 rounded-full font-mono font-semibold"
-                style={{
-                  background: '#EEF3EF',
-                  color: '#4E7A64',
-                }}
-              >
-                {TYPE_LABEL[q.question_type] ?? q.question_type}
-              </span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+                <span>{isListening ? 'Listening...' : 'Answer with Voice'}</span>
+              </button>
             </div>
+
             <p
-              className="mb-3 font-sans font-semibold"
+              className="mb-3 font-sans font-semibold text-sm"
               style={{ color: '#20342B' }}
             >
               {q.question_text}

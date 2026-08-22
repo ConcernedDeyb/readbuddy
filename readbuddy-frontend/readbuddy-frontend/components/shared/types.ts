@@ -4,9 +4,15 @@ export interface Student {
   id: string;
   display_name: string;
   username?: string;
+  school_id?: string;
+  email?: string;
   grade_level?: number;
   section?: string;
+  section_name?: string;
+  class_name?: string;
   preferred_language?: 'en' | 'tl';
+  sessions_completed?: number;
+  latest_level?: PhilIRILevel;
 }
 
 export interface ReadingSession {

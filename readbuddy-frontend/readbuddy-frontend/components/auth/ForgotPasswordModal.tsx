@@ -26,7 +26,7 @@ export function ForgotPasswordModal({ open, onClose, onSuccess }: ForgotPassword
     setMounted(true);
   }, []);
 
-  if (!open || !mounted) return null;
+  if (!open || !mounted || typeof document === 'undefined') return null;
 
   function handleResetForm() {
     setStep(1);
@@ -87,6 +87,7 @@ export function ForgotPasswordModal({ open, onClose, onSuccess }: ForgotPassword
       if (!found) {
         found = allAccounts.find(
           (acc) =>
+            acc.school_id?.toLowerCase() === lowerId ||
             acc.username?.toLowerCase() === lowerId ||
             acc.email?.toLowerCase() === lowerId ||
             acc.display_name?.toLowerCase() === lowerId
@@ -205,7 +206,12 @@ export function ForgotPasswordModal({ open, onClose, onSuccess }: ForgotPassword
       <div className="w-full max-w-md bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-6 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col">
         <div className="flex items-start justify-between gap-3 mb-1 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-xl shrink-0">🔐</span>
+            <div className="w-8 h-8 rounded-full bg-[#1F4D3A15] text-[#1F4D3A] flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
             <h3 className="text-xl font-serif font-semibold text-[#1F4D3A] leading-snug">
               Reset Your Password
             </h3>

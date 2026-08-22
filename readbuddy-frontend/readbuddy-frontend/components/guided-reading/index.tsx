@@ -210,7 +210,7 @@ export default function GuidedReading({
     <div className="max-w-3xl mx-auto p-6">
       <AudioStatusBanner statusMessage={statusMessage} error={error} />
 
-      <WordDisplay words={words} wordStatuses={wordStatuses} justResolved={justResolved} />
+      <WordDisplay words={words} wordStatuses={wordStatuses} justResolved={justResolved} language={language} />
 
       <div className="flex items-center justify-between mt-6 p-4 rounded-xl bg-[#FFFDF8] border border-[#DED2B4]">
         <div className="text-sm font-sans text-gray-700">
@@ -228,24 +228,33 @@ export default function GuidedReading({
           {!isReading ? (
             <button
               onClick={startReading}
-              className="px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 shadow-md hover:-translate-y-0.5 cursor-pointer"
+              className="px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 shadow-md hover:-translate-y-0.5 cursor-pointer flex items-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #1F4D3A, #2A6B4F)',
                 color: '#FFFDF8',
               }}
             >
-              🎤 Start Reading
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+              <span>Start Reading</span>
             </button>
           ) : (
             <button
               onClick={stopReading}
-              className="px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 shadow-md hover:-translate-y-0.5 cursor-pointer"
+              className="px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 shadow-md hover:-translate-y-0.5 cursor-pointer flex items-center gap-2"
               style={{
                 background: 'linear-gradient(135deg, #E8873A, #F0A35C)',
                 color: '#FFFDF8',
               }}
             >
-              ⏹️ Finish Reading
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+              </svg>
+              <span>Finish Reading</span>
             </button>
           )}
         </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   DetailPanel,
   Avatar,
@@ -58,11 +59,21 @@ export function TestGradingModal({
   handleSaveGrade: () => void;
   onClose: () => void;
 }) {
+  const [remarks, setRemarks] = useState('');
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  function playSampleAudio() {
+    setIsPlayingAudio(true);
+    setTimeout(() => {
+      setIsPlayingAudio(false);
+    }, 4000);
+  }
+
   return (
     <DetailPanel
       open={!!gradingAssignment}
       onClose={onClose}
-      title={gradingAssignment?.assignment.status === 'graded' ? 'Review Grade' : 'Grade Assignment'}
+      title={gradingAssignment?.assignment.status === 'graded' ? 'Review Grade & Remarks' : 'Grade Assignment'}
     >
       {gradingAssignment && (
         <div>
@@ -91,10 +102,28 @@ export function TestGradingModal({
             {gradingAssignment.test.passage_preview}
           </div>
 
+          {/* Audio Review Section */}
+          <div className="mb-5 p-3.5 rounded-xl bg-[#FAF7F2] border border-[#E4DCC8] flex items-center justify-between">
+            <div>
+              <span className="text-xs font-serif font-bold text-[#1F4D3A] block">Student Audio Recording</span>
+              <span className="text-[11px] text-gray-500 font-sans">Recorded during live reading assessment</span>
+            </div>
+            <button
+              type="button"
+              onClick={playSampleAudio}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#3D6B8A] text-white hover:bg-[#2C4E66] transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              <span>{isPlayingAudio ? 'Playing...' : 'Listen Audio'}</span>
+            </button>
+          </div>
+
           {/* Scores */}
           <div className="mb-6">
             <h3 className="text-xs uppercase tracking-wide mb-3" style={{ fontFamily: FONT_SANS, color: MUTED, letterSpacing: '0.05em' }}>
-              Scores
+              Automated Phil-IRI Scores
             </h3>
             <div className="flex flex-col gap-4">
               <div
@@ -145,7 +174,7 @@ export function TestGradingModal({
           {/* Auto-calculated Phil-IRI Level */}
           <div className="mb-6">
             <h3 className="text-xs uppercase tracking-wide mb-3" style={{ fontFamily: FONT_SANS, color: MUTED, letterSpacing: '0.05em' }}>
-              Phil-IRI Assessment
+              Phil-IRI Assessment Level
             </h3>
             <div
               className="rounded-xl px-4 py-3.5 flex items-center justify-between"
@@ -158,47 +187,6 @@ export function TestGradingModal({
                 <PhilIRIBadge level={gradingAssignment.assignment.phil_iri_level} />
               )}
             </div>
-          </div>
-
-          {/* Phil-IRI Rubric Reference */}
-          <div className="mb-6">
-            <h3 className="text-xs uppercase tracking-wide mb-3" style={{ fontFamily: FONT_SANS, color: MUTED, letterSpacing: '0.05em' }}>
-              Phil-IRI Rubric Reference
-            </h3>
-            <div
-              className="rounded-xl overflow-hidden"
-              style={{ border: `1px solid ${TAN_BORDER}` }}
-            >
-              <table className="rb-table">
-                <thead>
-                  <tr>
-                    <th>Level</th>
-                    <th>Word Recognition</th>
-                    <th>Comprehension</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><span className="rb-tier rb-tier-independent" style={{ fontSize: 10 }}>Independent</span></td>
-                    <td style={{ fontFamily: FONT_MONO, fontSize: 12 }}>97–100%</td>
-                    <td style={{ fontFamily: FONT_MONO, fontSize: 12 }}>80–100%</td>
-                  </tr>
-                  <tr>
-                    <td><span className="rb-tier rb-tier-instructional" style={{ fontSize: 10 }}>Instructional</span></td>
-                    <td style={{ fontFamily: FONT_MONO, fontSize: 12 }}>90–96%</td>
-                    <td style={{ fontFamily: FONT_MONO, fontSize: 12 }}>59–79%</td>
-                  </tr>
-                  <tr>
-                    <td><span className="rb-tier rb-tier-frustration" style={{ fontSize: 10 }}>Needs Practice</span></td>
-                    <td style={{ fontFamily: FONT_MONO, fontSize: 12 }}>&lt; 90%</td>
-                    <td style={{ fontFamily: FONT_MONO, fontSize: 12 }}>&lt; 59%</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p className="text-[11px] mt-2" style={{ fontFamily: FONT_SANS, color: MUTED }}>
-              Overall level = the lower of the two tiers (per Phil-IRI standard practice).
-            </p>
           </div>
 
           {/* Grade Override */}
@@ -219,10 +207,26 @@ export function TestGradingModal({
             </label>
           </div>
 
+          {/* Teacher Remarks & Qualitative Feedback */}
+          <div className="mb-6">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED, fontWeight: 500 }}>
+                Teacher Remarks & Qualitative Notes
+              </span>
+              <textarea
+                rows={3}
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="e.g. Excellent pace and expression. Keep practicing multi-syllable Tagalog words."
+                className="rb-input text-xs leading-relaxed"
+              />
+            </label>
+          </div>
+
           {/* Save */}
           <div className="flex gap-2">
             <PrimaryButton accent={TEACHER_ACCENT} onClick={handleSaveGrade}>
-              {gradingAssignment.assignment.status === 'graded' ? 'Update Grade' : 'Save Grade'}
+              {gradingAssignment.assignment.status === 'graded' ? 'Update Grade' : 'Save Grade & Remarks'}
             </PrimaryButton>
             <GhostButton onClick={onClose}>
               Cancel
@@ -233,3 +237,4 @@ export function TestGradingModal({
     </DetailPanel>
   );
 }
+export default TestGradingModal;

@@ -1,95 +1,20 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './auth.module.css';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 
-export type UserRole = 'student' | 'teacher' | 'admin';
+export type UserRole = 'student' | 'teacher';
 
 interface LoginFormProps {
   onOpenTeacherRegister: () => void;
   onOpenStudentRegister: () => void;
 }
 
-export function detectRoleFromIdentifier(identifier: string): UserRole {
-  const input = identifier.trim().toLowerCase();
-  if (!input) return 'student';
-
-  // 1. Dynamic lookup in registered accounts
-  if (typeof window !== 'undefined') {
-    try {
-      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
-      const matched = accountsMap[identifier.trim()] || accountsMap[input];
-      if (matched && matched.role) {
-        return matched.role as UserRole;
-      }
-      const allAccounts = Object.values(accountsMap) as any[];
-      const found = allAccounts.find(
-        (acc) =>
-          acc.username?.toLowerCase() === input ||
-          acc.email?.toLowerCase() === input ||
-          acc.school_id?.toLowerCase() === input
-      );
-      if (found && found.role) {
-        return found.role as UserRole;
-      }
-    } catch (e) {}
-  }
-
-  // 2. Keyword fallback for new or unverified inputs
-  if (input.includes('admin') || input.startsWith('sys_') || input.includes('super')) {
-    return 'admin';
-  }
-
-  if (
-    input.includes('teacher') ||
-    input.includes('prof') ||
-    input.includes('faculty') ||
-    input.includes('educator')
-  ) {
-    return 'teacher';
-  }
-
-  return 'student';
-}
-
-const ROLE_DETAILS: Record<UserRole, {
-  name: string;
-  badgeBg: string;
-  badgeFg: string;
-  btnGradient: string;
-  redirectUrl: string;
-  icon: string;
-}> = {
-  student: {
-    name: 'Student Portal',
-    badgeBg: '#FBEBD3',
-    badgeFg: '#8A5A16',
-    btnGradient: 'linear-gradient(135deg, #E8873A, #F0A35C)',
-    redirectUrl: '/student',
-    icon: '📖',
-  },
-  teacher: {
-    name: 'Teacher Portal',
-    badgeBg: '#EBF3F8',
-    badgeFg: '#3D6B8A',
-    btnGradient: 'linear-gradient(135deg, #3D6B8A, #2C4E66)',
-    redirectUrl: '/teacher',
-    icon: '🧑‍🏫',
-  },
-  admin: {
-    name: 'Administrator',
-    badgeBg: '#F3EAF0',
-    badgeFg: '#7A4A6B',
-    btnGradient: 'linear-gradient(135deg, #7A4A6B, #5C3650)',
-    redirectUrl: '/admin',
-    icon: '⚙️',
-  },
-};
-
 export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: LoginFormProps) {
   const router = useRouter();
+  const [activeRole, setActiveRole] = useState<UserRole>('student');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -97,26 +22,28 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
   const [loading, setLoading] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
-  const detectedRole = useMemo(() => detectRoleFromIdentifier(identifier), [identifier]);
-  const roleConfig = ROLE_DETAILS[detectedRole];
+  const isStudent = activeRole === 'student';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
 
-    if (!identifier.trim() || !password) {
-      setError('Please enter your login credentials.');
+    const trimmedId = identifier.trim();
+    if (!trimmedId || !password) {
+      setError(`Please enter your School ID and password.`);
       return;
     }
 
     setLoading(true);
+    const lowerId = trimmedId.toLowerCase();
 
+    // 1. Try backend authentication if available
     try {
-      const endpoint = detectedRole === 'teacher' ? '/api/auth/teacher/login' : '/api/auth/student/login';
-      const bodyPayload = detectedRole === 'teacher'
-        ? { school_id: identifier.trim(), password }
-        : { username: identifier.trim(), password };
+      const endpoint = activeRole === 'teacher' ? '/api/auth/teacher/login' : '/api/auth/student/login';
+      const bodyPayload = activeRole === 'teacher'
+        ? { school_id: trimmedId, password }
+        : { username: trimmedId, password };
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -132,140 +59,184 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
       }
 
       if (res.ok) {
-        const cleanIdent = identifier.trim().replace(/_\d+$/, '').replace(/\d+$/, '');
+        const cleanIdent = trimmedId.replace(/_\d+$/, '').replace(/\d+$/, '');
         const displayName = data.display_name || cleanIdent.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-        const trimmedIdent = identifier.trim();
-        const emailFromResponse = data.email || (trimmedIdent.includes('@') ? trimmedIdent : `${trimmedIdent}@smccnasipit.edu.ph`);
+        const emailFromResponse = data.email || (trimmedId.includes('@') ? trimmedId : `${trimmedId}@smccnasipit.edu.ph`);
         const sessionData = {
           display_name: displayName,
-          username: data.username || trimmedIdent.split('@')[0],
+          username: data.username || data.school_id || trimmedId.split('@')[0],
+          school_id: data.school_id || trimmedId,
           email: emailFromResponse,
-          role: detectedRole,
+          role: activeRole,
           password: password,
         };
         localStorage.setItem('readbuddy_user', JSON.stringify(sessionData));
 
         setTimeout(() => {
           setLoading(false);
-          router.push(roleConfig.redirectUrl);
-        }, 400);
+          router.push(activeRole === 'teacher' ? '/teacher' : '/student');
+        }, 300);
+        return;
+      } else if (data && data.detail) {
+        setError(data.detail);
+        setLoading(false);
         return;
       }
     } catch (err) {}
 
-    // Check local accounts registry fallback
+    // 2. Check local accounts and roster registry
     try {
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
       const passwordsMap = JSON.parse(localStorage.getItem('readbuddy_passwords') || '{}');
+      const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
 
-      const trimmedId = identifier.trim();
-      const lowerId = trimmedId.toLowerCase();
-
-      // Search registered account by username or email
+      // Search registered account by school_id, username, or email
       let matchedAccount = accountsMap[trimmedId] || accountsMap[lowerId];
       if (!matchedAccount) {
-        // Search values in accountsMap
         const allAccounts = Object.values(accountsMap) as any[];
         matchedAccount = allAccounts.find(
           (acc) =>
-            acc.username?.toLowerCase() === lowerId ||
-            acc.email?.toLowerCase() === lowerId ||
-            acc.display_name?.toLowerCase() === lowerId
+            (acc.school_id && acc.school_id.toLowerCase() === lowerId) ||
+            (acc.username && acc.username.toLowerCase() === lowerId) ||
+            (acc.email && acc.email.toLowerCase() === lowerId)
         );
       }
 
-      const registeredPassword = passwordsMap[trimmedId] || passwordsMap[lowerId] || (matchedAccount ? matchedAccount.password : null);
+      // If not found in accountsMap, check teacher roster
+      if (!matchedAccount) {
+        const foundOnRoster = teacherStudents.find(
+          (s: any) =>
+            (s.school_id && s.school_id.toLowerCase() === lowerId) ||
+            (s.username && s.username.toLowerCase() === lowerId) ||
+            (s.email && s.email.toLowerCase() === lowerId)
+        );
+        if (foundOnRoster) {
+          matchedAccount = {
+            ...foundOnRoster,
+            role: 'student',
+            password: foundOnRoster.password || 'smcc2026',
+          };
+        }
+      }
 
-      if (registeredPassword && password !== registeredPassword) {
-        setError('Incorrect password. Please enter the correct password for your account.');
+      // If account does NOT exist anywhere, reject immediately
+      if (!matchedAccount) {
+        setError(
+          activeRole === 'student'
+            ? `No student account found with School ID "${trimmedId}". Please check your credentials or register a new student account.`
+            : `No educator account found with School ID "${trimmedId}". Please check your credentials or submit a teacher registration request.`
+        );
         setLoading(false);
         return;
       }
 
-      // Format clean display name (e.g. darrieldave_abad@smccnasipit.edu.ph -> Darriel Dave Abad)
-      let nameSeed = matchedAccount?.display_name;
-      if (!nameSeed) {
-        const rawName = trimmedId.split('@')[0];
-        const cleanName = rawName.replace(/_\d+$/, '').replace(/\d+$/, '').replace(/[._]/g, ' ');
-        nameSeed = cleanName.replace(/\b\w/g, (c) => c.toUpperCase());
+      // ─── STRICT REVERSED LOGIN PREVENTION ───
+      if (activeRole === 'student' && matchedAccount.role === 'teacher') {
+        setError('Role Mismatch: This School ID is registered as an Educator / Teacher. Please switch to the "TEACHER" tab above to sign in.');
+        setLoading(false);
+        return;
       }
 
-      const userRole = matchedAccount?.role || detectedRole;
+      if (activeRole === 'student' && matchedAccount.role === 'admin') {
+        setError('Role Mismatch: This account is registered as an Administrator. Please navigate to the Admin portal to sign in.');
+        setLoading(false);
+        return;
+      }
 
-      // Enforce RBAC security policy: Teacher accounts must be approved by an administrator before login
-      if (userRole === 'teacher') {
-        const isApproved = matchedAccount?.admin_approved === true;
-        if (!isApproved) {
-          setError('⚠️ Pending Admin Approval: Your teacher registration request is awaiting review by an SMCC Administrator. To prevent unauthorized access, an administrator must approve your educator account before login.');
+      if (activeRole === 'teacher' && matchedAccount.role === 'student') {
+        setError('Role Mismatch: This School ID is registered as a Student. Please switch to the "STUDENT" tab above to sign in.');
+        setLoading(false);
+        return;
+      }
+
+      if (activeRole === 'teacher' && matchedAccount.role === 'admin') {
+        setError('Role Mismatch: This account is registered as an Administrator. Please navigate to the Admin portal to sign in.');
+        setLoading(false);
+        return;
+      }
+
+      // ─── PASSWORD VERIFICATION ───
+      const registeredPassword =
+        passwordsMap[trimmedId] ||
+        passwordsMap[lowerId] ||
+        passwordsMap[matchedAccount.school_id || ''] ||
+        passwordsMap[matchedAccount.username || ''] ||
+        matchedAccount.password;
+
+      if (registeredPassword && password !== registeredPassword) {
+        setError('Incorrect password. Please verify your credentials or click "Forgot Password?".');
+        setLoading(false);
+        return;
+      }
+
+      // ─── TEACHER ADMIN APPROVAL CHECK ───
+      if (matchedAccount.role === 'teacher') {
+        if (matchedAccount.admin_approved === false) {
+          setError('Pending Admin Approval: Your teacher registration is awaiting review by an SMCC Administrator.');
           setLoading(false);
           return;
         }
       }
 
+      // Validated successfully
       const sessionData = {
-        display_name: nameSeed,
-        username: matchedAccount?.username || trimmedId.split('@')[0],
-        email: trimmedId.includes('@') ? trimmedId : (matchedAccount?.email || ''),
-        school_id: matchedAccount?.school_id || undefined,
-        role: userRole,
+        display_name: matchedAccount.display_name,
+        username: matchedAccount.username || trimmedId.split('@')[0],
+        school_id: matchedAccount.school_id || trimmedId,
+        email: matchedAccount.email || (trimmedId.includes('@') ? trimmedId : ''),
+        role: matchedAccount.role,
+        grade_level: matchedAccount.grade_level,
         password: password,
       };
 
       localStorage.setItem('readbuddy_user', JSON.stringify(sessionData));
-      
-      // Update local registries with active credentials
-      passwordsMap[trimmedId] = password;
-      passwordsMap[sessionData.username] = password;
-      if (sessionData.email) passwordsMap[sessionData.email] = password;
-      localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
-
-      accountsMap[trimmedId] = sessionData;
-      accountsMap[sessionData.username] = sessionData;
-      if (sessionData.email) accountsMap[sessionData.email] = sessionData;
-      localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
 
       setTimeout(() => {
         setLoading(false);
-        router.push(roleConfig.redirectUrl);
-      }, 400);
+        router.push(activeRole === 'teacher' ? '/teacher' : '/student');
+      }, 300);
       return;
-    } catch (e) {}
-
-    // Fallback login
-    const rawName = identifier.trim().split('@')[0];
-    const cleanName = rawName.replace(/_\d+$/, '').replace(/\d+$/, '').replace(/[._]/g, ' ');
-    const displayName = cleanName.replace(/\b\w/g, (c) => c.toUpperCase());
-
-    const sessionData = {
-      display_name: displayName,
-      username: identifier.trim().split('@')[0],
-      email: identifier.trim().includes('@') ? identifier.trim() : '',
-      role: detectedRole,
-      password: password,
-    };
-    localStorage.setItem('readbuddy_user', JSON.stringify(sessionData));
-
-    setTimeout(() => {
+    } catch (e) {
+      setError('An error occurred during authentication. Please try again.');
       setLoading(false);
-      router.push(roleConfig.redirectUrl);
-    }, 400);
+    }
   }
 
   return (
     <>
       <form onSubmit={handleSubmit} className="rb-fade-in-up">
-        {/* RBAC Role Auto-Recognition Indicator */}
-        <div className={styles.roleDetectorBadge}>
-          <span className="text-xs font-sans text-gray-600 flex items-center gap-1.5">
-            <span>{roleConfig.icon}</span>
-            <span>Accessing Portal:</span>
-          </span>
-          <span
-            className={styles.roleTag}
-            style={{ background: roleConfig.badgeBg, color: roleConfig.badgeFg }}
+        {/* ─── Segmented Pill Switcher (STUDENT / TEACHER) ─── */}
+        <div className={styles.pillToggleContainer} role="tablist" aria-label="Portal Selector">
+          {/* Animated Background Slider */}
+          <div className={`${styles.sliderIndicator} ${!isStudent ? styles.sliderTeacher : ''}`} />
+
+          {/* Student Toggle Button */}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={isStudent}
+            onClick={() => {
+              setActiveRole('student');
+              setError('');
+            }}
+            className={`${styles.pillToggleBtn} ${isStudent ? styles.activePillText : ''}`}
           >
-            {roleConfig.name}
-          </span>
+            STUDENT
+          </button>
+
+          {/* Teacher Toggle Button */}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={!isStudent}
+            onClick={() => {
+              setActiveRole('teacher');
+              setError('');
+            }}
+            className={`${styles.pillToggleBtn} ${!isStudent ? styles.activePillText : ''}`}
+          >
+            TEACHER
+          </button>
         </div>
 
         {error && (
@@ -280,37 +251,41 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
           </div>
         )}
 
+        {/* ─── School ID Input (Both Student and Teacher) ─── */}
         <div className={styles.formGroup}>
-          <label className={styles.label}>Account Identifier</label>
+          <label className={styles.label}>
+            {isStudent ? 'Student School ID Number' : 'Teacher School ID / Email'}
+          </label>
           <input
             type="text"
-            placeholder="Username, Email, or School ID..."
+            placeholder={isStudent ? 'e.g. 202612345' : 'e.g. 202612345 or email'}
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
-            className={styles.input}
+            className={`${styles.input} ${!isStudent ? styles.inputTeacherFocus : ''}`}
             autoComplete="username"
             autoFocus
           />
         </div>
 
+        {/* ─── Password Input & Text Links ─── */}
         <div className={styles.formGroup}>
-          <div className="flex justify-between items-center mb-1">
+          <div className={styles.labelRow}>
             <label className={styles.label} style={{ marginBottom: 0 }}>
               Password
             </label>
-            <div className="flex items-center gap-2 text-xs font-sans font-semibold">
+            <div className="flex items-center gap-1.5 text-xs font-sans font-semibold">
               <button
                 type="button"
                 onClick={onOpenStudentRegister}
-                className="text-[#E8873A] hover:underline cursor-pointer"
+                className={`${styles.textLink} ${styles.studentLink}`}
               >
                 New Student?
               </button>
-              <span className="text-gray-300">•</span>
+              <span className={styles.dotSeparator}>•</span>
               <button
                 type="button"
                 onClick={onOpenTeacherRegister}
-                className="text-[#3D6B8A] hover:underline cursor-pointer"
+                className={`${styles.textLink} ${styles.teacherLink}`}
               >
                 New Teacher?
               </button>
@@ -321,27 +296,36 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={styles.input}
+            className={`${styles.input} ${!isStudent ? styles.inputTeacherFocus : ''}`}
             autoComplete="current-password"
           />
           <div className="flex justify-end mt-1.5">
             <button
               type="button"
               onClick={() => setShowForgotPasswordModal(true)}
-              className="text-xs font-sans font-semibold text-[#3D6B8A] hover:underline cursor-pointer"
+              className={`${styles.textLink} ${styles.forgotLink}`}
             >
               Forgot Password?
             </button>
           </div>
         </div>
 
+        {/* ─── Submit Button ─── */}
         <button
           type="submit"
           disabled={loading}
           className={styles.submitBtn}
-          style={{ background: roleConfig.btnGradient }}
+          style={{
+            background: isStudent
+              ? 'linear-gradient(135deg, #E8873A, #F0A35C)'
+              : 'linear-gradient(135deg, #3D6B8A, #2C4E66)',
+          }}
         >
-          {loading ? 'Authenticating Credentials...' : `Sign In to ${roleConfig.name}`}
+          {loading
+            ? 'Authenticating Credentials...'
+            : isStudent
+            ? 'Sign In to Student Portal'
+            : 'Sign In to Teacher Portal'}
         </button>
       </form>
 
@@ -353,4 +337,3 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
     </>
   );
 }
-

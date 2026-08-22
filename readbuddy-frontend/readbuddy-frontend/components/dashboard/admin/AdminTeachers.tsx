@@ -39,7 +39,7 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
             uniqueMap.set(key, {
               id: `t-acc-${idx + 1}`,
               display_name: acc.display_name || 'Educator',
-              school_id: acc.school_id || acc.username || 'SMCC-FACULTY',
+              school_id: acc.school_id || acc.username || '',
               email: acc.email || `${acc.username}@smccnasipit.edu.ph`,
               email_verified: Boolean(acc.email_verified),
               student_count: Number(acc.student_count) || 0,
@@ -248,7 +248,10 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
                       <span className="text-base truncate">{t.display_name}</span>
                       {!isApproved ? (
                         <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#FDF2E9] text-[#B4602E] font-sans font-bold border border-[#F0C99A] shrink-0 flex items-center gap-1">
-                          <span>⏳</span>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                          </svg>
                           <span>Pending Admin Approval</span>
                         </span>
                       ) : (

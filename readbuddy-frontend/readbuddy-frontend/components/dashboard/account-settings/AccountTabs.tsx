@@ -68,6 +68,10 @@ export function ProfileTab({
         accountsMap[profile.username].display_name = displayName.trim();
         accountsMap[profile.username].email = email.trim();
       }
+      if (profile.schoolId && accountsMap[profile.schoolId]) {
+        accountsMap[profile.schoolId].display_name = displayName.trim();
+        accountsMap[profile.schoolId].email = email.trim();
+      }
       accountsMap[email.trim()] = {
         ...userObj,
         display_name: displayName.trim(),
@@ -127,27 +131,29 @@ export function ProfileTab({
 
           {/* Email Verification Status Note Below Email Input */}
           {!isEmailVerified && !verificationSent && (
-            <p className="text-[11px] text-[#B4602E] font-medium flex items-center gap-1 font-sans">
-              ⚠️ Email address is pending verification. Click <strong>Verify Email</strong> to send a confirmation link to {email}.
+            <p className="text-[11px] text-[#B4602E] font-medium flex items-center gap-1.5 font-sans">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>Email address is pending verification. Click <strong>Verify Email</strong> to send a confirmation link to {email}.</span>
             </p>
           )}
           {verificationSent && (
-            <p className="text-[11px] text-[#2E7D4F] font-semibold flex items-center gap-1 font-sans">
-              ✓ Verification link sent to <strong>{email}</strong>! Please check your inbox to confirm.
+            <p className="text-[11px] text-[#2E7D4F] font-semibold flex items-center gap-1.5 font-sans">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>Verification link sent to <strong>{email}</strong>! Please check your inbox to confirm.</span>
             </p>
           )}
         </div>
       </SettingFieldRow>
 
-      <SettingFieldRow label="Username" hint="Permanent login identity.">
-        <Input value={profile.username} onChange={() => {}} disabled />
+      <SettingFieldRow label="School ID" hint="Permanent institutional login identity.">
+        <Input value={profile.schoolId || profile.username} onChange={() => {}} disabled />
       </SettingFieldRow>
-
-      {profile.schoolId && (
-        <SettingFieldRow label="School ID" hint="Assigned institutional identifier.">
-          <Input value={profile.schoolId} onChange={() => {}} disabled />
-        </SettingFieldRow>
-      )}
 
       <div className="flex items-center gap-3 pt-5 mt-2">
         <PrimaryButton accent={accent} onClick={handleProfileSave} disabled={!displayName.trim() || !email.trim()}>Save Profile Changes</PrimaryButton>
@@ -279,11 +285,13 @@ export function SecurityTab({ profile, accent }: { profile?: AccountProfile; acc
         const passwordsMap = JSON.parse(localStorage.getItem('readbuddy_passwords') || '{}');
         if (username) passwordsMap[username] = newPassword;
         if (email) passwordsMap[email] = newPassword;
+        if (profile?.schoolId) passwordsMap[profile.schoolId] = newPassword;
         localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
 
         const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
         if (username && accountsMap[username]) accountsMap[username].password = newPassword;
         if (email && accountsMap[email]) accountsMap[email].password = newPassword;
+        if (profile?.schoolId && accountsMap[profile.schoolId]) accountsMap[profile.schoolId].password = newPassword;
         localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
       } catch (e) {}
     }

@@ -25,12 +25,6 @@ const PHASE_LABEL: Record<VramStatus['activePhase'], string> = {
   llm: 'LLM (comprehension phase)',
 };
 
-const PHASE_ICON: Record<VramStatus['activePhase'], string> = {
-  idle: '💤',
-  asr: '🎙️',
-  llm: '🧠',
-};
-
 export function AdminOverview({
   teacherCount,
   studentCount,
@@ -60,7 +54,12 @@ export function AdminOverview({
           className="mb-6 p-4 rounded-2xl border border-[#F0C99A] bg-[#FFF8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-[#FFF3E6] transition-all rb-fade-in-up"
         >
           <div className="flex items-center gap-3">
-            <span className="text-2xl">⏳</span>
+            <div className="w-10 h-10 rounded-full bg-[#FCEDDE] text-[#B4602E] flex items-center justify-center shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
             <div>
               <div className="text-sm font-bold text-[#B4602E] font-sans">
                 {pendingTeacherCount} Teacher Account Creation Request{pendingTeacherCount === 1 ? '' : 's'} Pending Approval
@@ -80,10 +79,10 @@ export function AdminOverview({
       )}
 
       <div className="flex flex-wrap gap-4 mb-6">
-        <StatCard label="Teachers" value={teacherCount} accent={ADMIN_ACCENT} icon="🧑‍🏫" onClick={() => onNavigate('teachers')} />
-        <StatCard label="Students" value={studentCount} accent={ADMIN_ACCENT} icon="🧒" onClick={() => onNavigate('students')} />
-        <StatCard label="Passages" value={passageCount} accent={ADMIN_ACCENT} icon="📖" onClick={() => onNavigate('content')} />
-        <StatCard label="Tests" value={testCount} accent={ADMIN_ACCENT} icon="📋" onClick={() => onNavigate('content')} />
+        <StatCard label="Teachers" value={teacherCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('teachers')} />
+        <StatCard label="Students" value={studentCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('students')} />
+        <StatCard label="Passages" value={passageCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('content')} />
+        <StatCard label="Tests" value={testCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('content')} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -101,6 +100,7 @@ export function AdminOverview({
           <div className="flex items-center gap-6 my-2">
             <ProgressRing
               value={Math.round((vramStatus.usedMb / vramStatus.budgetMb) * 100)}
+              max={100}
               size={88}
               strokeWidth={8}
               color={ADMIN_ACCENT}
@@ -113,7 +113,7 @@ export function AdminOverview({
                 of {(vramStatus.budgetMb / 1024).toFixed(0)} GB VRAM used
               </div>
               <div className="flex items-center gap-1.5 text-xs font-medium mt-1" style={{ color: CHALK_GREEN }}>
-                <span>{PHASE_ICON[vramStatus.activePhase]}</span>
+                <span className="w-2 h-2 rounded-full bg-[#2E7D4F] animate-pulse" />
                 <span>{PHASE_LABEL[vramStatus.activePhase]}</span>
               </div>
             </div>

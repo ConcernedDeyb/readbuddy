@@ -15,6 +15,8 @@ import {
   PhilIRILevel,
 } from './dashboard/_shared';
 
+import { overallTier } from '@/lib/scoring';
+
 export default function AssignedTestSubmissionStep({
   wordPct,
   compPct,
@@ -26,14 +28,7 @@ export default function AssignedTestSubmissionStep({
   teacherName: string;
   onReturnHome: () => void;
 }) {
-  // Determine Phil-IRI level
-  const calcLevel = (): PhilIRILevel => {
-    if (wordPct >= 97 && compPct >= 80) return 'independent';
-    if (wordPct >= 90 && compPct >= 59) return 'instructional';
-    return 'frustration';
-  };
-
-  const level = calcLevel();
+  const level = overallTier(wordPct, compPct);
 
   const scoreColor = (pct: number) => {
     if (pct >= 90) return '#2E7D4F';

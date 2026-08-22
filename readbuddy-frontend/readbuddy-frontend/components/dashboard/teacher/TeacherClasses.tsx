@@ -34,17 +34,64 @@ export function TeacherClasses({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('readbuddy_teacher_classes');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setClasses(parsed);
-          return;
+    function load() {
+      try {
+        const saved = localStorage.getItem('readbuddy_teacher_classes');
+        const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+        const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
+
+        const studentCountsBySection = new Map<string, number>();
+
+        const countStudent = (secName: string) => {
+          if (!secName || secName.toLowerCase() === 'unassigned') return;
+          const clean = secName.toLowerCase().trim();
+          studentCountsBySection.set(clean, (studentCountsBySection.get(clean) || 0) + 1);
+        };
+
+        const seenStudents = new Set<string>();
+        teacherStudents.forEach((st: any) => {
+          const key = (st.school_id || st.username || st.id || '').toLowerCase();
+          if (key && !seenStudents.has(key)) {
+            seenStudents.add(key);
+            countStudent(st.class_name || st.section_name);
+          }
+        });
+
+        Object.values(accountsMap).forEach((acc: any) => {
+          if (acc.role !== 'student') return;
+          const key = (acc.school_id || acc.username || '').toLowerCase();
+          if (key && !seenStudents.has(key)) {
+            seenStudents.add(key);
+            countStudent(acc.section_name || acc.class_name);
+          }
+        });
+
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            const classesWithLiveCounts = parsed.map((c: SchoolClass) => ({
+              ...c,
+              student_count: studentCountsBySection.get(c.name.toLowerCase().trim()) || 0,
+            }));
+            setClasses(classesWithLiveCounts);
+            return;
+          }
         }
-      }
-      setClasses(initialClasses || []);
-    } catch (e) {}
+        setClasses(initialClasses || []);
+      } catch (e) {}
+    }
+
+    load();
+    window.addEventListener('readbuddy_classes_updated', load);
+    window.addEventListener('readbuddy_students_updated', load);
+    window.addEventListener('readbuddy_accounts_updated', load);
+    window.addEventListener('storage', load);
+    return () => {
+      window.removeEventListener('readbuddy_classes_updated', load);
+      window.removeEventListener('readbuddy_students_updated', load);
+      window.removeEventListener('readbuddy_accounts_updated', load);
+      window.removeEventListener('storage', load);
+    };
   }, [initialClasses]);
 
   function handleCreateClass(e: React.FormEvent) {
@@ -75,6 +122,7 @@ export function TeacherClasses({
     setClasses(updated);
     try {
       localStorage.setItem('readbuddy_teacher_classes', JSON.stringify(updated));
+      window.dispatchEvent(new Event('readbuddy_classes_updated'));
     } catch (e) {}
 
     setDraft({ name: '', grade_level: '7', class_code: '' });
@@ -83,11 +131,30 @@ export function TeacherClasses({
   }
 
   function handleDeleteClass(classId: string, className: string) {
-    if (!window.confirm(`Are you sure you want to delete "${className}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete "${className}"? Students in this section will become Unassigned.`)) return;
     const updated = classes.filter((c) => c.id !== classId);
     setClasses(updated);
     try {
       localStorage.setItem('readbuddy_teacher_classes', JSON.stringify(updated));
+      
+      // Update any students who were in this section to Unassigned
+      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+      let accountsUpdated = false;
+      Object.keys(accountsMap).forEach((key) => {
+        const acc = accountsMap[key];
+        if (acc && acc.role === 'student' && (acc.section_name === className || acc.class_name === className)) {
+          acc.section_name = 'Unassigned';
+          acc.class_name = 'Unassigned';
+          accountsUpdated = true;
+        }
+      });
+      if (accountsUpdated) {
+        localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
+      }
+
+      window.dispatchEvent(new Event('readbuddy_classes_updated'));
+      window.dispatchEvent(new Event('readbuddy_students_updated'));
+      window.dispatchEvent(new Event('readbuddy_accounts_updated'));
     } catch (e) {}
   }
 
@@ -248,4 +315,5 @@ export function TeacherClasses({
     </div>
   );
 }
+
 export default TeacherClasses;

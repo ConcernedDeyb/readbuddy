@@ -61,7 +61,9 @@ export default function StudentDashboardPage() {
     id: '',
     name: 'Student',
     username: '',
+    schoolId: '',
     gradeLevel: 1,
+    sectionName: 'Unassigned',
     teacherName: '',
     schoolName: "St. Michael's College of Caraga",
   });
@@ -76,26 +78,47 @@ export default function StudentDashboardPage() {
         const saved = localStorage.getItem('readbuddy_user');
         let currentUsername = '';
         let currentDisplayName = '';
+        let currentSchoolId = '';
 
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed.display_name) {
-            currentDisplayName = parsed.display_name;
-            setStudent((prev) => ({
-              ...prev,
-              name: parsed.display_name,
-              username: parsed.username || prev.username,
-              gradeLevel: parsed.grade_level || prev.gradeLevel,
-            }));
+          if (parsed.role === 'student') {
+            if (parsed.display_name) {
+              currentDisplayName = parsed.display_name;
+              setStudent((prev) => ({
+                ...prev,
+                name: parsed.display_name,
+                username: parsed.username || prev.username,
+                schoolId: parsed.school_id || prev.schoolId || parsed.username,
+                gradeLevel: parsed.grade_level || prev.gradeLevel,
+              }));
+            }
+            if (parsed.school_id) {
+              currentSchoolId = parsed.school_id;
+              setStudent((prev) => ({ ...prev, schoolId: parsed.school_id }));
+            }
+            if (parsed.username) {
+              currentUsername = parsed.username;
+              if (!currentSchoolId) currentSchoolId = parsed.username;
+            }
+            if (parsed.email) {
+              setStudentEmail(parsed.email);
+            } else if (parsed.username) {
+              setStudentEmail(`${parsed.username}@smccnasipit.edu.ph`);
+            }
           }
-          if (parsed.username) {
-            currentUsername = parsed.username;
-          }
-          if (parsed.email) {
-            setStudentEmail(parsed.email);
-          } else if (parsed.username) {
-            setStudentEmail(`${parsed.username}@smccnasipit.edu.ph`);
-          }
+        }
+
+        // Also check if account record was updated by teacher
+        const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+        const liveAccount = accountsMap[currentSchoolId] || accountsMap[currentUsername] || accountsMap[currentDisplayName.toLowerCase()];
+        if (liveAccount) {
+          setStudent((prev) => ({
+            ...prev,
+            gradeLevel: liveAccount.grade_level || prev.gradeLevel,
+            teacherName: liveAccount.teacher_name || prev.teacherName,
+            sectionName: liveAccount.section_name || prev.sectionName,
+          }));
         }
 
         // Load sessions from student history
@@ -117,16 +140,18 @@ export default function StudentDashboardPage() {
             const studentAssigned: PendingTest[] = [];
             parsedTests.forEach((t: any) => {
               (t.assignments || []).forEach((a: any) => {
+                const cleanStudentId = currentSchoolId;
                 const isMatch =
                   (currentDisplayName && a.student_name?.toLowerCase() === currentDisplayName.toLowerCase()) ||
-                  (currentUsername && (a.student_id === currentUsername || a.student_name?.toLowerCase() === currentUsername.toLowerCase()));
+                  (currentUsername && (a.student_id === currentUsername || a.student_name?.toLowerCase() === currentUsername.toLowerCase())) ||
+                  (cleanStudentId && (a.student_id === cleanStudentId || a.school_id === cleanStudentId));
 
                 if (isMatch && a.status === 'pending') {
                   studentAssigned.push({
                     id: a.id,
                     passage_preview: t.passage_preview || 'Assigned reading passage',
                     source_language: t.source_language || 'en',
-                    teacher_name: 'Teacher',
+                    teacher_name: t.teacher_name || 'Teacher',
                     assigned_at: t.created_at || 'Today',
                     status: 'pending',
                     instructions: 'Read clearly and answer all comprehension questions.',
@@ -145,10 +170,16 @@ export default function StudentDashboardPage() {
 
     loadData();
     window.addEventListener('readbuddy_user_updated', loadData);
+    window.addEventListener('readbuddy_accounts_updated', loadData);
+    window.addEventListener('readbuddy_students_updated', loadData);
     window.addEventListener('readbuddy_tests_updated', loadData);
+    window.addEventListener('storage', loadData);
     return () => {
       window.removeEventListener('readbuddy_user_updated', loadData);
+      window.removeEventListener('readbuddy_accounts_updated', loadData);
+      window.removeEventListener('readbuddy_students_updated', loadData);
       window.removeEventListener('readbuddy_tests_updated', loadData);
+      window.removeEventListener('storage', loadData);
     };
   }, []);
 
@@ -167,6 +198,9 @@ export default function StudentDashboardPage() {
       {section === 'overview' && (
         <StudentDashboard
           studentName={student.name.split(' ')[0]}
+          sectionName={(student as any).sectionName}
+          gradeLevel={student.gradeLevel}
+          teacherName={student.teacherName}
           sessions={sessions}
           pendingTests={pendingTests}
           onStartSession={() => router.push('/session')}
@@ -301,6 +335,7 @@ export default function StudentDashboardPage() {
               displayName: student.name,
               email: studentEmail || (student.username ? `${student.username}@smccnasipit.edu.ph` : 'student@smccnasipit.edu.ph'),
               username: student.username || 'student',
+              schoolId: student.schoolId || student.username,
               role: 'student',
               gradeLevel: student.gradeLevel,
               teacherName: student.teacherName,

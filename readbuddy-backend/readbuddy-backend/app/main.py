@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routes import asr, health, ocr, llm, ws_reading, auth, passages, classes
+from app.routes import asr, health, ocr, llm, ws_reading, auth, passages, classes, sessions, tests
 from app.services.asr_service import asr_service
 from app.db import engine, Base
 
@@ -30,6 +30,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(classes.router)
 app.include_router(passages.router)
+app.include_router(sessions.router)
+app.include_router(tests.router)
 app.include_router(health.router)
 app.include_router(asr.router)
 app.include_router(ocr.router)
