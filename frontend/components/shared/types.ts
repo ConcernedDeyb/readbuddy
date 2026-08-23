@@ -65,3 +65,52 @@ export interface AccountProfile {
   gradeLevel?: number;
   teacherName?: string;
 }
+
+/* ─── Notebook Types ─── */
+
+export interface NotebookFile {
+  id: string;
+  name: string;
+  type: 'pdf' | 'docx' | 'image' | 'text';
+  size: number;
+  data_url: string;
+}
+
+export interface NotebookEntry {
+  id: string;
+  title: string;
+  description: string;
+  content_text: string;
+  files: NotebookFile[];
+  source_language: 'en' | 'tl';
+  teacher_name: string;
+  teacher_id: string;
+  assigned_student_ids: string[];
+  assigned_student_names: string[];
+  target_grades?: number[];
+  target_classes?: string[];
+  created_at: string;
+}
+
+export interface StudentPersonalNote {
+  id: string;
+  student_id?: string;
+  title: string;
+  content: string;
+  tags?: string[];
+  files?: NotebookFile[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StudyHistoryItem {
+  id: string;
+  student_id?: string;
+  activity_type: 'reviewed_material' | 'created_note' | 'ai_study_session' | 'reading_practice';
+  title: string;
+  details?: string;
+  timestamp: string;
+  date: string;
+}
+
+

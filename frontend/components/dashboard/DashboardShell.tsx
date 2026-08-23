@@ -71,6 +71,12 @@ const IconClipboard = (
     <line x1="9" y1="16" x2="15" y2="16" />
   </svg>
 );
+const IconNotebook = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 6s1.5-2 5-2 5 2 5 2v14s-1.5-1-5-1-5 1-5 1V6z" />
+    <path d="M12 6s1.5-2 5-2 5 2 5 2v14s-1.5-1-5-1-5 1-5 1V6z" />
+  </svg>
+);
 const IconLogout = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -85,6 +91,7 @@ const TEACHER_NAV: NavItem[] = [
   { key: 'students', label: 'My Students', icon: IconUser },
   { key: 'passages', label: 'My Passages', icon: IconBook },
   { key: 'tests', label: 'Reading Tests', icon: IconClipboard },
+  { key: 'notebook', label: 'Notebook', icon: IconNotebook },
   { key: 'settings', label: 'Settings', icon: IconSettings },
 ];
 
@@ -101,6 +108,7 @@ const STUDENT_NAV: NavItem[] = [
   { key: 'overview', label: 'My Progress', icon: IconHome },
   { key: 'tests', label: 'Assigned Tests', icon: IconClipboard },
   { key: 'history', label: 'Reading History', icon: IconBook },
+  { key: 'notebook', label: 'Notebook', icon: IconNotebook },
   { key: 'settings', label: 'Settings', icon: IconSettings },
 ];
 
@@ -118,6 +126,7 @@ const SECTION_TITLES: Record<string, string> = {
   grading: 'Grading',
   history: 'Reading History',
   progress: 'My Progress',
+  notebook: 'Notebook',
 };
 
 /**

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DashboardShell, StudentDashboard, AccountSettings } from '@/components/dashboard';
+import { DashboardShell, StudentDashboard, StudentNotebook, AccountSettings } from '@/components/dashboard';
 import {
   SectionHeader,
   Card,
@@ -46,7 +46,7 @@ interface PendingTest {
   instructions?: string;
 }
 
-type StudentSection = 'overview' | 'tests' | 'history' | 'settings';
+type StudentSection = 'overview' | 'tests' | 'history' | 'notebook' | 'settings';
 
 function scoreColor(pct: number): string {
   if (pct >= 90) return '#2E7D4F';
@@ -173,12 +173,14 @@ export default function StudentDashboardPage() {
     window.addEventListener('readbuddy_accounts_updated', loadData);
     window.addEventListener('readbuddy_students_updated', loadData);
     window.addEventListener('readbuddy_tests_updated', loadData);
+    window.addEventListener('readbuddy_notebook_updated', loadData);
     window.addEventListener('storage', loadData);
     return () => {
       window.removeEventListener('readbuddy_user_updated', loadData);
       window.removeEventListener('readbuddy_accounts_updated', loadData);
       window.removeEventListener('readbuddy_students_updated', loadData);
       window.removeEventListener('readbuddy_tests_updated', loadData);
+      window.removeEventListener('readbuddy_notebook_updated', loadData);
       window.removeEventListener('storage', loadData);
     };
   }, []);
@@ -207,6 +209,7 @@ export default function StudentDashboardPage() {
           onStartTest={(testId) => {
             router.push(`/session?testId=${testId}`);
           }}
+          onGoToNotebook={() => setSection('notebook')}
         />
       )}
 
@@ -324,6 +327,16 @@ export default function StudentDashboardPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ─── Notebook Section ─── */}
+      {section === 'notebook' && (
+        <div className="rb-fade-in-up">
+          <StudentNotebook
+            studentName={student.name}
+            studentId={student.schoolId || student.username}
+          />
         </div>
       )}
 

@@ -15,7 +15,11 @@ export { default as TeacherPassages } from './teacher/TeacherPassages';
 export { default as TeacherStudents } from './teacher/TeacherStudents';
 export { default as TeacherAuthorPassage } from './teacher/TeacherAuthorPassage';
 export { default as ComprehensionTestEditor } from './teacher/ComprehensionTestEditor';
+export { default as TeacherNotebook } from './teacher/TeacherNotebook';
 
 export { default as StudentDashboard } from './student/StudentDashboard';
 export { default as StudentProgressChart } from './student/StudentProgressChart';
+export { default as StudentNotebook } from './student/StudentNotebook';
+export { default as NotebookAIChat } from './student/NotebookAIChat';
+
 

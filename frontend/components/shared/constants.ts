@@ -1,4 +1,4 @@
-import { Student, ReadingSession, Passage, ReadingTest } from './types';
+import { Student, ReadingSession, Passage, ReadingTest, NotebookEntry } from './types';
 
 export const INK = '#2B2621';
 export const MUTED = 'rgba(43,38,33,0.62)';
@@ -20,3 +20,5 @@ export const MOCK_STUDENTS: Student[] = [];
 export const MOCK_SESSIONS: ReadingSession[] = [];
 export const MOCK_PASSAGES: Passage[] = [];
 export const MOCK_TESTS: ReadingTest[] = [];
+export const MOCK_NOTEBOOK_ENTRIES: NotebookEntry[] = [];
+

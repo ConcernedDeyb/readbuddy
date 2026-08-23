@@ -9,6 +9,7 @@ import {
   TeacherPassages,
   TeacherAuthorPassage,
   TeacherTests,
+  TeacherNotebook,
   AccountSettings,
 } from '@/components/dashboard';
 
@@ -45,7 +46,7 @@ interface SchoolClass {
   created_at?: string;
 }
 
-type TeacherSection = 'overview' | 'classes' | 'students' | 'passages' | 'author' | 'tests' | 'settings';
+type TeacherSection = 'overview' | 'classes' | 'students' | 'passages' | 'author' | 'tests' | 'notebook' | 'settings';
 
 export default function TeacherDashboardPage() {
   const [section, setSection] = useState<TeacherSection>('overview');
@@ -144,6 +145,7 @@ export default function TeacherDashboardPage() {
     window.addEventListener('readbuddy_accounts_updated', loadData);
     window.addEventListener('readbuddy_students_updated', loadData);
     window.addEventListener('readbuddy_student_sessions_updated', loadData);
+    window.addEventListener('readbuddy_notebook_updated', loadData);
     window.addEventListener('storage', loadData);
     return () => {
       window.removeEventListener('readbuddy_user_updated', loadData);
@@ -152,6 +154,7 @@ export default function TeacherDashboardPage() {
       window.removeEventListener('readbuddy_accounts_updated', loadData);
       window.removeEventListener('readbuddy_students_updated', loadData);
       window.removeEventListener('readbuddy_student_sessions_updated', loadData);
+      window.removeEventListener('readbuddy_notebook_updated', loadData);
       window.removeEventListener('storage', loadData);
     };
   }, []);
@@ -226,6 +229,13 @@ export default function TeacherDashboardPage() {
       )}
 
       {section === 'author' && <TeacherAuthorPassage onDone={() => setSection('passages')} />}
+
+      {section === 'notebook' && (
+        <TeacherNotebook
+          students={students}
+          classes={classes}
+        />
+      )}
 
       {section === 'tests' && (
         <TeacherTests

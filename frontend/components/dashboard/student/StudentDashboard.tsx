@@ -18,8 +18,10 @@ import {
   CREAM,
   INK,
   PhilIRILevel,
+  NotebookEntry,
 } from '../_shared';
 import StudentProgressChart from './StudentProgressChart';
+import { useState, useEffect } from 'react';
 
 const STUDENT_ACCENT = '#E8873A';
 const LANG_LABEL: Record<string, string> = { en: 'English', tl: 'Tagalog' };
@@ -57,6 +59,7 @@ export function StudentDashboard({
   pendingTests,
   onStartSession,
   onStartTest,
+  onGoToNotebook,
 }: {
   studentName: string;
   sectionName?: string;
@@ -66,6 +69,7 @@ export function StudentDashboard({
   pendingTests: PendingTest[];
   onStartSession: () => void;
   onStartTest: (testId: string) => void;
+  onGoToNotebook?: () => void;
 }) {
   const totalSessions = sessions.length;
   const avgWordRecognition = totalSessions > 0
@@ -126,6 +130,9 @@ export function StudentDashboard({
         </Card>
       )}
 
+      {/* ─── My Notebook Widget ─── */}
+      <NotebookWidget studentName={studentName} onGoToNotebook={onGoToNotebook} />
+
       {sessions.length === 0 ? (
         <EmptyState message="No reading sessions completed yet." actionLabel="Start your first session" onAction={onStartSession} />
       ) : (
@@ -151,3 +158,130 @@ export function StudentDashboard({
   );
 }
 export default StudentDashboard;
+
+/* ─── Notebook Widget for Student Homepage ─── */
+
+function NotebookWidget({
+  studentName,
+  onGoToNotebook,
+}: {
+  studentName: string;
+  onGoToNotebook?: () => void;
+}) {
+  const [entries, setEntries] = useState<NotebookEntry[]>([]);
+  const [statuses, setStatuses] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    function load() {
+      try {
+        const saved = localStorage.getItem('readbuddy_teacher_notebook');
+        const currentUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+        const currentName = (currentUser.display_name || studentName || '').toLowerCase();
+        const currentUsername = (currentUser.username || '').toLowerCase();
+        const currentSchoolId = (currentUser.school_id || '').toLowerCase();
+
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            const myEntries = parsed.filter((entry: NotebookEntry) =>
+              entry.assigned_student_names.some((n) => n.toLowerCase() === currentName) ||
+              entry.assigned_student_ids.some((id) => id.toLowerCase() === currentUsername || id.toLowerCase() === currentSchoolId || id === currentUser.id)
+            );
+            setEntries(myEntries.slice(0, 5)); // Show latest 5
+          }
+        }
+
+        const savedStatuses = localStorage.getItem('readbuddy_student_notebook_status');
+        if (savedStatuses) setStatuses(JSON.parse(savedStatuses));
+      } catch (e) {}
+    }
+    load();
+    window.addEventListener('readbuddy_notebook_updated', load);
+    window.addEventListener('storage', load);
+    return () => {
+      window.removeEventListener('readbuddy_notebook_updated', load);
+      window.removeEventListener('storage', load);
+    };
+  }, [studentName]);
+
+  function getStatus(entryId: string): string {
+    try {
+      const currentUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+      const name = (currentUser.display_name || studentName || '').toLowerCase();
+      return statuses[`${entryId}::${name}`] || 'new';
+    } catch { return 'new'; }
+  }
+
+  const STATUS_BADGE: Record<string, { tone: 'accent' | 'info' | 'success'; label: string }> = {
+    new: { tone: 'accent', label: 'New' },
+    reviewed: { tone: 'info', label: 'Reviewed' },
+    studied: { tone: 'success', label: 'Studied' },
+  };
+
+  if (entries.length === 0) return null;
+
+  const newCount = entries.filter((e) => getStatus(e.id) === 'new').length;
+
+  return (
+    <Card className="mb-6 border-l-4" style={{ borderLeftColor: '#3D6B8A' }}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={CHALK_GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 6s1.5-2 5-2 5 2 5 2v14s-1.5-1-5-1-5 1-5 1V6z" />
+            <path d="M12 6s1.5-2 5-2 5 2 5 2v14s-1.5-1-5-1-5 1-5 1V6z" />
+          </svg>
+          <h2 className="text-base font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
+            My Notebook
+          </h2>
+          {newCount > 0 && (
+            <span
+              className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold"
+              style={{ background: '#E8873A', color: '#FFFDF8', fontFamily: FONT_MONO }}
+            >
+              {newCount}
+            </span>
+          )}
+        </div>
+        {onGoToNotebook && (
+          <button
+            onClick={onGoToNotebook}
+            className="text-xs font-semibold transition-colors hover:underline cursor-pointer"
+            style={{ fontFamily: FONT_SANS, color: '#3D6B8A' }}
+          >
+            View All
+          </button>
+        )}
+      </div>
+      <div className="flex flex-col gap-2">
+        {entries.map((entry) => {
+          const status = getStatus(entry.id);
+          const badge = STATUS_BADGE[status] || STATUS_BADGE.new;
+          return (
+            <div
+              key={entry.id}
+              className="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-200 hover:bg-[#1F4D3A03]"
+              style={{ background: CREAM, borderColor: TAN_BORDER }}
+              onClick={onGoToNotebook}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-xs font-semibold truncate" style={{ fontFamily: FONT_SANS, color: INK }}>
+                    {entry.title}
+                  </span>
+                  <Badge tone={badge.tone}>{badge.label}</Badge>
+                </div>
+                <span className="text-[11px]" style={{ fontFamily: FONT_MONO, color: MUTED }}>
+                  From {entry.teacher_name} · {entry.created_at}
+                  {entry.files.length > 0 ? ` · ${entry.files.length} file${entry.files.length !== 1 ? 's' : ''}` : ''}
+                </span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 ml-2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
