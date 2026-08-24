@@ -57,21 +57,30 @@ export default function TeacherTests({
   useEffect(() => {
     function loadTests() {
       try {
+        const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+        const currentTeacherId = (savedUser.school_id || savedUser.username || '').toLowerCase();
+        const currentTeacherDisplayName = (savedUser.display_name || '').toLowerCase();
+
         const saved = localStorage.getItem('readbuddy_teacher_tests');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            setTests(parsed);
+            const myTests = parsed.filter((t: any) => {
+              if (t.teacher_id && t.teacher_id.toLowerCase() === currentTeacherId) return true;
+              if (t.teacher_name && t.teacher_name.toLowerCase() === currentTeacherDisplayName) return true;
+              return false;
+            });
+            setTests(myTests);
             return;
           }
         }
-        setTests(initialTests || []);
+        setTests([]);
       } catch (e) {}
     }
     loadTests();
     window.addEventListener('readbuddy_tests_updated', loadTests);
     return () => window.removeEventListener('readbuddy_tests_updated', loadTests);
-  }, [initialTests]);
+  }, []);
 
   const publishedPassages = passages.filter((p) => p.word_count > 0);
 
@@ -80,11 +89,17 @@ export default function TeacherTests({
     const passage = publishedPassages.find((p) => p.id === selectedPassageId);
     if (!passage) return;
 
+    const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+    const teacherSchoolId = savedUser.school_id || savedUser.username || 'teacher';
+    const teacherDisplayName = savedUser.display_name || 'Teacher';
+
     const newTest: ReadingTest = {
       id: `test-${Date.now()}`,
       passage_id: passage.id,
       passage_preview: passage.confirmed_text.slice(0, 60) + (passage.confirmed_text.length > 60 ? '...' : ''),
       source_language: passage.source_language,
+      teacher_id: teacherSchoolId,
+      teacher_name: teacherDisplayName,
       created_at: new Date().toISOString().split('T')[0],
       assignments: Array.from(selectedStudentIds).map((sid) => {
         const student = students.find((s) => s.id === sid);
@@ -97,10 +112,10 @@ export default function TeacherTests({
       }),
     };
 
-    const updated = [newTest, ...tests];
-    setTests(updated);
     try {
-      localStorage.setItem('readbuddy_teacher_tests', JSON.stringify(updated));
+      const allSaved: ReadingTest[] = JSON.parse(localStorage.getItem('readbuddy_teacher_tests') || '[]');
+      const updatedAll = [newTest, ...allSaved];
+      localStorage.setItem('readbuddy_teacher_tests', JSON.stringify(updatedAll));
       window.dispatchEvent(new Event('readbuddy_tests_updated'));
     } catch (e) {}
 
@@ -111,25 +126,18 @@ export default function TeacherTests({
 
   function handleSaveGrade() {
     if (!gradingAssignment) return;
-    const grade = gradeOverride || gradingAssignment.assignment.phil_iri_level;
-    if (!grade) return;
+    const { test, assignment } = gradingAssignment;
+    const levelToSet = gradeOverride || assignment.phil_iri_level || 'Instructional';
 
-    const updated = tests.map((t) =>
-      t.id === gradingAssignment.test.id
-        ? {
-            ...t,
-            assignments: t.assignments.map((a) =>
-              a.id === gradingAssignment.assignment.id
-                ? { ...a, status: 'graded' as const, teacher_grade: grade as PhilIRILevel }
-                : a
-            ),
-          }
-        : t
+    const updatedAssignments = test.assignments.map((a) =>
+      a.id === assignment.id ? { ...a, phil_iri_level: levelToSet as PhilIRILevel, status: 'completed' as const } : a
     );
+    const updatedTest = { ...test, assignments: updatedAssignments };
 
-    setTests(updated);
     try {
-      localStorage.setItem('readbuddy_teacher_tests', JSON.stringify(updated));
+      const allSaved: ReadingTest[] = JSON.parse(localStorage.getItem('readbuddy_teacher_tests') || '[]');
+      const updatedAll = allSaved.map((t) => (t.id === test.id ? updatedTest : t));
+      localStorage.setItem('readbuddy_teacher_tests', JSON.stringify(updatedAll));
       window.dispatchEvent(new Event('readbuddy_tests_updated'));
     } catch (e) {}
 

@@ -218,12 +218,18 @@ export function TeacherAuthorPassage({ onDone }: { onDone: () => void }) {
 
     setIsSaving(true);
 
+    const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+    const teacherSchoolId = savedUser.school_id || savedUser.username || 'teacher';
+    const teacherDisplayName = savedUser.display_name || 'Teacher';
+
     const newPassage = {
       id: `p-${Date.now()}`,
       confirmed_text: text.trim(),
       source_language: language,
       is_published: true,
       word_count: wordCount,
+      teacher_id: teacherSchoolId,
+      teacher_name: teacherDisplayName,
       created_at: new Date().toISOString().split('T')[0],
       questions: questions,
     };

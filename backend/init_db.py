@@ -1,5 +1,5 @@
 import asyncio
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from app.db import engine, Base, async_session_maker
 from app.models import (
     Admin, Teacher, Student, Class, Passage,
@@ -29,16 +29,27 @@ async def init_database():
             session.add(settings_obj)
 
         # 2. Check if default admin exists
-        existing_admin = await session.scalar(select(Admin).where(Admin.username == "admin"))
+        existing_admin = await session.scalar(
+            select(Admin).where(
+                or_(
+                    Admin.username == "readbuddyadmin",
+                    Admin.username == "admin"
+                )
+            )
+        )
         if not existing_admin:
             admin = Admin(
                 display_name="SMCC System Administrator",
-                username="admin",
+                username="readbuddyadmin",
                 email="admin@smccnasipit.edu.ph",
-                password_hash=hash_password("AdminSecure2026!"),
+                password_hash=hash_password("smcc2026"),
                 role="admin",
             )
             session.add(admin)
+        else:
+            existing_admin.username = "readbuddyadmin"
+            existing_admin.password_hash = hash_password("smcc2026")
+            session.add(existing_admin)
 
         await session.commit()
         print("[DB Init] PostgreSQL Database initialized cleanly with dynamic schema!")

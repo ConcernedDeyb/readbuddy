@@ -11,6 +11,9 @@ export interface SchoolClass {
   grade_level: number;
   class_code: string;
   student_count: number;
+  teacher_id?: string;
+  teacher_name?: string;
+  teacher_email?: string;
   created_at?: string;
 }
 
@@ -36,6 +39,11 @@ export function TeacherClasses({
   useEffect(() => {
     function load() {
       try {
+        const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+        const teacherId = (savedUser.school_id || savedUser.username || '').toLowerCase();
+        const teacherName = (savedUser.display_name || '').toLowerCase();
+        const teacherEmail = (savedUser.email || '').toLowerCase();
+
         const saved = localStorage.getItem('readbuddy_teacher_classes');
         const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
         const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
@@ -69,7 +77,16 @@ export function TeacherClasses({
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            const classesWithLiveCounts = parsed.map((c: SchoolClass) => ({
+            // Filter strictly to classes belonging to this teacher
+            const myClasses = parsed.filter((c: any) => {
+              if (c.teacher_id && c.teacher_id.toLowerCase() === teacherId) return true;
+              if (c.teacher_school_id && c.teacher_school_id.toLowerCase() === teacherId) return true;
+              if (c.teacher_email && c.teacher_email.toLowerCase() === teacherEmail) return true;
+              if (c.teacher_name && c.teacher_name.toLowerCase() === teacherName) return true;
+              return false;
+            });
+
+            const classesWithLiveCounts = myClasses.map((c: SchoolClass) => ({
               ...c,
               student_count: studentCountsBySection.get(c.name.toLowerCase().trim()) || 0,
             }));
@@ -77,7 +94,7 @@ export function TeacherClasses({
             return;
           }
         }
-        setClasses(initialClasses || []);
+        setClasses([]);
       } catch (e) {}
     }
 
@@ -92,7 +109,7 @@ export function TeacherClasses({
       window.removeEventListener('readbuddy_accounts_updated', load);
       window.removeEventListener('storage', load);
     };
-  }, [initialClasses]);
+  }, []);
 
   function handleCreateClass(e: React.FormEvent) {
     e.preventDefault();
@@ -105,6 +122,11 @@ export function TeacherClasses({
 
     setLoading(true);
 
+    const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+    const teacherSchoolId = savedUser.school_id || savedUser.username || 'teacher';
+    const teacherDisplayName = savedUser.display_name || 'Teacher';
+    const teacherEmailAddress = savedUser.email || '';
+
     const autoCode = draft.class_code.trim()
       ? draft.class_code.trim().toUpperCase()
       : `SMCC-G${draft.grade_level}-${draft.name.trim().toUpperCase().replace(/\s+/g, '')}`;
@@ -115,13 +137,16 @@ export function TeacherClasses({
       grade_level: Number(draft.grade_level),
       class_code: autoCode,
       student_count: 0,
+      teacher_id: teacherSchoolId,
+      teacher_name: teacherDisplayName,
+      teacher_email: teacherEmailAddress,
       created_at: new Date().toISOString().split('T')[0],
     };
 
-    const updated = [newClass, ...classes];
-    setClasses(updated);
     try {
-      localStorage.setItem('readbuddy_teacher_classes', JSON.stringify(updated));
+      const allSaved: SchoolClass[] = JSON.parse(localStorage.getItem('readbuddy_teacher_classes') || '[]');
+      const updatedAll = [newClass, ...allSaved.filter((c) => c.id !== newClass.id)];
+      localStorage.setItem('readbuddy_teacher_classes', JSON.stringify(updatedAll));
       window.dispatchEvent(new Event('readbuddy_classes_updated'));
     } catch (e) {}
 
@@ -132,10 +157,10 @@ export function TeacherClasses({
 
   function handleDeleteClass(classId: string, className: string) {
     if (!window.confirm(`Are you sure you want to delete "${className}"? Students in this section will become Unassigned.`)) return;
-    const updated = classes.filter((c) => c.id !== classId);
-    setClasses(updated);
     try {
-      localStorage.setItem('readbuddy_teacher_classes', JSON.stringify(updated));
+      const allSaved: SchoolClass[] = JSON.parse(localStorage.getItem('readbuddy_teacher_classes') || '[]');
+      const updatedAll = allSaved.filter((c) => c.id !== classId);
+      localStorage.setItem('readbuddy_teacher_classes', JSON.stringify(updatedAll));
       
       // Update any students who were in this section to Unassigned
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');

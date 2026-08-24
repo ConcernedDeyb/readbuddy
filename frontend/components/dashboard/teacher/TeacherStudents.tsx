@@ -47,6 +47,14 @@ interface SchoolClass {
   student_count: number;
 }
 
+function formatStudentEmail(displayName: string, username?: string, customEmail?: string): string {
+  if (customEmail && customEmail.trim() && customEmail.includes('@')) {
+    return customEmail.trim();
+  }
+  const cleanId = (username || displayName || 'student').trim().toLowerCase();
+  return `${cleanId}@student.smccnasipit.edu.ph`;
+}
+
 export function TeacherStudents({
   initialStudents = [],
   teacherName = 'Teacher',
@@ -59,6 +67,7 @@ export function TeacherStudents({
   const [mounted, setMounted] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [availableClasses, setAvailableClasses] = useState<SchoolClass[]>([]);
+  const [allRegisteredStudents, setAllRegisteredStudents] = useState<Student[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [addMode, setAddMode] = useState<'select_database' | 'single' | 'bulk'>('select_database');
   const [search, setSearch] = useState('');
@@ -73,7 +82,6 @@ export function TeacherStudents({
   const [dbBrowseGradeFilter, setDbBrowseGradeFilter] = useState<string>('all'); // 'all' or '1'..'12'
   const [dbStudentSearch, setDbStudentSearch] = useState('');
   const [selectedDbStudentIds, setSelectedDbStudentIds] = useState<Set<string>>(new Set());
-  const [allRegisteredStudents, setAllRegisteredStudents] = useState<Student[]>([]);
 
   // Single add draft
   const [draft, setDraft] = useState({
@@ -95,28 +103,47 @@ export function TeacherStudents({
     setMounted(true);
   }, []);
 
-  // Load classes dynamically from localStorage
+  // Load classes dynamically from localStorage (scoped to this teacher)
   function loadClasses() {
     try {
+      const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+      const currentTeacherId = (savedUser.school_id || savedUser.username || '').toLowerCase();
+      const currentTeacherDisplayName = (savedUser.display_name || teacherName || '').toLowerCase();
+      const currentTeacherEmail = (savedUser.email || '').toLowerCase();
+
       const saved = localStorage.getItem('readbuddy_teacher_classes');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAvailableClasses(parsed);
-          if (!dbTargetSection) {
-            setDbTargetSection(parsed[0].name);
-            setDbTargetGrade(String(parsed[0].grade_level || '7'));
-          }
-          if (!draft.section_name) {
-            setDraft((d) => ({
-              ...d,
-              section_name: parsed[0].name,
-              grade_level: String(parsed[0].grade_level || d.grade_level),
-            }));
-          }
-          if (!bulkSection) {
-            setBulkSection(parsed[0].name);
-            setBulkGrade(String(parsed[0].grade_level || '7'));
+        if (Array.isArray(parsed)) {
+          const myClasses = parsed.filter((c: any) => {
+            if (c.teacher_id && c.teacher_id.toLowerCase() === currentTeacherId) return true;
+            if (c.teacher_school_id && c.teacher_school_id.toLowerCase() === currentTeacherId) return true;
+            if (c.teacher_email && c.teacher_email.toLowerCase() === currentTeacherEmail) return true;
+            if (c.teacher_name && c.teacher_name.toLowerCase() === currentTeacherDisplayName) return true;
+            return false;
+          });
+
+          setAvailableClasses(myClasses);
+          if (myClasses.length > 0) {
+            if (!dbTargetSection || !myClasses.some((c) => c.name === dbTargetSection)) {
+              setDbTargetSection(myClasses[0].name);
+              setDbTargetGrade(String(myClasses[0].grade_level || '7'));
+            }
+            if (!draft.section_name || !myClasses.some((c) => c.name === draft.section_name)) {
+              setDraft((d) => ({
+                ...d,
+                section_name: myClasses[0].name,
+                grade_level: String(myClasses[0].grade_level || d.grade_level),
+              }));
+            }
+            if (!bulkSection || !myClasses.some((c) => c.name === bulkSection)) {
+              setBulkSection(myClasses[0].name);
+              setBulkGrade(String(myClasses[0].grade_level || '7'));
+            }
+          } else {
+            if (!dbTargetSection) setDbTargetSection('__custom__');
+            if (!draft.section_name) setDraft((d) => ({ ...d, section_name: '__custom__' }));
+            if (!bulkSection) setBulkSection('__custom__');
           }
           return;
         }
@@ -131,12 +158,25 @@ export function TeacherStudents({
   // Load all registered database students and calculate active enrolled teacher roster
   async function loadRoster() {
     try {
+      const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+      const currentTeacherId = (savedUser.school_id || savedUser.username || '').toLowerCase();
+      const currentTeacherDisplayName = (savedUser.display_name || teacherName || '').toLowerCase();
+      const currentTeacherEmail = (savedUser.email || '').toLowerCase();
+
       const savedSessions = JSON.parse(localStorage.getItem('readbuddy_student_sessions') || '[]');
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
       const savedRoster = localStorage.getItem('readbuddy_teacher_students');
       const teacherStudentsRoster: Student[] = savedRoster ? JSON.parse(savedRoster) : [];
       const savedClasses: SchoolClass[] = JSON.parse(localStorage.getItem('readbuddy_teacher_classes') || '[]');
-      const teacherClassNames = new Set(savedClasses.map((c) => c.name.toLowerCase()));
+
+      const myClasses = savedClasses.filter((c: any) => {
+        if (c.teacher_id && c.teacher_id.toLowerCase() === currentTeacherId) return true;
+        if (c.teacher_school_id && c.teacher_school_id.toLowerCase() === currentTeacherId) return true;
+        if (c.teacher_email && c.teacher_email.toLowerCase() === currentTeacherEmail) return true;
+        if (c.teacher_name && c.teacher_name.toLowerCase() === currentTeacherDisplayName) return true;
+        return false;
+      });
+      const teacherClassNames = new Set(myClasses.map((c) => c.name.toLowerCase()));
 
       // 1. Fetch live from PostgreSQL backend endpoint
       let backendStudents: any[] = [];
@@ -158,12 +198,14 @@ export function TeacherStudents({
           const key = sid || un;
           if (!key) return;
 
+          const studentEmail = formatStudentEmail(st.display_name, st.username || st.school_id, st.email);
+
           globalStudentsMap.set(key, {
             id: st.id || `std-${key}`,
             display_name: st.display_name || 'Student',
             username: st.username || sid,
             school_id: st.school_id || sid,
-            email: st.email || `${st.school_id}@smccnasipit.edu.ph`,
+            email: studentEmail,
             grade_level: Number(st.grade_level) || 7,
             section_name: st.section_name || 'Unassigned',
             class_name: st.section_name || 'Unassigned',
@@ -183,6 +225,8 @@ export function TeacherStudents({
         const key = sid || un || dn;
         if (!key) return;
 
+        const studentEmail = formatStudentEmail(acc.display_name, acc.username || acc.school_id, acc.email);
+
         const matches = savedSessions.filter(
           (ses: any) =>
             (ses.student_name && ses.student_name.toLowerCase() === dn) ||
@@ -195,7 +239,7 @@ export function TeacherStudents({
           display_name: acc.display_name || existing?.display_name || 'Student',
           username: acc.username || existing?.username || sid,
           school_id: acc.school_id || existing?.school_id || sid,
-          email: acc.email || existing?.email || `${acc.school_id}@smccnasipit.edu.ph`,
+          email: studentEmail,
           password: acc.password || DEFAULT_STUDENT_PASSWORD,
           grade_level: Number(acc.grade_level) || existing?.grade_level || 7,
           section_name: acc.section_name || acc.class_name || existing?.section_name || 'Unassigned',
@@ -209,29 +253,37 @@ export function TeacherStudents({
 
       // C. Process teacher's explicitly enrolled students roster
       const explicitRosterMap = new Map<string, Student>();
-      teacherStudentsRoster.forEach((st) => {
+      teacherStudentsRoster.forEach((st: any) => {
         const sid = (st.school_id || '').toLowerCase().trim();
         const un = (st.username || '').toLowerCase().trim();
         const key = sid || un;
         if (!key) return;
 
-        const existing = globalStudentsMap.get(key);
-        const finalStudent: Student = {
-          ...st,
-          id: existing?.id || st.id || `std-${key}`,
-          display_name: st.display_name || existing?.display_name || 'Student',
-          username: st.username || existing?.username || sid,
-          school_id: st.school_id || existing?.school_id || sid,
-          email: st.email || existing?.email,
-          grade_level: Number(st.grade_level) || existing?.grade_level || 7,
-          section_name: st.section_name || st.class_name || existing?.section_name || 'Unassigned',
-          class_name: st.class_name || st.section_name || existing?.class_name || 'Unassigned',
-          teacher_name: st.teacher_name || teacherName,
-        };
+        // Check if student belongs to this teacher
+        const isMyStudent =
+          (st.teacher_id && st.teacher_id.toLowerCase() === currentTeacherId) ||
+          (st.teacher_name && st.teacher_name.toLowerCase() === currentTeacherDisplayName) ||
+          (st.section_name && teacherClassNames.has(st.section_name.toLowerCase()));
 
-        if (finalStudent.section_name !== 'Unassigned' && finalStudent.class_name !== 'Unassigned') {
-          explicitRosterMap.set(key, finalStudent);
-          globalStudentsMap.set(key, finalStudent);
+        if (isMyStudent) {
+          const existing = globalStudentsMap.get(key);
+          const finalStudent: Student = {
+            ...st,
+            id: existing?.id || st.id || `std-${key}`,
+            display_name: st.display_name || existing?.display_name || 'Student',
+            username: st.username || existing?.username || sid,
+            school_id: st.school_id || existing?.school_id || sid,
+            email: st.email || existing?.email,
+            grade_level: Number(st.grade_level) || existing?.grade_level || 7,
+            section_name: st.section_name || st.class_name || existing?.section_name || 'Unassigned',
+            class_name: st.class_name || st.section_name || existing?.class_name || 'Unassigned',
+            teacher_name: st.teacher_name || teacherName,
+          };
+
+          if (finalStudent.section_name !== 'Unassigned' && finalStudent.class_name !== 'Unassigned') {
+            explicitRosterMap.set(key, finalStudent);
+            globalStudentsMap.set(key, finalStudent);
+          }
         }
       });
 
@@ -247,8 +299,8 @@ export function TeacherStudents({
         const key = (st.school_id || st.username || '').toLowerCase().trim();
         if (explicitRosterMap.has(key)) return true;
 
-        // Matches teacher's name or one of the teacher's created class sections
-        if (st.teacher_name && st.teacher_name.toLowerCase() === teacherName.toLowerCase()) return true;
+        // Matches teacher's ID/name or one of the teacher's created class sections
+        if (st.teacher_name && st.teacher_name.toLowerCase() === currentTeacherDisplayName) return true;
         if (teacherClassNames.has(sec)) return true;
 
         return false;
@@ -476,7 +528,7 @@ export function TeacherStudents({
     const chosenGrade = Number(draft.grade_level) || 7;
     const formalUsername = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
-    const studentEmail = existingAcc?.email || `${cleanId}@smccnasipit.edu.ph`;
+    const studentEmail = formatStudentEmail(cleanName, formalUsername, existingAcc?.email);
     const studentPassword = existingAcc?.password || DEFAULT_STUDENT_PASSWORD;
 
     const newStudent: Student = {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   SectionHeader,
@@ -72,7 +72,7 @@ export default function StudentNotebook({
   studentId?: string;
 }) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'materials' | 'notes' | 'ai_assistant' | 'history'>('materials');
+  const [activeTab, setActiveTab] = useState<'materials' | 'notes' | 'history'>('materials');
   const [entries, setEntries] = useState<NotebookEntry[]>([]);
   const [personalNotes, setPersonalNotes] = useState<StudentPersonalNote[]>([]);
   const [studyHistory, setStudyHistory] = useState<StudyHistoryItem[]>([]);
@@ -93,20 +93,6 @@ export default function StudentNotebook({
   const [noteFiles, setNoteFiles] = useState<NotebookFile[]>([]);
   const [isNoteDragging, setIsNoteDragging] = useState(false);
   const noteFileInputRef = useRef<HTMLInputElement>(null);
-
-  // AI Assistant Tab state
-  const [aiSelectedContext, setAiSelectedContext] = useState<string>('all');
-  const [aiChatMessages, setAiChatMessages] = useState<Array<{ id: string; role: 'user' | 'ai'; text: string; time: string }>>([
-    {
-      id: 'welcome',
-      role: 'ai',
-      text: `Hello ${studentName || 'there'}! I'm your ReadBuddy AI Study Assistant. Ask me anything about your uploaded notes, teacher readings, or upcoming assignments. I can summarize lessons, define tricky words, or generate practice questions!`,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
-  const [aiInput, setAiInput] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const aiChatEndRef = useRef<HTMLDivElement>(null);
 
   // Helper to log persistent study activity
   const logStudyActivity = (type: StudyHistoryItem['activity_type'], title: string, details?: string) => {
@@ -184,10 +170,6 @@ export default function StudentNotebook({
       window.removeEventListener('storage', loadData);
     };
   }, [studentName, studentId]);
-
-  useEffect(() => {
-    aiChatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [aiChatMessages]);
 
   function getStatus(entryId: string): MaterialStatus {
     const currentUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
@@ -316,90 +298,6 @@ export default function StudentNotebook({
     setShowNoteEditor(true);
   }
 
-  // Seamless learning bridge: ask AI about specific material or note
-  function handleOpenAIWithContext(title: string, contextId: string, customPrompt?: string) {
-    setActiveTab('ai_assistant');
-    setAiSelectedContext(contextId);
-    if (customPrompt) {
-      setAiInput(customPrompt);
-    }
-  }
-
-  // Build combined context for AI based on selection
-  const currentAIContextText = useMemo(() => {
-    if (aiSelectedContext === 'all') {
-      let combined = 'STUDENT STUDY REPOSITORY:\n\n';
-      entries.forEach((e, idx) => {
-        combined += `[TEACHER HANDOUT ${idx + 1}: "${e.title}"]\n${e.content_text || e.description || 'Attached materials'}\n\n`;
-      });
-      personalNotes.forEach((n, idx) => {
-        combined += `[STUDENT NOTE ${idx + 1}: "${n.title}"]\n${n.content}\n\n`;
-      });
-      return combined.slice(0, 4000);
-    }
-    const foundEntry = entries.find((e) => e.id === aiSelectedContext);
-    if (foundEntry) return `[TEACHER HANDOUT: "${foundEntry.title}"]\n${foundEntry.content_text || foundEntry.description}`;
-    const foundNote = personalNotes.find((n) => n.id === aiSelectedContext);
-    if (foundNote) return `[STUDENT NOTE: "${foundNote.title}"]\n${foundNote.content}`;
-    return '';
-  }, [aiSelectedContext, entries, personalNotes]);
-
-  // AI Send Handler
-  async function handleSendAIMessage(overridePrompt?: string) {
-    const query = overridePrompt || aiInput.trim();
-    if (!query || aiLoading) return;
-
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const userMsg = { id: `usr-${Date.now()}`, role: 'user' as const, text: query, time };
-    setAiChatMessages((prev) => [...prev, userMsg]);
-    setAiInput('');
-    setAiLoading(true);
-
-    logStudyActivity('ai_study_session', `AI Q&A: ${query.slice(0, 35)}...`, `Context: ${aiSelectedContext === 'all' ? 'All Materials' : 'Specific Material'}`);
-
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const systemPrompt = `You are ReadBuddy's AI Study Assistant for basic education students (K-12). Answer questions accurately and encouragingly based strictly on the student's study materials, readings, and notes provided below.\n\nContext:\n${currentAIContextText}`;
-
-      const res = await fetch(`${apiBase}/llm/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ prompt: query, system_prompt: systemPrompt }),
-      });
-
-      let aiResponseText = '';
-      if (res.ok) {
-        const data = await res.json();
-        aiResponseText = data.response || data.text || data.content || 'I processed your material. Try asking specific questions.';
-      } else {
-        aiResponseText = generateSmartFallback(query, currentAIContextText);
-      }
-
-      setAiChatMessages((prev) => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          role: 'ai',
-          text: aiResponseText,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
-    } catch {
-      setAiChatMessages((prev) => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          role: 'ai',
-          text: generateSmartFallback(query, currentAIContextText),
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
   // Filtered teacher entries
   const filteredTeacherEntries = entries.filter((entry) => {
     const status = getStatus(entry.id);
@@ -434,7 +332,7 @@ export default function StudentNotebook({
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
           <SectionHeader
             title="My Notebook"
-            subtitle="Your personalized study hub for reading materials, notes, test preparation, and AI assistance."
+            subtitle="Your personalized study hub for reading materials, notes, and study preparation."
             accent={STUDENT_ACCENT}
           />
           {activeTab === 'notes' && !showNoteEditor && (
@@ -453,17 +351,18 @@ export default function StudentNotebook({
           <StatCard label="Study Sessions" value={studyHistory.length} accent="#3D6B8A" />
         </div>
 
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs (Fixed dimensions and consistent borders to prevent UI shift) */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-5 border-b" style={{ borderColor: TAN_BORDER }}>
           {/* Tab 1: Materials */}
           <button
+            type="button"
             onClick={() => { setActiveTab('materials'); setShowNoteEditor(false); }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150 border"
             style={{
               fontFamily: FONT_SANS,
               background: activeTab === 'materials' ? STUDENT_ACCENT : 'transparent',
               color: activeTab === 'materials' ? '#FFFDF8' : MUTED,
-              border: activeTab === 'materials' ? 'none' : `1.5px solid ${TAN_BORDER}`,
+              borderColor: activeTab === 'materials' ? STUDENT_ACCENT : TAN_BORDER,
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -475,13 +374,14 @@ export default function StudentNotebook({
 
           {/* Tab 2: Notes */}
           <button
+            type="button"
             onClick={() => setActiveTab('notes')}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150 border"
             style={{
               fontFamily: FONT_SANS,
               background: activeTab === 'notes' ? STUDENT_ACCENT : 'transparent',
               color: activeTab === 'notes' ? '#FFFDF8' : MUTED,
-              border: activeTab === 'notes' ? 'none' : `1.5px solid ${TAN_BORDER}`,
+              borderColor: activeTab === 'notes' ? STUDENT_ACCENT : TAN_BORDER,
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -491,33 +391,16 @@ export default function StudentNotebook({
             <span>My Personal Notes ({personalNotes.length})</span>
           </button>
 
-          {/* Tab 3: AI Assistant */}
+          {/* Tab 3: History */}
           <button
-            onClick={() => setActiveTab('ai_assistant')}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
-            style={{
-              fontFamily: FONT_SANS,
-              background: activeTab === 'ai_assistant' ? CHALK_GREEN : 'transparent',
-              color: activeTab === 'ai_assistant' ? '#FFFDF8' : MUTED,
-              border: activeTab === 'ai_assistant' ? 'none' : `1.5px solid ${TAN_BORDER}`,
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-            </svg>
-            <span>Contextual AI Assistant</span>
-          </button>
-
-          {/* Tab 4: History */}
-          <button
+            type="button"
             onClick={() => setActiveTab('history')}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150 border"
             style={{
               fontFamily: FONT_SANS,
               background: activeTab === 'history' ? '#3D6B8A' : 'transparent',
               color: activeTab === 'history' ? '#FFFDF8' : MUTED,
-              border: activeTab === 'history' ? 'none' : `1.5px solid ${TAN_BORDER}`,
+              borderColor: activeTab === 'history' ? '#3D6B8A' : TAN_BORDER,
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -533,20 +416,25 @@ export default function StudentNotebook({
           <div>
             {/* Search and Filters */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5">
-              <div className="relative flex-1">
+              <div className="relative flex-1 flex items-center">
+                <span className="absolute left-3.5 text-gray-400 pointer-events-none flex items-center">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </span>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search course materials, passages, vocabulary..."
-                  className="rb-input w-full pl-9"
+                  className="rb-input w-full text-xs !pl-10 !pr-3"
+                  style={{ paddingLeft: '38px' }}
                 />
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2">
-                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
               </div>
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
                 <button
+                  type="button"
                   onClick={() => setStatusFilter('all')}
                   className="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer border"
                   style={{
@@ -561,6 +449,7 @@ export default function StudentNotebook({
                 {(['new', 'reviewed', 'studied'] as const).map((st) => (
                   <button
                     key={st}
+                    type="button"
                     onClick={() => setStatusFilter(st)}
                     className="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer border capitalize"
                     style={{
@@ -655,6 +544,7 @@ export default function StudentNotebook({
                                   return (
                                     <button
                                       key={f.id}
+                                      type="button"
                                       onClick={(e) => { e.stopPropagation(); handleFilePreview(f); }}
                                       className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer border hover:-translate-y-0.5 transition-all"
                                       style={{ background: colors.bg, color: colors.fg, borderColor: `${colors.fg}22` }}
@@ -693,7 +583,7 @@ export default function StudentNotebook({
                             </div>
                           )}
 
-                          {/* Seamless Learning Workflow Action Bar */}
+                          {/* Learning Workflow Action Bar */}
                           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                             <div className="flex flex-wrap items-center gap-2">
                               {/* Status button */}
@@ -710,28 +600,21 @@ export default function StudentNotebook({
                                 </GhostButton>
                               )}
 
-                              {/* Seamless Note Taking Bridge */}
+                              {/* Note Taking Bridge */}
                               <button
+                                type="button"
                                 onClick={() => handleTakeNoteFromMaterial(entry)}
                                 className="text-xs px-3 py-1.5 rounded-full font-semibold border flex items-center gap-1.5 transition-colors cursor-pointer hover:bg-white"
                                 style={{ color: INK, borderColor: TAN_BORDER, fontFamily: FONT_SANS }}
                               >
                                 <span>📝 Take Personal Note</span>
                               </button>
-
-                              {/* Ask AI Bridge */}
-                              <button
-                                onClick={() => handleOpenAIWithContext(entry.title, entry.id, `Explain the key concepts of "${entry.title}"`)}
-                                className="text-xs px-3 py-1.5 rounded-full font-semibold border flex items-center gap-1.5 transition-all cursor-pointer"
-                                style={{ background: `${STUDENT_ACCENT}12`, borderColor: STUDENT_ACCENT, color: STUDENT_ACCENT, fontFamily: FONT_SANS }}
-                              >
-                                <span>🤖 Ask AI Assistant</span>
-                              </button>
                             </div>
 
                             {/* Practice Reading Aloud Bridge */}
                             {entry.content_text && (
                               <button
+                                type="button"
                                 onClick={() => {
                                   try {
                                     localStorage.setItem('readbuddy_confirmed_text', entry.content_text);
@@ -899,6 +782,7 @@ export default function StudentNotebook({
                           {note.title}
                         </h4>
                         <button
+                          type="button"
                           onClick={() => handleDeletePersonalNote(note.id)}
                           className="text-gray-400 hover:text-red-600 transition-colors p-1 cursor-pointer"
                           title="Delete note"
@@ -921,6 +805,7 @@ export default function StudentNotebook({
                             return (
                               <button
                                 key={f.id}
+                                type="button"
                                 onClick={() => handleFilePreview(f)}
                                 className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold cursor-pointer"
                                 style={{ background: colors.bg, color: colors.fg }}
@@ -946,13 +831,6 @@ export default function StudentNotebook({
 
                     <div className="flex items-center justify-between pt-2 border-t text-[11px]" style={{ borderColor: `${TAN_BORDER}66` }}>
                       <span className="font-mono text-gray-400">Created {note.created_at}</span>
-                      <button
-                        onClick={() => handleOpenAIWithContext(note.title, note.id, `Quiz me on my note "${note.title}"`)}
-                        className="text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                        style={{ color: STUDENT_ACCENT, fontFamily: FONT_SANS }}
-                      >
-                        <span>🤖 Ask AI About Note</span>
-                      </button>
                     </div>
                   </Card>
                 ))}
@@ -961,134 +839,7 @@ export default function StudentNotebook({
           </div>
         )}
 
-        {/* ─── TAB 3: CONTEXTUAL AI ASSISTANT HUB ─── */}
-        {activeTab === 'ai_assistant' && (
-          <div className="space-y-4">
-            {/* Context Selector & Knowledge Base Switcher */}
-            <Card className="!py-3 !px-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: FONT_MONO, color: CHALK_GREEN }}>
-                    AI Context Source:
-                  </span>
-                </div>
-                <select
-                  value={aiSelectedContext}
-                  onChange={(e) => setAiSelectedContext(e.target.value)}
-                  className="rb-input text-xs py-1.5 px-3 rounded-lg bg-white"
-                  style={{ borderColor: TAN_BORDER, maxWidth: '350px' }}
-                >
-                  <option value="all">🌟 All Notebook Materials & Personal Notes Combined</option>
-                  <optgroup label="Teacher Handouts">
-                    {entries.map((e) => (
-                      <option key={e.id} value={e.id}>📄 Handout: {e.title}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="My Personal Notes">
-                    {personalNotes.map((n) => (
-                      <option key={n.id} value={n.id}>📝 Note: {n.title}</option>
-                    ))}
-                  </optgroup>
-                </select>
-              </div>
-            </Card>
-
-            {/* Quick Action Study Prompts */}
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label: '💡 Generate Full Study Guide', prompt: 'Create a comprehensive study outline with key concepts from my materials.' },
-                { label: '📝 Summarize in 3 Bullet Points', prompt: 'Summarize the most important lessons into 3 clear bullet points.' },
-                { label: '🔍 Explain Difficult Vocabulary', prompt: 'List and define the most difficult or unfamiliar vocabulary words from this text.' },
-                { label: '❓ Quiz Me (Practice Test)', prompt: 'Generate 3 multiple-choice practice comprehension questions with answers based on my study material.' },
-              ].map((act) => (
-                <button
-                  key={act.label}
-                  disabled={aiLoading}
-                  onClick={() => handleSendAIMessage(act.prompt)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium border bg-white hover:bg-amber-50 transition-all cursor-pointer shadow-sm"
-                  style={{ borderColor: TAN_BORDER, color: INK, fontFamily: FONT_SANS }}
-                >
-                  {act.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Chat Stream Window */}
-            <Card className="min-h-[420px] max-h-[550px] flex flex-col justify-between !p-4">
-              <div className="overflow-y-auto space-y-3.5 pr-2 mb-4 max-h-[380px]">
-                {aiChatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} rb-fade-in-up`}
-                  >
-                    <div
-                      className="max-w-[85%] px-4 py-3 rounded-2xl"
-                      style={{
-                        background: msg.role === 'user' ? STUDENT_ACCENT : CREAM,
-                        color: msg.role === 'user' ? '#FFFDF8' : INK,
-                        border: msg.role === 'ai' ? `1px solid ${TAN_BORDER}` : 'none',
-                        fontFamily: FONT_SANS,
-                        fontSize: '14px',
-                        lineHeight: '1.6',
-                      }}
-                    >
-                      {msg.role === 'ai' && (
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={CHALK_GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="3" />
-                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                          </svg>
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#1F4D3A]">
-                            ReadBuddy Study Assistant
-                          </span>
-                        </div>
-                      )}
-                      <p className="whitespace-pre-wrap">{msg.text}</p>
-                      <span className="block text-right mt-1 text-[10px] opacity-60 font-mono">
-                        {msg.time}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-
-                {aiLoading && (
-                  <div className="flex justify-start">
-                    <div className="px-4 py-3 rounded-2xl flex items-center gap-2" style={{ background: CREAM, border: `1px solid ${TAN_BORDER}` }}>
-                      <span className="w-2 h-2 rounded-full bg-[#E8873A] animate-bounce" />
-                      <span className="w-2 h-2 rounded-full bg-[#E8873A] animate-bounce [animation-delay:0.2s]" />
-                      <span className="w-2 h-2 rounded-full bg-[#E8873A] animate-bounce [animation-delay:0.4s]" />
-                      <span className="text-xs font-sans text-gray-500 ml-1">Analyzing your study materials...</span>
-                    </div>
-                  </div>
-                )}
-                <div ref={aiChatEndRef} />
-              </div>
-
-              {/* Chat Input */}
-              <div className="flex items-center gap-2 pt-3 border-t" style={{ borderColor: TAN_BORDER }}>
-                <input
-                  type="text"
-                  value={aiInput}
-                  onChange={(e) => setAiInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendAIMessage(); } }}
-                  placeholder="Ask a question about your uploaded notes, readings, or test prep..."
-                  className="rb-input flex-1"
-                  disabled={aiLoading}
-                />
-                <PrimaryButton
-                  accent={STUDENT_ACCENT}
-                  onClick={() => handleSendAIMessage()}
-                  disabled={!aiInput.trim() || aiLoading}
-                >
-                  Ask AI
-                </PrimaryButton>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* ─── TAB 4: PERSISTENT STUDY HISTORY & ACTIVITY ─── */}
+        {/* ─── TAB 3: PERSISTENT STUDY HISTORY & ACTIVITY ─── */}
         {activeTab === 'history' && (
           <div className="space-y-4">
             <Card>
@@ -1103,6 +854,7 @@ export default function StudentNotebook({
                 </div>
                 {studyHistory.length > 0 && (
                   <button
+                    type="button"
                     onClick={() => {
                       if (confirm('Clear study session history?')) {
                         setStudyHistory([]);
@@ -1118,7 +870,7 @@ export default function StudentNotebook({
 
               {studyHistory.length === 0 ? (
                 <EmptyState
-                  message="No study sessions logged yet. Review your course materials, write study notes, or chat with AI to build your study history!"
+                  message="No study sessions logged yet. Review your course materials and write study notes to build your study history!"
                 />
               ) : (
                 <div className="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#DED2B4]">
@@ -1161,30 +913,4 @@ export default function StudentNotebook({
       </div>
     </ErrorBoundary>
   );
-}
-
-/**
- * Smart keyword fallback generator when the local Ollama LLM is offline.
- */
-function generateSmartFallback(query: string, context: string): string {
-  if (!context.trim()) {
-    return 'Your notebook is currently empty. Add notes or wait for your teacher to share study materials, and I will be able to help you study!';
-  }
-
-  const qLower = query.toLowerCase();
-
-  if (qLower.includes('summar') || qLower.includes('outline') || qLower.includes('key point')) {
-    const lines = context.split('\n').filter((l) => l.trim().length > 20).slice(0, 4);
-    return `Here is a summary based on your materials:\n\n${lines.map((l) => `• ${l.trim()}`).join('\n')}\n\nTip: You can review these key concepts or practice reading them aloud!`;
-  }
-
-  if (qLower.includes('quiz') || qLower.includes('question') || qLower.includes('test')) {
-    return `Here is a practice comprehension check from your materials:\n\n1. What is the central message or theme discussed in your study text?\n2. Can you recall two supporting details mentioned in the reading?\n3. How can you apply these concepts in your upcoming test?\n\nTry writing your answers in a Personal Note to test your recall!`;
-  }
-
-  if (qLower.includes('vocab') || qLower.includes('word') || qLower.includes('defin')) {
-    return `Based on your materials, make sure you understand the key terms mentioned in your handouts. Review the highlighted sections and create vocabulary flash notes in your Personal Notes tab!`;
-  }
-
-  return `Based on your study notes and readings, here is a relevant excerpt:\n\n"${context.slice(0, 250)}..."\n\nAsk me if you would like me to quiz you on this or break it down into simpler steps!`;
 }

@@ -85,6 +85,29 @@ export function AdminOverview({
         <StatCard label="Tests" value={testCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('content')} />
       </div>
 
+      {/* Quick Actions Panel */}
+      <div className="flex items-center gap-3 mb-6 p-3.5 rounded-2xl bg-[#FFFDF8] border border-[#DED2B4] flex-wrap">
+        <span className="text-xs font-bold font-serif text-[#1F4D3A] mr-1">Quick Admin Actions:</span>
+        <button
+          onClick={() => onNavigate('teachers')}
+          className="px-3 py-1.5 rounded-xl text-xs font-sans font-semibold bg-[#FAF5EA] border border-[#DED2B4] text-[#6E5334] hover:bg-[#F3EBDA] transition-colors cursor-pointer flex items-center gap-1.5"
+        >
+          <span>➕ Add Teacher</span>
+        </button>
+        <button
+          onClick={() => onNavigate('students')}
+          className="px-3 py-1.5 rounded-xl text-xs font-sans font-semibold bg-[#FAF5EA] border border-[#DED2B4] text-[#6E5334] hover:bg-[#F3EBDA] transition-colors cursor-pointer flex items-center gap-1.5"
+        >
+          <span>➕ Add Student</span>
+        </button>
+        <button
+          onClick={() => onNavigate('logs')}
+          className="px-3 py-1.5 rounded-xl text-xs font-sans font-semibold bg-[#FAF5EA] border border-[#DED2B4] text-[#6E5334] hover:bg-[#F3EBDA] transition-colors cursor-pointer flex items-center gap-1.5"
+        >
+          <span>🛡️ Auth & SSO Logs</span>
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* VRAM / Model State Card */}
         <Card className="flex flex-col gap-4">

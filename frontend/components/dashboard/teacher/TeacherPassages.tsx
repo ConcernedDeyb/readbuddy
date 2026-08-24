@@ -29,39 +29,48 @@ export function TeacherPassages({
   useEffect(() => {
     function loadPassages() {
       try {
+        const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+        const currentTeacherId = (savedUser.school_id || savedUser.username || '').toLowerCase();
+        const currentTeacherDisplayName = (savedUser.display_name || '').toLowerCase();
+
         const saved = localStorage.getItem('readbuddy_teacher_passages');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            setPassages(parsed);
+            const myPassages = parsed.filter((p: any) => {
+              if (p.teacher_id && p.teacher_id.toLowerCase() === currentTeacherId) return true;
+              if (p.teacher_name && p.teacher_name.toLowerCase() === currentTeacherDisplayName) return true;
+              return false;
+            });
+            setPassages(myPassages);
             return;
           }
         }
-        setPassages(initialPassages || []);
+        setPassages([]);
       } catch (e) {}
     }
     loadPassages();
     window.addEventListener('readbuddy_passages_updated', loadPassages);
     return () => window.removeEventListener('readbuddy_passages_updated', loadPassages);
-  }, [initialPassages]);
+  }, []);
 
   function handleTogglePublish(passageId: string) {
-    const updated = passages.map((p) =>
-      p.id === passageId ? { ...p, is_published: !p.is_published } : p
-    );
-    setPassages(updated);
     try {
-      localStorage.setItem('readbuddy_teacher_passages', JSON.stringify(updated));
+      const allSaved: Passage[] = JSON.parse(localStorage.getItem('readbuddy_teacher_passages') || '[]');
+      const updatedAll = allSaved.map((p) =>
+        p.id === passageId ? { ...p, is_published: !p.is_published } : p
+      );
+      localStorage.setItem('readbuddy_teacher_passages', JSON.stringify(updatedAll));
       window.dispatchEvent(new Event('readbuddy_passages_updated'));
     } catch (e) {}
   }
 
   function handleDelete(passageId: string) {
     if (!window.confirm('Are you sure you want to delete this passage?')) return;
-    const updated = passages.filter((p) => p.id !== passageId);
-    setPassages(updated);
     try {
-      localStorage.setItem('readbuddy_teacher_passages', JSON.stringify(updated));
+      const allSaved: Passage[] = JSON.parse(localStorage.getItem('readbuddy_teacher_passages') || '[]');
+      const updatedAll = allSaved.filter((p) => p.id !== passageId);
+      localStorage.setItem('readbuddy_teacher_passages', JSON.stringify(updatedAll));
       window.dispatchEvent(new Event('readbuddy_passages_updated'));
     } catch (e) {}
   }

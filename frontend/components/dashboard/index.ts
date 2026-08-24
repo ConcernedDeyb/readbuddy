@@ -8,6 +8,7 @@ export { default as AdminSettings } from './admin/AdminSettings';
 export { default as AdminStudents } from './admin/AdminStudents';
 export { default as AdminTeachers } from './admin/AdminTeachers';
 export { default as AdminContent } from './admin/AdminContent';
+export { default as AdminAuthLogsSSO } from './admin/AdminAuthLogsSSO';
 
 export { default as TeacherOverview } from './teacher/TeacherOverview';
 export { default as TeacherClasses } from './teacher/TeacherClasses';

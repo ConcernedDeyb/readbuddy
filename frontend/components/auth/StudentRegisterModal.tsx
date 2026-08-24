@@ -264,7 +264,7 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
               <label className={styles.label}>Student Email Address</label>
               <input
                 type="email"
-                placeholder="student@smccnasipit.edu.ph"
+                placeholder="e.g. jdelacruz@student.smccnasipit.edu.ph"
                 value={studentEmail}
                 onChange={(e) => setStudentEmail(e.target.value)}
                 className={styles.input}

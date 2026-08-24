@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DashboardShell, AdminOverview, AdminTeachers, AdminStudents, AdminContent, AdminSettings, AccountSettings } from '@/components/dashboard';
+import { DashboardShell, AdminOverview, AdminTeachers, AdminStudents, AdminContent, AdminAuthLogsSSO, AdminSettings, AccountSettings } from '@/components/dashboard';
 
 const MOCK_ADAPTER_BENCHMARK = {
   fleursWer: 0.1244,
@@ -12,13 +12,13 @@ const MOCK_ADAPTER_BENCHMARK = {
 
 const MOCK_VRAM_STATUS = { activePhase: 'idle' as const, usedMb: 1400, budgetMb: 8192 };
 
-type AdminSection = 'overview' | 'teachers' | 'students' | 'content' | 'settings' | 'account';
+type AdminSection = 'overview' | 'teachers' | 'students' | 'content' | 'logs' | 'settings' | 'account';
 
 export default function AdminDashboardPage() {
   const [section, setSection] = useState<AdminSection>('overview');
   const [adminName, setAdminName] = useState('System Admin');
   const [adminEmail, setAdminEmail] = useState('admin@smccnasipit.edu.ph');
-  const [adminUsername, setAdminUsername] = useState('admin');
+  const [adminUsername, setAdminUsername] = useState('readbuddyadmin');
 
   // Dynamic live lists
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -207,6 +207,8 @@ export default function AdminDashboardPage() {
           }}
         />
       )}
+
+      {section === 'logs' && <AdminAuthLogsSSO />}
 
       {section === 'settings' && (
         <AdminSettings

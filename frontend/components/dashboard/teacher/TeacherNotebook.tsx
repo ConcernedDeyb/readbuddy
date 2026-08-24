@@ -656,14 +656,26 @@ export default function TeacherNotebook({
   const [showCreate, setShowCreate] = useState(false);
   const [detailEntry, setDetailEntry] = useState<NotebookEntry | null>(null);
 
-  // Load entries & classes
+  // Load entries & classes (scoped to current teacher)
   useEffect(() => {
     function loadData() {
       try {
+        const savedUser = JSON.parse(localStorage.getItem('readbuddy_user') || '{}');
+        const teacherId = (savedUser.school_id || savedUser.username || '').toLowerCase();
+        const teacherName = (savedUser.display_name || '').toLowerCase();
+        const teacherEmail = (savedUser.email || '').toLowerCase();
+
         const savedEntries = localStorage.getItem('readbuddy_teacher_notebook');
         if (savedEntries) {
           const parsed = JSON.parse(savedEntries);
-          if (Array.isArray(parsed)) setEntries(parsed);
+          if (Array.isArray(parsed)) {
+            const myEntries = parsed.filter((e: any) => {
+              if (e.teacher_id && e.teacher_id.toLowerCase() === teacherId) return true;
+              if (e.teacher_name && e.teacher_name.toLowerCase() === teacherName) return true;
+              return false;
+            });
+            setEntries(myEntries);
+          }
         } else {
           setEntries([]);
         }
@@ -671,7 +683,16 @@ export default function TeacherNotebook({
         const savedClasses = localStorage.getItem('readbuddy_teacher_classes');
         if (savedClasses) {
           const parsed = JSON.parse(savedClasses);
-          if (Array.isArray(parsed)) setClasses(parsed);
+          if (Array.isArray(parsed)) {
+            const myClasses = parsed.filter((c: any) => {
+              if (c.teacher_id && c.teacher_id.toLowerCase() === teacherId) return true;
+              if (c.teacher_school_id && c.teacher_school_id.toLowerCase() === teacherId) return true;
+              if (c.teacher_email && c.teacher_email.toLowerCase() === teacherEmail) return true;
+              if (c.teacher_name && c.teacher_name.toLowerCase() === teacherName) return true;
+              return false;
+            });
+            setClasses(myClasses);
+          }
         }
       } catch (e) {}
     }

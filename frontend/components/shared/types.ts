@@ -52,6 +52,8 @@ export interface ReadingTest {
   passage_id: string;
   passage_preview: string;
   source_language: 'en' | 'tl';
+  teacher_id?: string;
+  teacher_name?: string;
   created_at: string;
   assignments: TestAssignment[];
 }
