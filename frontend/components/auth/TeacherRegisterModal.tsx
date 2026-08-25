@@ -17,6 +17,8 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -214,31 +216,118 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
 
               <div className="grid sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className={styles.label}>
-                    Password <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="Min. 8 characters..."
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={styles.input}
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={styles.label} style={{ marginBottom: 0 }}>
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    {password.length > 0 && (
+                      <span
+                        className="text-[10px] font-mono font-bold"
+                        style={{ color: password.length < 8 ? '#E53E3E' : '#2E7D4F' }}
+                      >
+                        {password.length < 8 ? `${password.length}/8 chars` : '✓ 8+ chars'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      placeholder="Min. 8 characters..."
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error && error.toLowerCase().includes('password')) setError('');
+                      }}
+                      className={styles.input}
+                      style={{
+                        paddingRight: '40px',
+                        borderColor:
+                          confirmPassword.length > 0 && password !== confirmPassword
+                            ? '#E53E3E'
+                            : confirmPassword.length > 0 && password === confirmPassword
+                            ? '#2E7D4F'
+                            : undefined,
+                        backgroundColor:
+                          confirmPassword.length > 0 && password !== confirmPassword
+                            ? '#FFF5F5'
+                            : confirmPassword.length > 0 && password === confirmPassword
+                            ? '#F4FAF6'
+                            : undefined,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer text-xs"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? '🙈' : '👁️'}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
-                  <label className={styles.label}>
-                    Confirm Password <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="Re-enter password..."
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={styles.input}
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={styles.label} style={{ marginBottom: 0 }}>
+                      Confirm Password <span className="text-red-500">*</span>
+                    </label>
+                    {confirmPassword.length > 0 && (
+                      <span
+                        className="text-[10px] font-mono font-bold"
+                        style={{ color: password !== confirmPassword ? '#E53E3E' : '#2E7D4F' }}
+                      >
+                        {password !== confirmPassword ? '✕ Mismatch' : '✓ Matches'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      placeholder="Re-enter password..."
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        if (error && error.toLowerCase().includes('password')) setError('');
+                      }}
+                      className={styles.input}
+                      style={{
+                        paddingRight: '40px',
+                        borderColor:
+                          confirmPassword.length > 0 && password !== confirmPassword
+                            ? '#E53E3E'
+                            : confirmPassword.length > 0 && password === confirmPassword
+                            ? '#2E7D4F'
+                            : undefined,
+                        backgroundColor:
+                          confirmPassword.length > 0 && password !== confirmPassword
+                            ? '#FFF5F5'
+                            : confirmPassword.length > 0 && password === confirmPassword
+                            ? '#F4FAF6'
+                            : undefined,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer text-xs"
+                      title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? '🙈' : '👁️'}
+                    </button>
+                  </div>
+                  {confirmPassword.length > 0 && password !== confirmPassword ? (
+                    <div className="flex items-start gap-1 text-[11px] text-red-600 font-sans mt-1 font-semibold leading-tight">
+                      <span className="shrink-0">❌</span>
+                      <span>Passwords do not match. Please re-enter the exact password.</span>
+                    </div>
+                  ) : confirmPassword.length > 0 && password === confirmPassword ? (
+                    <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-sans mt-1 font-semibold leading-tight">
+                      <span className="shrink-0">✓</span>
+                      <span>Passwords match!</span>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

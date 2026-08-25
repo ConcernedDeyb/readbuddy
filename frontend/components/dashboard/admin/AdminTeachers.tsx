@@ -39,9 +39,41 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
     adminApproved: true,
   });
 
+  const [teacherQuotaLimit, setTeacherQuotaLimit] = useState(10);
+  const [customQuotaInput, setCustomQuotaInput] = useState('10');
+
   useEffect(() => {
     setMounted(true);
+    try {
+      const savedLimit = localStorage.getItem('readbuddy_teacher_creation_limit');
+      if (savedLimit) {
+        const val = Number(savedLimit);
+        if (!isNaN(val) && val > 0) {
+          setTeacherQuotaLimit(val);
+          setCustomQuotaInput(String(val));
+        }
+      }
+    } catch (e) {}
   }, []);
+
+  function handleUpdateTeacherQuota(newLimit: number) {
+    if (newLimit < 1) return;
+    setTeacherQuotaLimit(newLimit);
+    setCustomQuotaInput(String(newLimit));
+    try {
+      localStorage.setItem('readbuddy_teacher_creation_limit', String(newLimit));
+      window.dispatchEvent(new Event('readbuddy_settings_updated'));
+      setFeedback(`✓ Educator creation quota updated to ${newLimit} accounts.`);
+      setTimeout(() => setFeedback(null), 3000);
+
+      recordActivity({
+        user_name: 'System Admin',
+        role: 'admin',
+        action: 'Quota Adjusted',
+        details: `Teacher account creation limit updated to ${newLimit} accounts`,
+      });
+    } catch (e) {}
+  }
 
   // Load registered teacher accounts from localStorage
   function loadTeachers() {
@@ -448,6 +480,102 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
           </button>
         </div>
       )}
+
+      {/* ─── EDUCATOR ACCOUNT CREATION LIMITER & ANTI-IMPERSONATION CONTROL CARD ─── */}
+      <div className="mb-6 p-4 rounded-2xl bg-[#FFFDF8] border-2 rb-fade-in-up" style={{ borderColor: `${ADMIN_ACCENT}33` }}>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span className="text-base">🛡️</span>
+              <h3 className="text-sm font-bold uppercase tracking-wide font-mono" style={{ color: ADMIN_ACCENT }}>
+                Teacher Account Creation Limiter & Anti-Impersonation Control
+              </h3>
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full font-mono font-bold bg-[#EBF3F8] text-[#3D6B8A] border border-[#A8C5DA]">
+                {teachers.length} / {teacherQuotaLimit} Accounts Allocated
+              </span>
+            </div>
+            <p className="text-xs text-gray-600 font-sans leading-relaxed max-w-2xl">
+              Configures the maximum number of educator accounts permitted on ReadBuddy to prevent student impersonation and unauthorized faculty accounts. Adjust this limit anytime below.
+            </p>
+
+            {/* Utilization Progress Bar */}
+            <div className="mt-3 flex items-center gap-3">
+              <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden max-w-md">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(100, (teachers.length / Math.max(1, teacherQuotaLimit)) * 100)}%`,
+                    background:
+                      teachers.length >= teacherQuotaLimit
+                        ? '#B4602E'
+                        : teachers.length / teacherQuotaLimit >= 0.8
+                        ? '#E8873A'
+                        : '#2E7D4F',
+                  }}
+                />
+              </div>
+              <span className="text-xs font-mono font-bold shrink-0 text-gray-700">
+                {Math.round((teachers.length / Math.max(1, teacherQuotaLimit)) * 100)}% Quota Used
+              </span>
+            </div>
+          </div>
+
+          {/* Limiter Adjuster Controls */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0 bg-[#FBF6EB] p-2.5 rounded-xl border border-[#E5DAC4]">
+            <span className="text-xs font-bold font-sans text-[#1F4D3A] mr-1">Max Teacher Limit:</span>
+            
+            <button
+              type="button"
+              onClick={() => handleUpdateTeacherQuota(Math.max(1, teacherQuotaLimit - 1))}
+              className="w-8 h-8 rounded-lg bg-white border border-[#DED2B4] font-bold text-gray-700 hover:bg-gray-100 flex items-center justify-center cursor-pointer transition-colors shadow-sm text-sm"
+              title="Decrease Quota by 1"
+            >
+              -
+            </button>
+
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={customQuotaInput}
+              onChange={(e) => {
+                setCustomQuotaInput(e.target.value);
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val) && val > 0) {
+                  handleUpdateTeacherQuota(val);
+                }
+              }}
+              className="w-16 h-8 text-center text-xs font-mono font-bold bg-white border border-[#DED2B4] rounded-lg"
+            />
+
+            <button
+              type="button"
+              onClick={() => handleUpdateTeacherQuota(teacherQuotaLimit + 1)}
+              className="w-8 h-8 rounded-lg bg-white border border-[#DED2B4] font-bold text-gray-700 hover:bg-gray-100 flex items-center justify-center cursor-pointer transition-colors shadow-sm text-sm"
+              title="Increase Quota by 1"
+            >
+              +
+            </button>
+
+            <div className="flex gap-1 ml-1">
+              {[5, 10, 20, 50].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => handleUpdateTeacherQuota(preset)}
+                  className={`px-2 py-1 rounded-md text-[11px] font-mono font-bold transition-all cursor-pointer border ${
+                    teacherQuotaLimit === preset
+                      ? 'bg-[#7A4A6B] text-white border-[#7A4A6B]'
+                      : 'bg-white text-gray-600 border-[#DED2B4] hover:bg-gray-50'
+                  }`}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-2 border-b border-[#DED2B444]">
