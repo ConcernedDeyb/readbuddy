@@ -228,7 +228,7 @@ export default function DashboardShell({
                     setMobileNavOpen(false);
                   }}
                   data-active={active}
-                  className="w-full text-left px-3.5 py-2.5 rounded-xl mb-1 flex items-center gap-3 transition-all duration-200 cursor-pointer hover:bg-white/10"
+                  className="rb-sidebar-nav-item w-full text-left px-3.5 py-2.5 rounded-xl mb-1 flex items-center gap-3 transition-all duration-200 cursor-pointer hover:bg-white/10"
                   style={{
                     fontFamily: FONT_SANS,
                     fontWeight: active ? 600 : 400,
@@ -314,7 +314,10 @@ export default function DashboardShell({
             </svg>
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-lg" aria-hidden>📖</span>
+            <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FBF7EE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
             <span style={{ fontFamily: FONT_SERIF, fontWeight: 600, color: CREAM }}>
               ReadBuddy
             </span>

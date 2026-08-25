@@ -137,9 +137,9 @@ export default function StepShell({
       <main className="max-w-2xl mx-auto px-5 py-8 sm:py-10 overflow-hidden">
         <div
           key={activeStep}
-          className={direction === 'forward' ? 'rb-panel-forward' : 'rb-panel-backward'}
+          className={`rb-surface ${direction === 'forward' ? 'rb-panel-forward' : 'rb-panel-backward'}`}
           style={{
-            background: '#FFFFFF',
+            background: 'rgba(255, 253, 248, 0.88)',
             borderRadius: 16,
             padding: '28px',
             border: '1px solid #E4DCC8',

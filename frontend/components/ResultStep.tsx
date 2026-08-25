@@ -121,7 +121,7 @@ export default function ResultStep({ wordPct, compPct, onRestart, onReturnHome }
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
         <button
           onClick={onRestart}
-          className="px-6 py-2.5 rounded-full text-sm inline-flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] hover:shadow-md cursor-pointer"
+          className="rb-action px-6 py-2.5 rounded-full text-sm inline-flex items-center gap-2 transition-all duration-200 hover:shadow-md cursor-pointer"
           style={{
             fontFamily: "'Figtree', sans-serif",
             fontWeight: 600,
@@ -135,7 +135,7 @@ export default function ResultStep({ wordPct, compPct, onRestart, onReturnHome }
         {onReturnHome && (
           <button
             onClick={onReturnHome}
-            className="px-6 py-2.5 rounded-full text-sm inline-flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] cursor-pointer"
+            className="rb-action px-6 py-2.5 rounded-full text-sm inline-flex items-center gap-2 transition-all duration-200 cursor-pointer"
             style={{
               fontFamily: "'Figtree', sans-serif",
               fontWeight: 600,

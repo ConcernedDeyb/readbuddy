@@ -39,6 +39,13 @@ export default function UnifiedAuthLanding() {
     <div className={styles.authWrapper}>
       {/* Brand Header */}
       <div className={styles.brandHeader}>
+        <div className={styles.mascotArea}>
+          <iframe
+            className={styles.interactiveLogoFrame}
+            src="/readbuddy-interactive-logo.html"
+            title="Interactive ReadBuddy reading companion"
+          />
+        </div>
         <div className={styles.logoBadge}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B2621" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="5" y="4" width="14" height="16" rx="2" />

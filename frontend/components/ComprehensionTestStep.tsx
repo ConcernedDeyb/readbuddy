@@ -315,7 +315,7 @@ export default function ComprehensionTestStep({ passageText, customQuestions, on
               <button
                 type="button"
                 onClick={() => handleVoiceAnswer(orderKey, q.choices)}
-                className={`px-2.5 py-1 rounded-full text-xs font-sans font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`rb-action px-2.5 py-1 rounded-full text-xs font-sans font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                   isListening ? 'bg-[#E8873A] text-white animate-pulse' : 'bg-[#FAF6EE] text-[#1F4D3A] border border-[#DED2B4] hover:bg-[#F3EBD8]'
                 }`}
                 title="Speak your answer aloud"
@@ -383,7 +383,7 @@ export default function ComprehensionTestStep({ passageText, customQuestions, on
       <button
         onClick={handleSubmit}
         disabled={!allAnswered}
-        className="px-6 py-2.5 rounded-full text-sm font-semibold inline-flex items-center gap-1.5 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] hover:shadow-md disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:active:scale-100 cursor-pointer text-white"
+        className="rb-action px-6 py-2.5 rounded-full text-sm font-semibold inline-flex items-center gap-1.5 transition-all duration-200 hover:shadow-md disabled:opacity-40 disabled:hover:shadow-none cursor-pointer text-white"
         style={{
           background: 'linear-gradient(135deg, #E8873A, #F0A35C)',
         }}

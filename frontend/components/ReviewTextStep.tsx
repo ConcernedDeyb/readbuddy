@@ -53,7 +53,7 @@ export default function ReviewTextStep({ initialText, onConfirm }: ReviewTextSte
       <button
         onClick={() => onConfirm(text.trim())}
         disabled={!text.trim()}
-        className="mt-2 px-5 py-2.5 rounded-full text-sm inline-flex items-center gap-1.5 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] hover:shadow-md disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:active:scale-100"
+        className="rb-action mt-2 px-5 py-2.5 rounded-full text-sm inline-flex items-center gap-1.5 transition-all duration-200 hover:shadow-md disabled:opacity-40 disabled:hover:shadow-none"
         style={{
           fontFamily: "'Figtree', sans-serif",
           fontWeight: 600,

@@ -30,6 +30,21 @@
 html {
   overflow-y: scroll;
   scrollbar-gutter: stable;
+  background: var(--color-cream);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--color-cream);
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
 }
 
 * {
@@ -214,16 +229,6 @@ html {
 .rb-sidebar-nav-item[data-active="true"] {
   background: rgba(251, 247, 238, 0.12);
 }
-.rb-sidebar-nav-item[data-active="true"]::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 3px;
-  border-radius: 0 4px 4px 0;
-  transition: background 0.2s ease;
-}
 
 /* ─── Inputs ─── */
 
@@ -241,6 +246,57 @@ html {
   border-color: var(--color-marigold);
   box-shadow: 0 0 0 3px rgba(232, 135, 58, 0.12);
   outline: none;
+}
+
+.rb-input:disabled {
+  cursor: not-allowed;
+  background: var(--color-tan-light);
+  color: var(--color-ink-muted);
+}
+
+.rb-input[aria-invalid="true"] {
+  border-color: #B4602E;
+  box-shadow: 0 0 0 3px rgba(180, 96, 46, 0.12);
+}
+
+/* Shared, additive affordances for buttons and cards throughout the app. */
+.rb-action {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 44px;
+  border-radius: 10px;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
+}
+.rb-action::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.24) 48%, transparent 76%);
+  transform: translateX(-65%);
+  transition: opacity 0.22s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rb-action:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.rb-action:hover:not(:disabled)::before {
+  opacity: 1;
+  transform: translateX(65%);
+}
+.rb-action:focus-visible {
+  outline-offset: 3px;
+}
+.rb-action:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+}
+
+.rb-surface {
+  background: rgba(255, 253, 248, 0.88);
+  border: 1px solid rgba(222, 210, 180, 0.8);
+  box-shadow: 0 1px 2px rgba(31, 77, 58, 0.04), 0 10px 24px -20px rgba(31, 77, 58, 0.32);
 }
 
 /* ─── Reduced Motion ─── */
@@ -391,6 +447,11 @@ html {
 /* ─── Reduced Motion ─── */
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
   .rb-shimmer,
   .rb-fade-in-up,
   .rb-scale-pop,
@@ -403,7 +464,9 @@ html {
   .rb-card,
   .rb-card-interactive,
   .rb-sidebar-nav-item,
-  .rb-mini-bar-fill {
+  .rb-mini-bar-fill,
+  .rb-action,
+  .rb-action::before {
     transition: none !important;
   }
 }
