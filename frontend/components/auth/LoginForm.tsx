@@ -17,6 +17,7 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -373,14 +374,55 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
               Forgot Password?
             </button>
           </div>
-          <input
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={styles.input}
-            autoComplete="current-password"
-          />
+            <div className={styles.passwordWrapper}>
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={styles.input}
+                autoComplete="current-password"
+                aria-label="Password"
+              />
+              <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className={styles.showPasswordBtn}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+                          {showPassword ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5"
+              >
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5"
+              >
+                <path d="M17.94 17.94A10.5 10.5 0 0 1 12 20c-5.52 0-10-4.48-10-10 0-1.88.53-3.64 1.44-5.15" />
+                <path d="M1 1l22 22" />
+                <path d="M9.88 9.88a3 3 0 0 0 4.24 4.24" />
+                <path d="M12 12a3 3 0 0 1 3 3" />
+              </svg>
+            )}
+            </button>
+            </div>
         </div>
 
         {/* ─── Submit Button ─── */}

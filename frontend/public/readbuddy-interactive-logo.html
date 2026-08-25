@@ -21,7 +21,14 @@
       outline: none;
     }
     .logo-container:focus-visible { outline: 3px solid #e8873a; outline-offset: 10px; border-radius: 24px; }
-    svg { display: block; width: 100%; height: auto; overflow: visible; }
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+      animation: logoSway 4.8s ease-in-out infinite;
+      transform-origin: center;
+    }
     #speech-bubble { animation: float 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
     #stars .star { animation: twinkle 2s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
     #stars .star:nth-child(2) { animation-delay: .65s; }
@@ -34,12 +41,16 @@
     .logo-container:hover #book-page-left, .logo-container.is-active #book-page-left { transform: rotate(-5deg) translate(-5px, -2px); }
     .logo-container:hover #book-page-right, .logo-container.is-active #book-page-right { transform: rotate(5deg) translate(5px, -2px); }
     .logo-container:hover #antenna-ball, .logo-container.is-active #antenna-ball { animation: antennaBounce .52s cubic-bezier(.34, 1.56, .64, 1); }
+    @keyframes logoSway {
+      0%, 100% { transform: translateY(2px) rotate(-1deg) scale(0.99); }
+      50% { transform: translateY(-5px) rotate(1deg) scale(1.01); }
+    }
     @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
     @keyframes twinkle { from { opacity: .55; transform: scale(.9); } to { opacity: 1; transform: scale(1.1); } }
     @keyframes antennaGlow { 0%,100% { filter: drop-shadow(0 0 0 #35b9aa); } 50% { filter: drop-shadow(0 0 9px #35b9aa); } }
     @keyframes antennaBounce { 0% { transform: translateY(0) scale(1); } 42% { transform: translateY(-13px) scale(1.12); } 100% { transform: translateY(0) scale(1); } }
     @media (prefers-reduced-motion: reduce) {
-      #speech-bubble, #stars .star, #antenna-ball { animation: none; }
+      svg, #speech-bubble, #stars .star, #antenna-ball { animation: none; }
       #robot-head, #robot-eyes, #main-book, #book-page-left, #book-page-right { transition: none; }
     }
   </style>
