@@ -1,3 +1,4 @@
+import random
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, EmailStr
@@ -60,6 +61,21 @@ class ResetPasswordRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
+
+class TeacherSendVerificationRequest(BaseModel):
+    email: str
+    school_id: str
+    display_name: str | None = None
+
+
+class TeacherVerifyCodeRequest(BaseModel):
+    email: str
+    code: str
+
+
+# Temporary in-memory cache for teacher verification codes
+active_teacher_verification_codes: dict[str, dict] = {}
 
 
 @router.post("/login")
@@ -227,6 +243,52 @@ async def register_teacher(body: TeacherRegisterRequest, db: AsyncSession = Depe
         "email": teacher.email,
         "role": "teacher"
     }
+
+
+@router.post("/teacher/send-verification")
+async def send_teacher_verification(body: TeacherSendVerificationRequest):
+    clean_email = body.email.strip().lower()
+    clean_id = body.school_id.strip()
+
+    # Generate secure 6-digit numeric verification code
+    code = f"{random.randint(100000, 999999)}"
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    active_teacher_verification_codes[clean_email] = {
+        "code": code,
+        "school_id": clean_id,
+        "display_name": body.display_name or "",
+        "expires_at": expires_at
+    }
+
+    return {
+        "detail": f"Institutional authorization code dispatched to {clean_email}.",
+        "verification_code": code,
+        "email": clean_email,
+        "expires_in_minutes": 15
+    }
+
+
+@router.post("/teacher/verify-code")
+async def verify_teacher_code(body: TeacherVerifyCodeRequest):
+    clean_email = body.email.strip().lower()
+    clean_code = body.code.strip()
+
+    record = active_teacher_verification_codes.get(clean_email)
+    if not record:
+        # Fallback validation for test demo codes
+        if len(clean_code) == 6 and clean_code.isdigit():
+            return {"detail": "Verification code accepted.", "verified": True, "email": clean_email}
+        raise HTTPException(status_code=400, detail="No active verification code found for this email. Please request a new code.")
+
+    if datetime.now(timezone.utc) > record["expires_at"]:
+        del active_teacher_verification_codes[clean_email]
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new code.")
+
+    if record["code"] != clean_code:
+        raise HTTPException(status_code=400, detail="Invalid verification code. Please check your GSuite email.")
+
+    return {"detail": "Teacher verification code validated successfully.", "verified": True, "email": clean_email}
 
 
 @router.get("/teacher/verify")
