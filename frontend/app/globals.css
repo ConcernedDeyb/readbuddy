@@ -272,12 +272,9 @@ select {
   box-shadow: 3px 3px 0px rgba(23, 61, 46, 0.35);
   font-weight: 700;
 }
-<<<<<<< HEAD
 .rb-sidebar-nav-item[data-active="true"] svg {
   stroke: #1F4D3A !important;
 }
-=======
->>>>>>> 408880d8d80dc0d4db1305551c95ab11256bcce2
 
 /* ─── Neobrutalism Inputs ─── */
 
@@ -299,9 +296,6 @@ select {
   transform: translate(-1px, -1px);
 }
 
-<<<<<<< HEAD
-/* ─── Neobrutalism Tables ─── */
-=======
 .rb-input:disabled {
   cursor: not-allowed;
   background: var(--color-tan-light);
@@ -313,50 +307,7 @@ select {
   box-shadow: 0 0 0 3px rgba(180, 96, 46, 0.12);
 }
 
-/* Shared, additive affordances for buttons and cards throughout the app. */
-.rb-action {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  min-height: 44px;
-  border-radius: 10px;
-  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
-}
-.rb-action::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.24) 48%, transparent 76%);
-  transform: translateX(-65%);
-  transition: opacity 0.22s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.rb-action:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
-.rb-action:hover:not(:disabled)::before {
-  opacity: 1;
-  transform: translateX(65%);
-}
-.rb-action:focus-visible {
-  outline-offset: 3px;
-}
-.rb-action:active:not(:disabled) {
-  transform: translateY(1px) scale(0.985);
-}
-
-.rb-surface {
-  background: rgba(255, 253, 248, 0.88);
-  border: 1px solid rgba(222, 210, 180, 0.8);
-  box-shadow: 0 1px 2px rgba(31, 77, 58, 0.04), 0 10px 24px -20px rgba(31, 77, 58, 0.32);
-}
-
-/* ─── Reduced Motion ─── */
-
-/* ─── Tables ─── */
->>>>>>> 408880d8d80dc0d4db1305551c95ab11256bcce2
+/* ─── Neobrutalism Tables ─── */
 
 .rb-table {
   width: 100%;
