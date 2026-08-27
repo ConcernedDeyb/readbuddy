@@ -62,7 +62,7 @@ export function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${styles.primaryButton} ${className}`}
+      className={`rb-action ${styles.primaryButton} ${className}`}
       style={{
         background: `linear-gradient(135deg, ${accent}, ${accent}EE)`,
         borderColor: darkBorder,
@@ -90,7 +90,7 @@ export function GhostButton({
   return (
     <button
       onClick={onClick}
-      className={`${styles.ghostButton} ${className}`}
+      className={`rb-action ${styles.ghostButton} ${className}`}
       style={style}
     >
       {children}
@@ -143,7 +143,7 @@ export function StatCard({
   return (
     <Tag
       onClick={onClick}
-      className={`${styles.statCard} ${onClick ? styles.statCardClickable : ''}`}
+      className={`${onClick ? 'rb-action ' : ''}${styles.statCard} ${onClick ? styles.statCardClickable : ''}`}
       style={{
         background: `linear-gradient(135deg, #FFFDF8 0%, ${accent}0A 100%)`,
       }}
@@ -316,7 +316,7 @@ export function EmptyState({ message, actionLabel, onAction }: { message: string
     <div className={styles.emptyContainer}>
       <p className={styles.emptyText}>{message}</p>
       {actionLabel && onAction && (
-        <button onClick={onAction} className={styles.emptyButton}>
+        <button onClick={onAction} className={`rb-action ${styles.emptyButton}`}>
           {actionLabel}
         </button>
       )}
@@ -338,7 +338,7 @@ export class ErrorBoundary extends Component<ErrorProps, ErrorState> {
         <div className={styles.errorContainer}>
           <h3 className={styles.errorTitle}>{this.props.fallbackTitle || 'Something went wrong'}</h3>
           <p className={styles.errorMessage}>{this.state.error?.message || 'An unexpected rendering error occurred.'}</p>
-          <button onClick={() => this.setState({ hasError: false, error: null })} className={styles.errorRetryButton}>Try Again</button>
+          <button onClick={() => this.setState({ hasError: false, error: null })} className={`rb-action ${styles.errorRetryButton}`}>Try Again</button>
         </div>
       );
     }

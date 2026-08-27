@@ -84,7 +84,7 @@ export default function InputMethodStep({
               <button
                 key={lang}
                 onClick={() => onLanguageChange(lang)}
-                className="px-4 py-2 rounded-full text-sm transition-all duration-200"
+                className="rb-action px-4 py-2 rounded-full text-sm transition-all duration-200"
                 style={{
                   fontFamily: "'Figtree', sans-serif",
                   fontWeight: 600,
@@ -119,7 +119,7 @@ export default function InputMethodStep({
         <button
           onClick={handleTypedSubmit}
           disabled={!typedText.trim()}
-          className="mt-3 px-5 py-2.5 rounded-full text-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] hover:shadow-md disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:active:scale-100"
+          className="rb-action mt-3 px-5 py-2.5 rounded-full text-sm transition-all duration-200 hover:shadow-md disabled:opacity-40 disabled:hover:shadow-none"
           style={{
             fontFamily: "'Figtree', sans-serif",
             fontWeight: 600,

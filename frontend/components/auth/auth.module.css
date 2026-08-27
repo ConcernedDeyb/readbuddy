@@ -18,6 +18,23 @@
   margin-bottom: 1.75rem;
 }
 
+.mascotArea {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: -1.35rem auto 0.4rem;
+}
+
+.interactiveLogoFrame {
+  width: clamp(142px, 31vw, 190px);
+  aspect-ratio: 1;
+  display: block;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
 .logoBadge {
   display: inline-flex;
   align-items: center;
@@ -348,4 +365,15 @@
   font-family: var(--font-sans);
   font-size: 0.75rem;
   color: rgba(43, 38, 33, 0.65);
+}
+
+@media (max-width: 480px) {
+  .mascotArea {
+    margin-top: -0.75rem;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interactiveLogoFrame { opacity: 1; }
 }

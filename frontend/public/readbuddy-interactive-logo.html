@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReadBuddy Interactive Logo</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      font-family: system-ui, sans-serif;
+    }
+    .logo-container {
+      width: min(92vw, 530px);
+      cursor: pointer;
+      outline: none;
+    }
+    .logo-container:focus-visible { outline: 3px solid #e8873a; outline-offset: 10px; border-radius: 24px; }
+    svg { display: block; width: 100%; height: auto; overflow: visible; }
+    #speech-bubble { animation: float 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    #stars .star { animation: twinkle 2s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+    #stars .star:nth-child(2) { animation-delay: .65s; }
+    #stars .star:nth-child(3) { animation-delay: 1.15s; }
+    #antenna-ball { animation: antennaGlow 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    #robot-head, #robot-eyes { transition: transform 170ms cubic-bezier(.22, 1, .36, 1); }
+    #main-book { transform-box: fill-box; transform-origin: center bottom; transition: transform 230ms cubic-bezier(.22, 1, .36, 1); }
+    #book-page-left, #book-page-right { transform-box: fill-box; transition: transform 300ms cubic-bezier(.22, 1, .36, 1); }
+    .logo-container:hover #main-book, .logo-container.is-active #main-book { transform: translateY(-4px) scale(1.015); }
+    .logo-container:hover #book-page-left, .logo-container.is-active #book-page-left { transform: rotate(-5deg) translate(-5px, -2px); }
+    .logo-container:hover #book-page-right, .logo-container.is-active #book-page-right { transform: rotate(5deg) translate(5px, -2px); }
+    .logo-container:hover #antenna-ball, .logo-container.is-active #antenna-ball { animation: antennaBounce .52s cubic-bezier(.34, 1.56, .64, 1); }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+    @keyframes twinkle { from { opacity: .55; transform: scale(.9); } to { opacity: 1; transform: scale(1.1); } }
+    @keyframes antennaGlow { 0%,100% { filter: drop-shadow(0 0 0 #35b9aa); } 50% { filter: drop-shadow(0 0 9px #35b9aa); } }
+    @keyframes antennaBounce { 0% { transform: translateY(0) scale(1); } 42% { transform: translateY(-13px) scale(1.12); } 100% { transform: translateY(0) scale(1); } }
+    @media (prefers-reduced-motion: reduce) {
+      #speech-bubble, #stars .star, #antenna-ball { animation: none; }
+      #robot-head, #robot-eyes, #main-book, #book-page-left, #book-page-right { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="logo-container" role="button" tabindex="0" aria-label="Interactive ReadBuddy logo">
+    <svg viewBox="0 0 600 600" role="img" aria-labelledby="logo-title logo-description">
+      <title id="logo-title">ReadBuddy reading companion</title>
+      <desc id="logo-description">A friendly robot holds a book within a circular learning badge.</desc>
+      <defs>
+        <linearGradient id="sun" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff3c8"/><stop offset="1" stop-color="#f8cf69"/></linearGradient>
+        <linearGradient id="book" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2ab3a2"/><stop offset="1" stop-color="#147f78"/></linearGradient>
+        <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#112d55"/><stop offset="1" stop-color="#061a3a"/></linearGradient>
+      </defs>
+
+      <g id="bg-circle">
+        <circle cx="300" cy="300" r="258" fill="#09254c"/>
+        <circle cx="300" cy="296" r="230" fill="url(#sun)" stroke="#fffdf8" stroke-width="7"/>
+        <path d="M82 381c22 113 112 170 218 170s196-57 218-170c-54 52-139 79-218 79S136 433 82 381Z" fill="#09254c"/>
+      </g>
+      <g id="stars" fill="#f5aa36">
+        <path class="star" d="m414 142 7 18 18 7-18 7-7 18-7-18-18-7 18-7Z"/>
+        <path class="star" d="m462 207 10 25 25 10-25 10-10 25-10-25-25-10 25-10Z"/>
+        <path class="star" fill="#21a99a" d="m140 159 9 22 22 9-22 9-9 22-9-22-22-9 22-9Z"/>
+      </g>
+      <g id="speech-bubble">
+        <path d="M76 276c0-30 29-53 65-53s65 23 65 53-29 53-65 53c-10 0-20-2-29-5l-25 16 7-26c-12-10-18-23-18-38Z" fill="#26a99a" stroke="#fffdf8" stroke-width="4"/>
+        <circle cx="116" cy="276" r="7" fill="#fffdf8"/><circle cx="141" cy="276" r="7" fill="#fffdf8"/><circle cx="166" cy="276" r="7" fill="#fffdf8"/>
+      </g>
+      <g id="background-book" stroke="#09254c" stroke-width="7" stroke-linejoin="round">
+        <path d="M437 332c31-21 68-18 104 2l-14 107c-33-19-65-22-96-1Z" fill="#fffdf8"/>
+        <path d="M431 332c-31-21-68-18-104 2l14 107c33-19 65-22 96-1Z" fill="#fffdf8"/>
+        <path d="M451 357c21-11 42-10 61 0M450 382c21-11 42-10 61 0M409 357c-21-11-42-10-61 0M410 382c-21-11-42-10-61 0" fill="none" stroke-width="5"/>
+      </g>
+      <g id="robot-head">
+        <path d="M300 125v-32" stroke="#09254c" stroke-width="10" stroke-linecap="round"/>
+        <g id="antenna-ball"><circle cx="300" cy="79" r="22" fill="#2bb5a4" stroke="#fffdf8" stroke-width="5"/></g>
+        <ellipse cx="229" cy="289" rx="25" ry="56" fill="#2cae9e" stroke="#fffdf8" stroke-width="5"/>
+        <ellipse cx="371" cy="289" rx="25" ry="56" fill="#2cae9e" stroke="#fffdf8" stroke-width="5"/>
+        <path d="M159 287c0-83 64-145 141-145s141 62 141 145v77c0 77-63 126-141 126s-141-49-141-126Z" fill="#fffdf8" stroke="#e9f0f6" stroke-width="7"/>
+        <path d="M182 289c0-38 30-65 68-65h100c38 0 68 27 68 65v36c0 52-43 88-118 88s-118-36-118-88Z" fill="url(#screen)"/>
+        <g id="robot-eyes" fill="none" stroke="#a8ece1" stroke-width="8" stroke-linecap="round">
+          <path d="M232 319c8-15 25-15 33 0"/>
+          <path d="M335 319c8-15 25-15 33 0"/>
+          <path d="M286 354c8 12 20 12 28 0"/>
+        </g>
+      </g>
+      <g id="hands" fill="#fffdf8" stroke="#e9f0f6" stroke-width="5">
+        <path d="M174 447c-27 3-47 22-47 47 0 25 18 39 43 37l24-8v-53Z"/>
+        <path d="M426 447c27 3 47 22 47 47 0 25-18 39-43 37l-24-8v-53Z"/>
+      </g>
+      <g id="main-book" stroke="#fffdf8" stroke-width="7" stroke-linejoin="round">
+        <g id="book-page-left"><path d="M83 409c77 6 145 27 217 67v113c-75-41-143-61-217-67Z" fill="url(#book)"/></g>
+        <g id="book-page-right"><path d="M517 409c-77 6-145 27-217 67v113c75-41 143-61 217-67Z" fill="url(#book)"/></g>
+        <path d="M300 476v113" fill="none" stroke="#0d7771" stroke-width="10"/>
+      </g>
+    </svg>
+  </div>
+  <script>
+    const container = document.querySelector('.logo-container');
+    const head = document.querySelector('#robot-head');
+    const eyes = document.querySelector('#robot-eyes');
+    const reset = () => { head.style.transform = ''; eyes.style.transform = ''; };
+    window.addEventListener('pointermove', (event) => {
+      const box = container.getBoundingClientRect();
+      const x = Math.max(-1, Math.min(1, (event.clientX - box.left - box.width / 2) / (box.width / 2)));
+      const y = Math.max(-1, Math.min(1, (event.clientY - box.top - box.height / 2) / (box.height / 2)));
+      head.style.transform = `translate(${x * 3}px, ${y * 2}px)`;
+      eyes.style.transform = `translate(${x * 7}px, ${y * 5}px)`;
+    });
+    container.addEventListener('pointerleave', reset);
+    container.addEventListener('click', () => container.classList.toggle('is-active'));
+    container.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); container.click(); }
+    });
+  </script>
+</body>
+</html>

@@ -230,7 +230,11 @@
   font-size: 0.75rem;
   padding: 0.5rem 1rem;
   border-radius: 10px;
+<<<<<<< HEAD
   background: #DC2626;
+=======
+  background: var(--color-chalk-green);
+>>>>>>> 408880d8d80dc0d4db1305551c95ab11256bcce2
   color: var(--color-cream-warm);
   border: 2px solid #991B1B;
   box-shadow: 2px 2px 0px #991B1B;
