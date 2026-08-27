@@ -1,4 +1,4 @@
-/* ─── Shared Design System CSS Module ─── */
+/* ─── Shared Design System CSS Module (Warm Academic Soft-Neobrutalism) ─── */
 
 .sectionHeader {
   margin-bottom: 1.5rem;
@@ -9,31 +9,36 @@
   height: 0.375rem;
   border-radius: 9999px;
   margin-bottom: 0.75rem;
+  border: 1px solid rgba(31, 77, 58, 0.2);
 }
 
 .sectionTitle {
   font-family: var(--font-serif);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-chalk-green);
-  font-size: 1.5rem;
-  line-height: 2rem;
+  font-size: 1.625rem;
+  line-height: 2.125rem;
   margin-bottom: 0.375rem;
+  letter-spacing: -0.01em;
 }
 
 .sectionSubtitle {
   font-family: var(--font-sans);
   font-size: 0.875rem;
   color: var(--color-ink-muted);
+  line-height: 1.5;
 }
 
 .statCard {
   text-align: left;
-  border-radius: 1rem;
-  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  padding: 1.125rem 1.25rem;
   flex: 1 1 0%;
   min-width: 140px;
-  transition: all 0.2s ease;
-  border: 1px solid var(--color-tan-border);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  border: 2px solid var(--color-tan-border);
+  box-shadow: 3px 3px 0px rgba(31, 77, 58, 0.1);
+  background: var(--color-cream-warm);
 }
 
 .statCardClickable {
@@ -41,17 +46,19 @@
 }
 
 .statCardClickable:hover {
-  transform: translateY(-0.25rem);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px rgba(31, 77, 58, 0.18);
+  border-color: var(--color-chalk-green);
 }
 
 .statCardClickable:active {
-  transform: translateY(0);
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0px rgba(31, 77, 58, 0.1);
 }
 
 .statIcon {
   font-size: 1.25rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
   display: block;
 }
 
@@ -60,60 +67,80 @@
   font-weight: 700;
   font-size: 1.875rem;
   margin-bottom: 0.25rem;
+  line-height: 1.2;
 }
 
 .statLabel {
   font-family: var(--font-sans);
   color: var(--color-ink-muted);
-  font-size: 0.75rem;
+  font-size: 0.725rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .primaryButton {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
-  border-radius: 9999px;
+  border-radius: 12px;
   color: var(--color-cream-warm);
-  transition: all 0.2s ease;
+  border: 2px solid #1F4D3A;
+  box-shadow: 3px 3px 0px #1F4D3A;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .primaryButton:hover:not(:disabled) {
-  transform: translateY(-0.125rem);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #1F4D3A;
 }
 
 .primaryButton:active:not(:disabled) {
-  transform: translateY(0) scale(0.97);
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #1F4D3A;
 }
 
 .primaryButton:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
+  box-shadow: none;
   cursor: not-allowed;
+  transform: none;
 }
 
 .ghostButton {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
-  border-radius: 9999px;
+  border-radius: 12px;
   color: var(--color-chalk-green);
-  border: 1.5px solid var(--color-tan-border);
-  background: transparent;
-  transition: all 0.2s ease;
+  border: 2px solid var(--color-tan-border);
+  background: var(--color-cream-warm);
+  box-shadow: 2px 2px 0px rgba(31, 77, 58, 0.08);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.15s ease;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .ghostButton:hover {
-  background-color: rgba(31, 77, 58, 0.03);
+  background-color: #FFFFFF;
+  border-color: var(--color-chalk-green);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--color-chalk-green);
 }
 
 .ghostButton:active {
-  transform: scale(0.97);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--color-chalk-green);
 }
 
 .badge {
@@ -125,14 +152,17 @@
   gap: 0.25rem;
   padding: 0.25rem 0.625rem;
   border-radius: 9999px;
+  border: 1.5px solid transparent;
+  box-shadow: 1.5px 1.5px 0px rgba(0, 0, 0, 0.08);
 }
 
 .emptyContainer {
-  border-radius: 1rem;
+  border-radius: 16px;
   padding: 3rem 1.5rem;
   text-align: center;
-  background: var(--color-cream);
-  border: 1.5px dashed var(--color-tan-border);
+  background: var(--color-cream-warm);
+  border: 2px dashed var(--color-tan-border);
+  box-shadow: 3px 3px 0px rgba(31, 77, 58, 0.06);
 }
 
 .emptyText {
@@ -144,34 +174,45 @@
 
 .emptyButton {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
-  border-radius: 9999px;
+  border-radius: 12px;
   background: var(--color-chalk-green);
-  color: var(--color-cream);
-  transition: all 0.2s ease;
+  color: var(--color-cream-warm);
+  border: 2px solid #133326;
+  box-shadow: 3px 3px 0px #133326;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .emptyButton:hover {
-  transform: translateY(-0.125rem);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #133326;
+}
+
+.emptyButton:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #133326;
 }
 
 .errorContainer {
-  border-radius: 1rem;
+  border-radius: 16px;
   padding: 1.5rem;
   text-align: center;
   margin: 1rem 0;
-  background: var(--color-cream);
-  border: 1.5px solid var(--color-tan-border);
+  background: #FFF5F5;
+  border: 2px solid #F0A9A9;
+  box-shadow: 3px 3px 0px rgba(220, 38, 38, 0.12);
 }
 
 .errorTitle {
   font-family: var(--font-serif);
-  color: var(--color-chalk-green);
-  font-weight: 600;
+  color: #991B1B;
+  font-weight: 700;
   font-size: 1.125rem;
   margin-bottom: 0.5rem;
 }
@@ -185,11 +226,22 @@
 
 .errorRetryButton {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.75rem;
   padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  background: var(--color-chalk-green);
+  border-radius: 10px;
+  background: #DC2626;
   color: var(--color-cream-warm);
+  border: 2px solid #991B1B;
+  box-shadow: 2px 2px 0px #991B1B;
   cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.errorRetryButton:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #991B1B;
+}
+.errorRetryButton:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #991B1B;
 }

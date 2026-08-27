@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { LoginForm } from './LoginForm';
 import { TeacherRegisterModal } from './TeacherRegisterModal';
 import { StudentRegisterModal } from './StudentRegisterModal';
+import { ReadBuddyLogo, ReadBuddyMascot } from '../brand';
 import styles from './auth.module.css';
 
 export default function UnifiedAuthLanding() {
@@ -37,26 +38,13 @@ export default function UnifiedAuthLanding() {
 
   return (
     <div className={styles.authWrapper}>
-      {/* Brand Header */}
-      <div className={styles.brandHeader}>
-        <div className={styles.logoBadge}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B2621" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="5" y="4" width="14" height="16" rx="2" />
-            <line x1="9" y1="4" x2="9" y2="20" />
-          </svg>
-          <span className={styles.logoBadgeText}>
-            SMCC BASIC EDUCATION
-          </span>
-        </div>
-
-        <h1 className={styles.title}>ReadBuddy</h1>
-        <p className={styles.subtitle}>
-          AI-Powered Reading Comprehension Assistant for Basic Education Students
-        </p>
+      {/* Brand Header with Official Mascot Logo */}
+      <div className="flex flex-col items-center text-center mb-6">
+        <ReadBuddyLogo variant="full" size="xl" showTagline />
       </div>
 
       {resetToast && (
-        <div className="mb-4 px-4 py-2.5 rounded-full bg-[#1F4D3A] text-white text-xs font-sans font-semibold shadow-lg flex items-center gap-2 animate-bounce">
+        <div className="mb-4 px-4 py-2.5 rounded-full bg-[#1F4D3A] text-white text-xs font-sans font-bold shadow-lg flex items-center gap-2 animate-bounce">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <polyline points="20 6 9 17 4 12" />
           </svg>
@@ -88,7 +76,7 @@ export default function UnifiedAuthLanding() {
 
       {/* Footer Security Note & Quick Storage Reset Button */}
       <footer className={styles.footerNote}>
-        <div>Saint Michael College of Caraga · Local AI Inference · Private & Secure for Minors</div>
+        <div className="font-medium">Saint Michael College of Caraga · Local Edge AI Inference · Safe & Private for Minors</div>
         <div className="mt-2.5">
           <button
             type="button"

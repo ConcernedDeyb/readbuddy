@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ─── Design System ─── */
+/* ─── Design System Tokens (Warm Academic Soft-Neobrutalism) ─── */
 
 @theme {
   --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
@@ -10,7 +10,7 @@
   --color-cream: #FBF7EE;
   --color-cream-warm: #FFFDF8;
   --color-ink: #2B2621;
-  --color-ink-muted: rgba(43, 38, 33, 0.62);
+  --color-ink-muted: rgba(43, 38, 33, 0.68);
   --color-chalk-green: #1F4D3A;
   --color-chalk-green-light: #2A6B4F;
   --color-marigold: #E8873A;
@@ -30,22 +30,25 @@
 html {
   overflow-y: scroll;
   scrollbar-gutter: stable;
+  background-color: var(--color-cream);
+  color: var(--color-ink);
 }
 
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-tan-border) transparent;
 }
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 7px; height: 7px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--color-tan-border);
   border-radius: 999px;
+  border: 1.5px solid var(--color-cream);
 }
 ::-webkit-scrollbar-thumb:hover { background: #C5B896; }
 
 ::placeholder {
-  color: rgba(43, 38, 33, 0.35);
+  color: rgba(43, 38, 33, 0.38);
   font-style: normal;
 }
 
@@ -54,7 +57,7 @@ html {
 :focus-visible {
   outline: 2px solid var(--color-marigold);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 /* ─── Notebook Background ─── */
@@ -68,37 +71,68 @@ html {
   );
 }
 
-/* ─── Cards ─── */
+/* ─── Soft-Neobrutalism Cards ─── */
 
 .rb-card {
-  background: var(--color-cream);
-  border: 1px solid var(--color-tan-border);
+  background: var(--color-cream-warm);
+  border: 2px solid var(--color-tan-border);
   border-radius: 16px;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 4px 4px 0px rgba(31, 77, 58, 0.12);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s ease;
 }
 .rb-card:hover {
-  box-shadow: 0 4px 20px -4px rgba(31, 77, 58, 0.1),
-              0 2px 8px -2px rgba(31, 77, 58, 0.06);
+  box-shadow: 5px 5px 0px rgba(31, 77, 58, 0.16);
 }
 .rb-card-interactive {
   cursor: pointer;
 }
 .rb-card-interactive:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px -8px rgba(31, 77, 58, 0.14),
-              0 4px 12px -4px rgba(31, 77, 58, 0.08);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(31, 77, 58, 0.2);
+  border-color: var(--color-chalk-green);
 }
 .rb-card-interactive:active {
-  transform: translateY(0);
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0px rgba(31, 77, 58, 0.14);
+}
+
+/* ─── Soft-Neobrutalism Tactile Buttons ─── */
+
+.rb-btn-tactile {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  border: 2px solid #1F4D3A;
+  box-shadow: 3px 3px 0px #1F4D3A;
+  border-radius: 12px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.rb-btn-tactile:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #1F4D3A;
+}
+.rb-btn-tactile:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #1F4D3A;
+}
+.rb-btn-tactile:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ─── Glass Card (for sidebar/overlays) ─── */
 
 .rb-glass {
-  background: rgba(251, 247, 238, 0.85);
+  background: rgba(251, 247, 238, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(222, 210, 180, 0.6);
+  border: 2px solid rgba(222, 210, 180, 0.8);
+  box-shadow: 4px 4px 0px rgba(31, 77, 58, 0.1);
 }
 
 /* ─── Shimmer Loading ─── */
@@ -117,6 +151,7 @@ html {
   background-size: 200% 100%;
   animation: rb-shimmer 1.5s ease-in-out infinite;
   border-radius: 8px;
+  border: 1.5px solid var(--color-tan-border);
 }
 
 /* ─── Fade In Up ─── */
@@ -132,18 +167,18 @@ html {
   }
 }
 .rb-fade-in-up {
-  animation: rb-fade-in-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rb-fade-in-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ─── Scale Pop ─── */
 
 @keyframes rb-scale-pop {
   0% { transform: scale(0.85); opacity: 0; }
-  60% { transform: scale(1.05); opacity: 1; }
+  60% { transform: scale(1.04); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
 .rb-scale-pop {
-  animation: rb-scale-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: rb-scale-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 /* ─── Gentle Float ─── */
@@ -164,7 +199,7 @@ html {
 }
 .rb-wave-bar {
   display: inline-block;
-  width: 3px;
+  width: 3.5px;
   height: 16px;
   border-radius: 999px;
   background: var(--color-marigold);
@@ -188,13 +223,15 @@ html {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 999px;
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 13px;
   color: white;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
 
@@ -202,80 +239,80 @@ html {
 
 .rb-sidebar {
   background: linear-gradient(180deg, #1F4D3A 0%, #173D2E 100%);
+  border-right: 2px solid rgba(222, 210, 180, 0.25);
 }
 .rb-sidebar-nav-item {
   position: relative;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  border-radius: 12px;
+  margin: 2px 8px;
 }
 .rb-sidebar-nav-item:hover {
-  background: rgba(251, 247, 238, 0.08);
-  padding-left: 14px;
+  background: rgba(251, 247, 238, 0.1);
+  transform: translateX(2px);
 }
 .rb-sidebar-nav-item[data-active="true"] {
-  background: rgba(251, 247, 238, 0.12);
+  background: #FFFDF8;
+  color: #1F4D3A !important;
+  border: 2px solid #1F4D3A;
+  box-shadow: 3px 3px 0px rgba(23, 61, 46, 0.35);
+  font-weight: 700;
 }
-.rb-sidebar-nav-item[data-active="true"]::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 3px;
-  border-radius: 0 4px 4px 0;
-  transition: background 0.2s ease;
+.rb-sidebar-nav-item[data-active="true"] svg {
+  stroke: #1F4D3A !important;
 }
 
-/* ─── Inputs ─── */
+/* ─── Neobrutalism Inputs ─── */
 
 .rb-input {
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 13.5px;
   padding: 10px 14px;
-  border: 1.5px solid var(--color-tan-border);
-  border-radius: 10px;
+  border: 2px solid var(--color-tan-border);
+  border-radius: 12px;
   background: var(--color-cream-warm);
   color: var(--color-ink);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 2px 2px 0px rgba(43, 38, 33, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 .rb-input:focus {
   border-color: var(--color-marigold);
-  box-shadow: 0 0 0 3px rgba(232, 135, 58, 0.12);
+  box-shadow: 3px 3px 0px var(--color-marigold);
   outline: none;
+  transform: translate(-1px, -1px);
 }
 
-/* ─── Reduced Motion ─── */
-
-/* ─── Tables ─── */
+/* ─── Neobrutalism Tables ─── */
 
 .rb-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 13.5px;
 }
 .rb-table thead th {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
-  color: var(--color-ink-muted);
+  font-weight: 700;
+  color: var(--color-chalk-green);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 10px 16px;
+  letter-spacing: 0.06em;
+  padding: 11px 16px;
   text-align: left;
-  border-bottom: 1.5px solid var(--color-tan-border);
+  border-bottom: 2px solid var(--color-tan-border);
   background: var(--color-cream);
   white-space: nowrap;
 }
 .rb-table tbody tr {
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 .rb-table tbody tr:hover {
-  background: rgba(31, 77, 58, 0.03);
+  background: rgba(31, 77, 58, 0.035);
 }
 .rb-table tbody td {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(222, 210, 180, 0.5);
+  border-bottom: 1.5px solid rgba(222, 210, 180, 0.55);
   color: var(--color-ink);
   vertical-align: middle;
 }
@@ -283,7 +320,7 @@ html {
   border-bottom: none;
 }
 
-/* ─── Phil-IRI Tier Badges ─── */
+/* ─── Phil-IRI Tier Badges (Soft-Neobrutalist) ─── */
 
 .rb-tier {
   display: inline-flex;
@@ -295,21 +332,22 @@ html {
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
 }
 .rb-tier-independent {
   background: #E6F4EA;
-  color: #2E7D4F;
-  border: 1px solid #BFE0CC;
+  color: #1F693D;
+  border: 1.5px solid #2E7D4F;
 }
 .rb-tier-instructional {
   background: #FCF1DD;
-  color: #8A5A1E;
-  border: 1px solid #EFD9AC;
+  color: #7D4C13;
+  border: 1.5px solid #E8873A;
 }
 .rb-tier-frustration {
   background: #FCEDDE;
-  color: #B4602E;
-  border: 1px solid #F0C99A;
+  color: #9C3B1A;
+  border: 1.5px solid #B4602E;
 }
 
 /* ─── Detail Panel (Slide-in) ─── */
@@ -323,7 +361,7 @@ html {
   width: 100vw;
   height: 100vh;
   z-index: 9998;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: rb-overlay-in 0.25s ease-out both;
@@ -341,8 +379,8 @@ html {
   width: 100%;
   max-width: 540px;
   background: var(--color-cream-warm);
-  border-left: 1px solid var(--color-tan-border);
-  box-shadow: -12px 0 48px rgba(31, 77, 58, 0.2);
+  border-left: 2px solid var(--color-tan-border);
+  box-shadow: -8px 0 32px rgba(31, 77, 58, 0.22);
   animation: rb-slide-in-right 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
   overflow-y: auto;
 }
@@ -357,8 +395,6 @@ html {
   }
 }
 
-
-
 /* ─── Chart Zones ─── */
 
 .rb-chart-zone-independent { fill: rgba(46, 125, 79, 0.08); }
@@ -368,9 +404,10 @@ html {
 /* ─── Mini Progress Bar ─── */
 
 .rb-mini-bar {
-  height: 6px;
+  height: 8px;
   border-radius: 999px;
   background: var(--color-tan-light);
+  border: 1.5px solid var(--color-tan-border);
   overflow: hidden;
   min-width: 60px;
 }
@@ -402,6 +439,7 @@ html {
   }
   .rb-card,
   .rb-card-interactive,
+  .rb-btn-tactile,
   .rb-sidebar-nav-item,
   .rb-mini-bar-fill {
     transition: none !important;

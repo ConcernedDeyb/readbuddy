@@ -20,9 +20,9 @@ interface RecentActivity {
 }
 
 const PHASE_LABEL: Record<VramStatus['activePhase'], string> = {
-  idle: 'Idle',
-  asr: 'ASR (reading phase)',
-  llm: 'LLM (comprehension phase)',
+  idle: 'Idle (Awaiting Student Audio)',
+  asr: 'Active: ASR (Wav2Vec2 / MMS)',
+  llm: 'Active: LLM (Gemma Comprehension)',
 };
 
 export function AdminOverview({
@@ -46,31 +46,32 @@ export function AdminOverview({
 }) {
   return (
     <div>
-      <SectionHeader title="System Overview" subtitle="ReadBuddy at a glance across every classroom." accent={ADMIN_ACCENT} />
+      <SectionHeader
+        title="Institutional System Overview"
+        subtitle="Saint Michael College of Caraga (SMCC) ReadBuddy Administrative Telemetry."
+        accent={ADMIN_ACCENT}
+      />
 
       {pendingTeacherCount > 0 && (
         <div
           onClick={() => onNavigate('teachers')}
-          className="mb-6 p-4 rounded-2xl border border-[#F0C99A] bg-[#FFF8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-[#FFF3E6] transition-all rb-fade-in-up"
+          className="mb-6 p-4 rounded-2xl border-2 border-[#E8873A] bg-[#FFF8F0] shadow-[4px_4px_0px_rgba(232,135,58,0.2)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:-translate-y-0.5 transition-all rb-fade-in-up"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#FCEDDE] text-[#B4602E] flex items-center justify-center shrink-0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
+            <div className="w-10 h-10 rounded-xl bg-[#FCEDDE] border border-[#F0C99A] text-[#B4602E] flex items-center justify-center text-lg shrink-0">
+              ⚠️
             </div>
             <div>
               <div className="text-sm font-bold text-[#B4602E] font-sans">
-                {pendingTeacherCount} Teacher Account Creation Request{pendingTeacherCount === 1 ? '' : 's'} Pending Approval
+                {pendingTeacherCount} Teacher Registration Request{pendingTeacherCount === 1 ? '' : 's'} Pending Approval
               </div>
               <p className="text-xs text-[#8A5A1E] font-sans">
-                Institutional educator registrations require verification before access is granted.
+                Educator registrations must be authorized before access to classroom rosters is granted.
               </p>
             </div>
           </div>
           <button
-            className="px-3.5 py-1.5 rounded-xl text-xs font-sans font-bold text-white shrink-0 self-start sm:self-auto cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-sans font-bold text-white shrink-0 self-start sm:self-auto cursor-pointer border-2 border-[#8A5A1E] shadow-[2px_2px_0px_#8A5A1E]"
             style={{ background: 'linear-gradient(135deg, #B4602E, #8A5A1E)' }}
           >
             Review & Approve →
@@ -78,45 +79,53 @@ export function AdminOverview({
         </div>
       )}
 
+      {/* Metrics Row */}
       <div className="flex flex-wrap gap-4 mb-6">
-        <StatCard label="Teachers" value={teacherCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('teachers')} />
-        <StatCard label="Students" value={studentCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('students')} />
-        <StatCard label="Passages" value={passageCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('content')} />
-        <StatCard label="Tests" value={testCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('content')} />
+        <StatCard label="Active Educators" value={teacherCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('teachers')} />
+        <StatCard label="Enrolled Students" value={studentCount} accent="#1F4D3A" onClick={() => onNavigate('students')} />
+        <StatCard label="Published Passages" value={passageCount} accent="#3D6B8A" onClick={() => onNavigate('content')} />
+        <StatCard label="Active Tests" value={testCount} accent="#E8873A" onClick={() => onNavigate('content')} />
       </div>
 
-      {/* Quick Actions Panel */}
-      <div className="flex items-center gap-3 mb-6 p-3.5 rounded-2xl bg-[#FFFDF8] border border-[#DED2B4] flex-wrap">
-        <span className="text-xs font-bold font-serif text-[#1F4D3A] mr-1">Quick Admin Actions:</span>
+      {/* Quick Actions Panel (Tactile Soft-Neobrutalism) */}
+      <div className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-[#FFFDF8] border-2 border-[#DED2B4] shadow-[3px_3px_0px_rgba(31,77,58,0.08)] flex-wrap">
+        <span className="text-xs font-bold font-serif text-[#1F4D3A] mr-1">Admin Fast Actions:</span>
         <button
           onClick={() => onNavigate('teachers')}
-          className="px-3 py-1.5 rounded-xl text-xs font-sans font-semibold bg-[#FAF5EA] border border-[#DED2B4] text-[#6E5334] hover:bg-[#F3EBDA] transition-colors cursor-pointer flex items-center gap-1.5"
+          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
         >
           <span>➕ Add Teacher</span>
         </button>
         <button
           onClick={() => onNavigate('students')}
-          className="px-3 py-1.5 rounded-xl text-xs font-sans font-semibold bg-[#FAF5EA] border border-[#DED2B4] text-[#6E5334] hover:bg-[#F3EBDA] transition-colors cursor-pointer flex items-center gap-1.5"
+          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
         >
           <span>➕ Add Student</span>
         </button>
         <button
           onClick={() => onNavigate('logs')}
-          className="px-3 py-1.5 rounded-xl text-xs font-sans font-semibold bg-[#FAF5EA] border border-[#DED2B4] text-[#6E5334] hover:bg-[#F3EBDA] transition-colors cursor-pointer flex items-center gap-1.5"
+          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
         >
           <span>🛡️ Auth & SSO Logs</span>
+        </button>
+        <button
+          onClick={() => onNavigate('settings')}
+          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
+        >
+          <span>⚙️ System Settings</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* VRAM / Model State Card */}
         <Card className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
-              GPU Memory Budget
+          <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: TAN_BORDER }}>
+            <h3 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
+              <span>⚡</span>
+              <span>GPU VRAM Telemetry</span>
             </h3>
-            <span className="text-xs px-2.5 py-1 rounded-full font-mono font-medium border" style={{ background: '#FAF7F2', borderColor: TAN_BORDER, color: MUTED }}>
-              RTX 4070 · 8GB
+            <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold border border-[#DED2B4] bg-[#FFFDF8] text-gray-600">
+              RTX 4070 · 8GB GDDR6
             </span>
           </div>
 
@@ -129,52 +138,52 @@ export function AdminOverview({
               color={ADMIN_ACCENT}
             />
             <div className="flex flex-col gap-1">
-              <div className="text-2xl font-bold" style={{ fontFamily: FONT_MONO, color: CHALK_GREEN }}>
+              <div className="text-2xl font-bold font-mono text-[#1F4D3A]">
                 {(vramStatus.usedMb / 1024).toFixed(1)} GB
               </div>
-              <div className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED }}>
-                of {(vramStatus.budgetMb / 1024).toFixed(0)} GB VRAM used
+              <div className="text-xs font-semibold text-gray-500 font-sans">
+                of {(vramStatus.budgetMb / 1024).toFixed(0)} GB VRAM Allocated
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-medium mt-1" style={{ color: CHALK_GREEN }}>
-                <span className="w-2 h-2 rounded-full bg-[#2E7D4F] animate-pulse" />
+              <div className="flex items-center gap-1.5 text-xs font-bold mt-1 text-[#2E7D4F]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#2E7D4F] animate-pulse" />
                 <span>{PHASE_LABEL[vramStatus.activePhase]}</span>
               </div>
             </div>
           </div>
 
-          <div className="text-xs pt-3 border-t flex items-center justify-between" style={{ borderColor: TAN_BORDER, color: MUTED, fontFamily: FONT_SANS }}>
-            <span>Tagalog ASR Model: MMS-1B-All (FLEURS Fine-tuned)</span>
-            <span className="font-mono text-[11px] text-[#2E7D4F] font-bold">Active</span>
+          <div className="text-xs pt-3 border-t flex items-center justify-between font-sans" style={{ borderColor: TAN_BORDER, color: MUTED }}>
+            <span>Dual-Pipeline Model Cache (Wav2Vec2 + Gemma 2B)</span>
+            <span className="font-mono text-[11px] text-[#2E7D4F] font-bold">Optimal</span>
           </div>
         </Card>
 
-        {/* Recent Session Activity */}
+        {/* Activity Card */}
         <Card className="flex flex-col gap-3">
-          <h3 className="text-base font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
-            Recent Activity
-          </h3>
+          <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: TAN_BORDER }}>
+            <h3 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
+              <span>📜</span>
+              <span>Platform Activity Stream</span>
+            </h3>
+            <span className="text-xs font-mono text-gray-500">{recentActivity.length} Events</span>
+          </div>
 
           {recentActivity.length === 0 ? (
-            <div className="text-xs py-8 text-center" style={{ fontFamily: FONT_SANS, color: MUTED }}>
-              No reading sessions or assessment activity recorded yet.
-            </div>
+            <p className="text-xs text-gray-500 font-sans py-4 text-center">
+              No recent activity recorded yet.
+            </p>
           ) : (
-            <div className="flex flex-col gap-2.5">
-              {recentActivity.map((a) => (
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              {recentActivity.map((act) => (
                 <div
-                  key={a.id}
-                  className="flex items-center justify-between py-2 border-b last:border-0 text-xs"
-                  style={{ borderColor: TAN_BORDER }}
+                  key={act.id}
+                  className="flex items-center justify-between p-2.5 rounded-xl border bg-[#FFFDF8]"
+                  style={{ borderColor: `${TAN_BORDER}88` }}
                 >
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-semibold" style={{ fontFamily: FONT_SANS, color: CHALK_GREEN }}>
-                      {a.student_name} ({a.action})
-                    </span>
-                    <span style={{ fontFamily: FONT_MONO, color: MUTED, fontSize: '10px' }}>
-                      Teacher: {a.teacher_name} · {a.date}
-                    </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold block text-[#1F4D3A] truncate">{act.student_name}</span>
+                    <span className="text-[10px] text-gray-500 font-mono">{act.action} · {act.date}</span>
                   </div>
-                  <PhilIRIBadge level={a.phil_iri_level} showIcon={false} />
+                  <PhilIRIBadge level={act.phil_iri_level} />
                 </div>
               ))}
             </div>

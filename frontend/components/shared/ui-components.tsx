@@ -6,7 +6,7 @@ import { PhilIRILevel } from './types';
 import { INK, MUTED, CREAM, TAN_BORDER, TAN_LIGHT, MARIGOLD_BG, FONT_SANS, FONT_MONO, FONT_SERIF } from './constants';
 import styles from './shared.module.css';
 
-/* ─── Card ─── */
+/* ─── Card (Soft-Neobrutalism) ─── */
 export function Card({
   children,
   className = '',
@@ -28,7 +28,7 @@ export function Card({
   );
 }
 
-/* ─── Primary Button ─── */
+/* ─── Primary Button (Tactile 3D Soft-Neobrutalism) ─── */
 export function PrimaryButton({
   children,
   onClick,
@@ -46,6 +46,17 @@ export function PrimaryButton({
   className?: string;
   style?: CSSProperties;
 }) {
+  const darkBorder =
+    accent === '#E8873A'
+      ? '#9C4B0E'
+      : accent === '#3D6B8A'
+      ? '#1D3D53'
+      : accent === '#7A4A6B'
+      ? '#48233C'
+      : accent === '#2E7D4F'
+      ? '#174A2E'
+      : '#133326';
+
   return (
     <button
       type={type}
@@ -53,7 +64,9 @@ export function PrimaryButton({
       disabled={disabled}
       className={`${styles.primaryButton} ${className}`}
       style={{
-        background: `linear-gradient(135deg, ${accent}, ${accent}DD)`,
+        background: `linear-gradient(135deg, ${accent}, ${accent}EE)`,
+        borderColor: darkBorder,
+        boxShadow: disabled ? 'none' : `3px 3px 0px ${darkBorder}`,
         ...style,
       }}
     >
@@ -99,7 +112,10 @@ export function SectionHeader({
     <div className={styles.sectionHeader}>
       <div
         className={`${styles.sectionAccent} rb-fade-in-up`}
-        style={{ background: `linear-gradient(90deg, ${accent}, ${accent}88)` }}
+        style={{
+          background: `linear-gradient(90deg, ${accent}, ${accent}AA)`,
+          borderColor: accent,
+        }}
       />
       <h1 className={styles.sectionTitle}>
         {title}
@@ -129,7 +145,7 @@ export function StatCard({
       onClick={onClick}
       className={`${styles.statCard} ${onClick ? styles.statCardClickable : ''}`}
       style={{
-        background: `linear-gradient(135deg, ${CREAM} 0%, ${accent}08 100%)`,
+        background: `linear-gradient(135deg, #FFFDF8 0%, ${accent}0A 100%)`,
       }}
     >
       {icon && <span className={styles.statIcon} aria-hidden>{icon}</span>}
@@ -148,16 +164,16 @@ export function Badge({
   tone?: 'neutral' | 'success' | 'warning' | 'accent' | 'info';
   accent?: string;
 }) {
-  const tones: Record<string, { bg: string; fg: string }> = {
-    neutral: { bg: TAN_LIGHT, fg: MUTED },
-    success: { bg: '#E6F4EA', fg: '#2E7D4F' },
-    warning: { bg: '#FBEAE3', fg: '#A4432A' },
-    accent: { bg: MARIGOLD_BG, fg: '#8A5A16' },
-    info: { bg: '#E8F0F8', fg: '#3D6B8A' },
+  const tones: Record<string, { bg: string; fg: string; border: string }> = {
+    neutral: { bg: TAN_LIGHT, fg: MUTED, border: TAN_BORDER },
+    success: { bg: '#E6F4EA', fg: '#1F693D', border: '#2E7D4F' },
+    warning: { bg: '#FBEAE3', fg: '#9C3B1A', border: '#B4602E' },
+    accent: { bg: MARIGOLD_BG, fg: '#7D4C13', border: '#E8873A' },
+    info: { bg: '#E8F0F8', fg: '#2C4E66', border: '#3D6B8A' },
   };
   const t = tones[tone] || tones.neutral;
   return (
-    <span className={styles.badge} style={{ background: t.bg, color: t.fg }}>
+    <span className={styles.badge} style={{ background: t.bg, color: t.fg, borderColor: t.border }}>
       {children}
     </span>
   );
@@ -197,17 +213,17 @@ export function DetailPanel({
       <div className="rb-detail-panel">
         <div
           className="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
-          style={{ background: 'rgba(255,253,248,0.95)', backdropFilter: 'blur(8px)', borderBottom: `1px solid ${TAN_BORDER}` }}
+          style={{ background: 'rgba(255,253,248,0.95)', backdropFilter: 'blur(8px)', borderBottom: `2px solid ${TAN_BORDER}` }}
         >
-          <h2 className="text-lg" style={{ fontFamily: FONT_SERIF, fontWeight: 600, color: '#1F4D3A' }}>
+          <h2 className="text-lg" style={{ fontFamily: FONT_SERIF, fontWeight: 700, color: '#1F4D3A' }}>
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-[#1F4D3A08] cursor-pointer"
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-[#1F4D3A15] cursor-pointer"
             aria-label="Close panel"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2" strokeLinecap="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2.5" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -250,7 +266,7 @@ export function ProgressRing({
           {pct}%
         </text>
       </svg>
-      {label && <span className="text-[11px] uppercase tracking-wide" style={{ fontFamily: FONT_SANS, color: MUTED, letterSpacing: '0.04em' }}>{label}</span>}
+      {label && <span className="text-[11px] uppercase tracking-wide font-bold" style={{ fontFamily: FONT_SANS, color: MUTED, letterSpacing: '0.05em' }}>{label}</span>}
     </div>
   );
 }
@@ -270,16 +286,25 @@ export function ScoreDisplay({ label, value, color }: { label: string; value: nu
     <div className="flex items-center gap-3">
       <span className="text-sm w-12 text-right" style={{ fontFamily: FONT_MONO, fontWeight: 700, color }}>{Math.round(value)}%</span>
       <div className="flex-1"><MiniProgressBar value={value} color={color} width={120} /></div>
-      <span className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED }}>{label}</span>
+      <span className="text-xs font-semibold" style={{ fontFamily: FONT_SANS, color: MUTED }}>{label}</span>
     </div>
   );
 }
 
-/* ─── Avatar ─── */
-export function Avatar({ name, accent, size = 36 }: { name: string; accent: string; size?: number }) {
+/* ─── Avatar (Soft-Neobrutalism) ─── */
+export function Avatar({ name, accent, size = 38 }: { name: string; accent: string; size?: number }) {
   const initials = (name || 'User').split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 2);
   return (
-    <span className="rb-avatar" style={{ width: size, height: size, fontSize: size * 0.36, background: `linear-gradient(135deg, ${accent}, ${accent}BB)` }}>
+    <span
+      className="rb-avatar"
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * 0.36,
+        background: `linear-gradient(135deg, ${accent}, ${accent}DD)`,
+        borderColor: '#FFFFFF',
+      }}
+    >
       {initials}
     </span>
   );

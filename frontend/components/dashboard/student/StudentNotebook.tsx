@@ -351,21 +351,23 @@ export default function StudentNotebook({
           <StatCard label="Study Sessions" value={studyHistory.length} accent="#3D6B8A" />
         </div>
 
-        {/* Navigation Tabs (Fixed dimensions and consistent borders to prevent UI shift) */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-5 border-b" style={{ borderColor: TAN_BORDER }}>
+        {/* Navigation Tabs (Soft-Neobrutalism Tactile Design) */}
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 mb-6 border-b-2" style={{ borderColor: TAN_BORDER }}>
           {/* Tab 1: Materials */}
           <button
             type="button"
             onClick={() => { setActiveTab('materials'); setShowNoteEditor(false); }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150 border"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 border-2"
             style={{
               fontFamily: FONT_SANS,
-              background: activeTab === 'materials' ? STUDENT_ACCENT : 'transparent',
+              background: activeTab === 'materials' ? STUDENT_ACCENT : '#FFFDF8',
               color: activeTab === 'materials' ? '#FFFDF8' : MUTED,
-              borderColor: activeTab === 'materials' ? STUDENT_ACCENT : TAN_BORDER,
+              borderColor: activeTab === 'materials' ? '#9C4B0E' : TAN_BORDER,
+              boxShadow: activeTab === 'materials' ? '3px 3px 0px #9C4B0E' : '2px 2px 0px rgba(0,0,0,0.06)',
+              transform: activeTab === 'materials' ? 'translate(-1px, -1px)' : 'none',
             }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M2 6s1.5-2 5-2 5 2 5 2v14s-1.5-1-5-1-5 1-5 1V6z" />
               <path d="M12 6s1.5-2 5-2 5 2 5 2v14s-1.5-1-5-1-5 1-5 1V6z" />
             </svg>
@@ -376,15 +378,17 @@ export default function StudentNotebook({
           <button
             type="button"
             onClick={() => setActiveTab('notes')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150 border"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 border-2"
             style={{
               fontFamily: FONT_SANS,
-              background: activeTab === 'notes' ? STUDENT_ACCENT : 'transparent',
+              background: activeTab === 'notes' ? STUDENT_ACCENT : '#FFFDF8',
               color: activeTab === 'notes' ? '#FFFDF8' : MUTED,
-              borderColor: activeTab === 'notes' ? STUDENT_ACCENT : TAN_BORDER,
+              borderColor: activeTab === 'notes' ? '#9C4B0E' : TAN_BORDER,
+              boxShadow: activeTab === 'notes' ? '3px 3px 0px #9C4B0E' : '2px 2px 0px rgba(0,0,0,0.06)',
+              transform: activeTab === 'notes' ? 'translate(-1px, -1px)' : 'none',
             }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
@@ -395,15 +399,17 @@ export default function StudentNotebook({
           <button
             type="button"
             onClick={() => setActiveTab('history')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150 border"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 border-2"
             style={{
               fontFamily: FONT_SANS,
-              background: activeTab === 'history' ? '#3D6B8A' : 'transparent',
+              background: activeTab === 'history' ? '#3D6B8A' : '#FFFDF8',
               color: activeTab === 'history' ? '#FFFDF8' : MUTED,
-              borderColor: activeTab === 'history' ? '#3D6B8A' : TAN_BORDER,
+              borderColor: activeTab === 'history' ? '#1D3D53' : TAN_BORDER,
+              boxShadow: activeTab === 'history' ? '3px 3px 0px #1D3D53' : '2px 2px 0px rgba(0,0,0,0.06)',
+              transform: activeTab === 'history' ? 'translate(-1px, -1px)' : 'none',
             }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>

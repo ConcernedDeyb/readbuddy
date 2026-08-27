@@ -327,7 +327,7 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         <div className={styles.formHeader}>
           <h2 className={styles.formTitle}>Institutional Sign In</h2>
           <p className={styles.formSubtitle}>
-            Enter your School ID Number to access your ReadBuddy portal.
+            Enter your School ID Number to access your portal.
           </p>
         </div>
 

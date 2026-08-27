@@ -190,7 +190,11 @@ function SessionContent() {
   };
 
   return (
-    <StepShell activeStep={step} mode={isAssignedTest ? 'test' : 'practice'}>
+    <StepShell
+      activeStep={step}
+      mode={isAssignedTest ? 'test' : 'practice'}
+      onExit={handleReturnDashboard}
+    >
       {/* Assigned Test Step 1: Briefing */}
       {step === 'briefing' && assignedTestData && (
         <AssignedTestBriefingStep
