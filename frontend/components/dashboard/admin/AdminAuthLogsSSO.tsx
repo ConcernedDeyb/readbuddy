@@ -337,17 +337,20 @@ export function AdminAuthLogsSSO() {
         </div>
       )}
 
-      {/* Sub Tabs */}
-      <div className="flex items-center gap-2 mb-6 pb-2 border-b border-[#DED2B444]">
+      {/* Sub Tabs (Soft-Neobrutalism Tactile Pill Buttons) */}
+      <div className="flex items-center gap-2.5 mb-6 overflow-x-auto pb-1">
         <button
           onClick={() => setActiveTab('logs')}
-          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5"
+          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border-2 select-none"
           style={{
-            background: activeTab === 'logs' ? ADMIN_ACCENT : 'transparent',
-            color: activeTab === 'logs' ? '#FFFFFF' : MUTED,
+            background: activeTab === 'logs' ? ADMIN_ACCENT : '#FFFDF8',
+            color: activeTab === 'logs' ? '#FFFFFF' : '#2B2621',
+            borderColor: activeTab === 'logs' ? '#1F4D3A' : '#DED2B4',
+            boxShadow: activeTab === 'logs' ? '3px 3px 0px #1F4D3A' : '2px 2px 0px rgba(31,77,58,0.06)',
+            transform: activeTab === 'logs' ? 'translate(-1px, -1px)' : 'none',
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           <span>Authentication Logs ({authLogs.length})</span>
@@ -355,13 +358,16 @@ export function AdminAuthLogsSSO() {
 
         <button
           onClick={() => setActiveTab('activity')}
-          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5"
+          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border-2 select-none"
           style={{
-            background: activeTab === 'activity' ? ADMIN_ACCENT : 'transparent',
-            color: activeTab === 'activity' ? '#FFFFFF' : MUTED,
+            background: activeTab === 'activity' ? ADMIN_ACCENT : '#FFFDF8',
+            color: activeTab === 'activity' ? '#FFFFFF' : '#2B2621',
+            borderColor: activeTab === 'activity' ? '#1F4D3A' : '#DED2B4',
+            boxShadow: activeTab === 'activity' ? '3px 3px 0px #1F4D3A' : '2px 2px 0px rgba(31,77,58,0.06)',
+            transform: activeTab === 'activity' ? 'translate(-1px, -1px)' : 'none',
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <circle cx="12" cy="12" r="10" />
             <polyline points="12 6 12 12 16 14" />
           </svg>
@@ -370,13 +376,16 @@ export function AdminAuthLogsSSO() {
 
         <button
           onClick={() => setActiveTab('sso')}
-          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5"
+          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border-2 select-none"
           style={{
-            background: activeTab === 'sso' ? ADMIN_ACCENT : 'transparent',
-            color: activeTab === 'sso' ? '#FFFFFF' : MUTED,
+            background: activeTab === 'sso' ? ADMIN_ACCENT : '#FFFDF8',
+            color: activeTab === 'sso' ? '#FFFFFF' : '#2B2621',
+            borderColor: activeTab === 'sso' ? '#1F4D3A' : '#DED2B4',
+            boxShadow: activeTab === 'sso' ? '3px 3px 0px #1F4D3A' : '2px 2px 0px rgba(31,77,58,0.06)',
+            transform: activeTab === 'sso' ? 'translate(-1px, -1px)' : 'none',
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>

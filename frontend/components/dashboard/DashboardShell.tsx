@@ -3,6 +3,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { FONT_SERIF, FONT_SANS, FONT_MONO, CREAM, MUTED, TAN_BORDER, CHALK_GREEN } from './_shared';
 import { ReadBuddyLogo } from '../brand';
+import { ReadBuddyTourModal } from '../guide';
 
 export type DashboardRole = 'teacher' | 'admin' | 'student';
 
@@ -155,6 +156,19 @@ export default function DashboardShell({
   const theme = ROLE_THEME[role];
   const nav = role === 'teacher' ? TEACHER_NAV : role === 'admin' ? ADMIN_NAV : STUDENT_NAV;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [showTourModal, setShowTourModal] = useState(false);
+
+  // Auto-prompt onboarding tour on first login for new users
+  useEffect(() => {
+    try {
+      const tourKey = `readbuddy_tour_${role}`;
+      const completed = localStorage.getItem(tourKey);
+      if (!completed) {
+        const timer = setTimeout(() => setShowTourModal(true), 600);
+        return () => clearTimeout(timer);
+      }
+    } catch (e) {}
+  }, [role]);
 
   // Scroll to top on section change
   useEffect(() => {
@@ -323,8 +337,8 @@ export default function DashboardShell({
           </span>
         </header>
 
-        {/* Breadcrumb Header Bar */}
-        <div className="hidden sm:block px-8 pt-6 pb-0">
+        {/* Breadcrumb Header Bar & Quick Guide Button */}
+        <div className="hidden sm:flex items-center justify-between px-8 pt-6 pb-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-[#FFFDF8] border border-[#DED2B4] shadow-[2px_2px_0px_rgba(31,77,58,0.06)] text-xs" style={{ fontFamily: FONT_SANS }}>
             <button
               onClick={() => onSectionChange('overview')}
@@ -337,6 +351,15 @@ export default function DashboardShell({
               {SECTION_TITLES[activeSection] || activeSection}
             </span>
           </div>
+
+          <button
+            onClick={() => setShowTourModal(true)}
+            className="px-3 py-1 rounded-xl bg-[#FFFDF8] hover:bg-[#FCEDDE] text-[#1F4D3A] font-bold text-xs font-sans border-2 border-[#1F4D3A] shadow-[2px_2px_0px_#1F4D3A] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F4D3A] transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Open interactive mascot guide"
+          >
+            <span>📖</span>
+            <span>Quick Guide</span>
+          </button>
         </div>
 
         <main className="max-w-5xl mx-auto px-5 sm:px-8 py-6 sm:py-8">
@@ -345,6 +368,19 @@ export default function DashboardShell({
           </div>
         </main>
       </div>
+
+      {/* ─── Interactive Mascot Onboarding & Feature Guide Modal ─── */}
+      <ReadBuddyTourModal
+        open={showTourModal}
+        role={role}
+        userName={userName}
+        onClose={() => {
+          setShowTourModal(false);
+          try {
+            localStorage.setItem(`readbuddy_tour_${role}`, 'completed');
+          } catch (e) {}
+        }}
+      />
     </div>
   );
 }

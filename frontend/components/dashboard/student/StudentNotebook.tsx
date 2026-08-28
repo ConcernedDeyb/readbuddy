@@ -351,19 +351,19 @@ export default function StudentNotebook({
           <StatCard label="Study Sessions" value={studyHistory.length} accent="#3D6B8A" />
         </div>
 
-        {/* Navigation Tabs (Soft-Neobrutalism Tactile Design) */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 mb-6 border-b-2" style={{ borderColor: TAN_BORDER }}>
+        {/* Navigation Tabs (Soft-Neobrutalism Tactile Pill Buttons) */}
+        <div className="flex items-center gap-3 overflow-x-auto pt-1 pb-2 mb-6">
           {/* Tab 1: Materials */}
           <button
             type="button"
             onClick={() => { setActiveTab('materials'); setShowNoteEditor(false); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 border-2"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 border-2 select-none"
             style={{
               fontFamily: FONT_SANS,
-              background: activeTab === 'materials' ? STUDENT_ACCENT : '#FFFDF8',
-              color: activeTab === 'materials' ? '#FFFDF8' : MUTED,
-              borderColor: activeTab === 'materials' ? '#9C4B0E' : TAN_BORDER,
-              boxShadow: activeTab === 'materials' ? '3px 3px 0px #9C4B0E' : '2px 2px 0px rgba(0,0,0,0.06)',
+              background: activeTab === 'materials' ? '#E8873A' : '#FFFDF8',
+              color: activeTab === 'materials' ? '#FFFDF8' : '#2B2621',
+              borderColor: activeTab === 'materials' ? '#1F4D3A' : TAN_BORDER,
+              boxShadow: activeTab === 'materials' ? '3px 3px 0px #1F4D3A' : '2px 2px 0px rgba(31, 77, 58, 0.08)',
               transform: activeTab === 'materials' ? 'translate(-1px, -1px)' : 'none',
             }}
           >
@@ -378,13 +378,13 @@ export default function StudentNotebook({
           <button
             type="button"
             onClick={() => setActiveTab('notes')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 border-2"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 border-2 select-none"
             style={{
               fontFamily: FONT_SANS,
-              background: activeTab === 'notes' ? STUDENT_ACCENT : '#FFFDF8',
-              color: activeTab === 'notes' ? '#FFFDF8' : MUTED,
-              borderColor: activeTab === 'notes' ? '#9C4B0E' : TAN_BORDER,
-              boxShadow: activeTab === 'notes' ? '3px 3px 0px #9C4B0E' : '2px 2px 0px rgba(0,0,0,0.06)',
+              background: activeTab === 'notes' ? '#E8873A' : '#FFFDF8',
+              color: activeTab === 'notes' ? '#FFFDF8' : '#2B2621',
+              borderColor: activeTab === 'notes' ? '#1F4D3A' : TAN_BORDER,
+              boxShadow: activeTab === 'notes' ? '3px 3px 0px #1F4D3A' : '2px 2px 0px rgba(31, 77, 58, 0.08)',
               transform: activeTab === 'notes' ? 'translate(-1px, -1px)' : 'none',
             }}
           >
@@ -399,13 +399,13 @@ export default function StudentNotebook({
           <button
             type="button"
             onClick={() => setActiveTab('history')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 border-2"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 border-2 select-none"
             style={{
               fontFamily: FONT_SANS,
               background: activeTab === 'history' ? '#3D6B8A' : '#FFFDF8',
-              color: activeTab === 'history' ? '#FFFDF8' : MUTED,
-              borderColor: activeTab === 'history' ? '#1D3D53' : TAN_BORDER,
-              boxShadow: activeTab === 'history' ? '3px 3px 0px #1D3D53' : '2px 2px 0px rgba(0,0,0,0.06)',
+              color: activeTab === 'history' ? '#FFFDF8' : '#2B2621',
+              borderColor: activeTab === 'history' ? '#1F4D3A' : TAN_BORDER,
+              boxShadow: activeTab === 'history' ? '3px 3px 0px #1F4D3A' : '2px 2px 0px rgba(31, 77, 58, 0.08)',
               transform: activeTab === 'history' ? 'translate(-1px, -1px)' : 'none',
             }}
           >

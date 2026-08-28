@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import styles from './auth.module.css';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { CreateAccountModal } from './CreateAccountModal';
+import { LoginLoadingScreen } from './LoginLoadingScreen';
 import { recordAuthLog, recordActivity } from '@/utils/auditLogger';
 
 export interface LoginFormProps {
@@ -20,6 +21,7 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginSuccessData, setLoginSuccessData] = useState<{ role: 'student' | 'teacher' | 'admin'; name: string } | null>(null);
 
   // Modal dialog states
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
@@ -303,21 +305,34 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         details: `Authenticated as ${userRole} (${trimmedId})`,
       });
 
-      setTimeout(() => {
-        setLoading(false);
-        if (userRole === 'admin') {
-          router.push('/admin');
-        } else if (userRole === 'teacher') {
-          router.push('/teacher');
-        } else {
-          router.push('/student');
-        }
-      }, 300);
+      setLoading(false);
+      setLoginSuccessData({
+        role: userRole,
+        name: matchedAccount.display_name,
+      });
       return;
     } catch (e) {
       setError('An error occurred during authentication. Please try again.');
       setLoading(false);
     }
+  }
+
+  if (loginSuccessData) {
+    return (
+      <LoginLoadingScreen
+        role={loginSuccessData.role}
+        userName={loginSuccessData.name}
+        onComplete={() => {
+          if (loginSuccessData.role === 'admin') {
+            router.push('/admin');
+          } else if (loginSuccessData.role === 'teacher') {
+            router.push('/teacher');
+          } else {
+            router.push('/student');
+          }
+        }}
+      />
+    );
   }
 
   return (

@@ -12,6 +12,7 @@ import {
   TeacherNotebook,
   AccountSettings,
 } from '@/components/dashboard';
+import { DashboardSkeleton } from '@/components/shared/SkeletonLoaders';
 
 import { PhilIRILevel } from '@/components/dashboard/_shared';
 
@@ -50,6 +51,7 @@ type TeacherSection = 'overview' | 'classes' | 'students' | 'passages' | 'author
 
 export default function TeacherDashboardPage() {
   const [section, setSection] = useState<TeacherSection>('overview');
+  const [isLoading, setIsLoading] = useState(true);
   const [teacherName, setTeacherName] = useState('Teacher');
   const [teacherEmail, setTeacherEmail] = useState('');
   const [teacherUsername, setTeacherUsername] = useState('');
@@ -174,7 +176,9 @@ export default function TeacherDashboardPage() {
         } else {
           setTests([]);
         }
-      } catch (e) {}
+      } catch (e) {} finally {
+        setTimeout(() => setIsLoading(false), 200);
+      }
     }
 
     loadData();
@@ -218,21 +222,25 @@ export default function TeacherDashboardPage() {
       }}
     >
       {section === 'overview' && (
-        <TeacherOverview
-          teacherName={teacherName}
-          studentCount={students.length}
-          passageCount={passages.length}
-          publishedCount={passages.filter((p) => p.is_published).length}
-          testCount={testAssignmentCount}
-          pendingGradingCount={pendingGradingCount}
-          students={students.map((s) => ({
-            id: s.id,
-            name: s.display_name,
-            latest_level: s.latest_level,
-            sessions_completed: s.sessions_completed || 0,
-          }))}
-          onNavigate={(s) => setSection(s as TeacherSection)}
-        />
+        isLoading ? (
+          <DashboardSkeleton role="teacher" />
+        ) : (
+          <TeacherOverview
+            teacherName={teacherName}
+            studentCount={students.length}
+            passageCount={passages.length}
+            publishedCount={passages.filter((p) => p.is_published).length}
+            testCount={testAssignmentCount}
+            pendingGradingCount={pendingGradingCount}
+            students={students.map((s) => ({
+              id: s.id,
+              name: s.display_name,
+              latest_level: s.latest_level,
+              sessions_completed: s.sessions_completed || 0,
+            }))}
+            onNavigate={(s) => setSection(s as TeacherSection)}
+          />
+        )
       )}
 
       {section === 'classes' && (

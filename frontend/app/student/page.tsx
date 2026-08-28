@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardShell, StudentDashboard, StudentNotebook, AccountSettings } from '@/components/dashboard';
+import { DashboardSkeleton } from '@/components/shared/SkeletonLoaders';
 import {
   SectionHeader,
   Card,
@@ -57,6 +58,7 @@ function scoreColor(pct: number): string {
 export default function StudentDashboardPage() {
   const router = useRouter();
   const [section, setSection] = useState<StudentSection>('overview');
+  const [isLoading, setIsLoading] = useState(true);
   const [student, setStudent] = useState({
     id: '',
     name: 'Student',
@@ -165,7 +167,9 @@ export default function StudentDashboardPage() {
         } else {
           setPendingTests([]);
         }
-      } catch (e) {}
+      } catch (e) {} finally {
+        setTimeout(() => setIsLoading(false), 200);
+      }
     }
 
     loadData();
@@ -198,19 +202,23 @@ export default function StudentDashboardPage() {
     >
       {/* ─── Overview Section ─── */}
       {section === 'overview' && (
-        <StudentDashboard
-          studentName={student.name.split(' ')[0]}
-          sectionName={(student as any).sectionName}
-          gradeLevel={student.gradeLevel}
-          teacherName={student.teacherName}
-          sessions={sessions}
-          pendingTests={pendingTests}
-          onStartSession={() => router.push('/session')}
-          onStartTest={(testId) => {
-            router.push(`/session?testId=${testId}`);
-          }}
-          onGoToNotebook={() => setSection('notebook')}
-        />
+        isLoading ? (
+          <DashboardSkeleton role="student" />
+        ) : (
+          <StudentDashboard
+            studentName={student.name.split(' ')[0]}
+            sectionName={(student as any).sectionName}
+            gradeLevel={student.gradeLevel}
+            teacherName={student.teacherName}
+            sessions={sessions}
+            pendingTests={pendingTests}
+            onStartSession={() => router.push('/session')}
+            onStartTest={(testId) => {
+              router.push(`/session?testId=${testId}`);
+            }}
+            onGoToNotebook={() => setSection('notebook')}
+          />
+        )
       )}
 
       {/* ─── Assigned Tests Section ─── */}

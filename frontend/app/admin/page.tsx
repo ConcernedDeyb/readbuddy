@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { DashboardShell, AdminOverview, AdminTeachers, AdminStudents, AdminContent, AdminAuthLogsSSO, AdminSettings, AccountSettings } from '@/components/dashboard';
+import { DashboardSkeleton } from '@/components/shared/SkeletonLoaders';
 
 const MOCK_ADAPTER_BENCHMARK = {
   fleursWer: 0.1244,
@@ -16,6 +17,7 @@ type AdminSection = 'overview' | 'teachers' | 'students' | 'content' | 'logs' | 
 
 export default function AdminDashboardPage() {
   const [section, setSection] = useState<AdminSection>('overview');
+  const [isLoading, setIsLoading] = useState(true);
   const [adminName, setAdminName] = useState('System Admin');
   const [adminEmail, setAdminEmail] = useState('admin@smccnasipit.edu.ph');
   const [adminUsername, setAdminUsername] = useState('readbuddyadmin');
@@ -146,7 +148,9 @@ export default function AdminDashboardPage() {
           action: 'Completed session',
         }));
         setRecentActivity(activityList);
-      } catch (e) {}
+      } catch (e) {} finally {
+        setTimeout(() => setIsLoading(false), 200);
+      }
     }
 
     loadData();
@@ -182,16 +186,20 @@ export default function AdminDashboardPage() {
       }}
     >
       {section === 'overview' && (
-        <AdminOverview
-          teacherCount={teachers.length}
-          studentCount={students.length}
-          passageCount={passages.length}
-          testCount={passages.filter((p) => p.is_published).length}
-          pendingTeacherCount={pendingTeacherCount}
-          vramStatus={MOCK_VRAM_STATUS}
-          recentActivity={recentActivity}
-          onNavigate={(s) => setSection(s as AdminSection)}
-        />
+        isLoading ? (
+          <DashboardSkeleton role="admin" />
+        ) : (
+          <AdminOverview
+            teacherCount={teachers.length}
+            studentCount={students.length}
+            passageCount={passages.length}
+            testCount={passages.filter((p) => p.is_published).length}
+            pendingTeacherCount={pendingTeacherCount}
+            vramStatus={MOCK_VRAM_STATUS}
+            recentActivity={recentActivity}
+            onNavigate={(s) => setSection(s as AdminSection)}
+          />
+        )
       )}
 
       {section === 'teachers' && <AdminTeachers teachers={teachers} />}
