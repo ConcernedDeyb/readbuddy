@@ -1,6 +1,7 @@
 'use client';
 
 import { SectionHeader, StatCard, Card, PhilIRIBadge, FONT_SANS, FONT_MONO, FONT_SERIF, MUTED, CHALK_GREEN, TAN_BORDER, PhilIRILevel } from '../_shared';
+import { School, PenTool, ClipboardList, BarChart3 } from 'lucide-react';
 
 const TEACHER_ACCENT = '#3D6B8A';
 
@@ -54,8 +55,8 @@ export function TeacherOverview({
           className="p-4 rounded-xl border-2 bg-[#FFFDF8] flex items-center gap-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(61,107,138,0.2)] cursor-pointer"
           style={{ borderColor: TAN_BORDER }}
         >
-          <div className="w-10 h-10 rounded-xl bg-[#E8F0F8] border border-[#A8C5DA] flex items-center justify-center text-lg shrink-0">
-            🏫
+          <div className="w-10 h-10 rounded-xl bg-[#E8F0F8] border border-[#A8C5DA] flex items-center justify-center shrink-0">
+            <School className="w-5 h-5 text-[#3D6B8A]" strokeWidth={2.25} />
           </div>
           <div>
             <span className="text-xs font-bold block text-[#1F4D3A]" style={{ fontFamily: FONT_SANS }}>Manage Sections</span>
@@ -69,8 +70,8 @@ export function TeacherOverview({
           className="p-4 rounded-xl border-2 bg-[#FFFDF8] flex items-center gap-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(31,77,58,0.2)] cursor-pointer"
           style={{ borderColor: TAN_BORDER }}
         >
-          <div className="w-10 h-10 rounded-xl bg-[#E6F4EA] border border-[#BFE0CC] flex items-center justify-center text-lg shrink-0">
-            ✍️
+          <div className="w-10 h-10 rounded-xl bg-[#E6F4EA] border border-[#BFE0CC] flex items-center justify-center shrink-0">
+            <PenTool className="w-5 h-5 text-[#1F4D3A]" strokeWidth={2.25} />
           </div>
           <div>
             <span className="text-xs font-bold block text-[#1F4D3A]" style={{ fontFamily: FONT_SANS }}>Author Passage</span>
@@ -84,8 +85,8 @@ export function TeacherOverview({
           className="p-4 rounded-xl border-2 bg-[#FFFDF8] flex items-center gap-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(232,135,58,0.2)] cursor-pointer"
           style={{ borderColor: TAN_BORDER }}
         >
-          <div className="w-10 h-10 rounded-xl bg-[#FCEDDE] border border-[#F0C99A] flex items-center justify-center text-lg shrink-0">
-            📝
+          <div className="w-10 h-10 rounded-xl bg-[#FCEDDE] border border-[#F0C99A] flex items-center justify-center shrink-0">
+            <ClipboardList className="w-5 h-5 text-[#E8873A]" strokeWidth={2.25} />
           </div>
           <div>
             <span className="text-xs font-bold block text-[#1F4D3A]" style={{ fontFamily: FONT_SANS }}>Assign Reading Test</span>
@@ -98,7 +99,7 @@ export function TeacherOverview({
       <Card>
         <div className="flex items-center justify-between mb-3 border-b pb-2" style={{ borderColor: TAN_BORDER }}>
           <h2 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
-            <span>📊</span>
+            <BarChart3 className="w-4 h-4 text-[#1F4D3A]" strokeWidth={2.25} />
             <span>Recent Student Reading Activity</span>
           </h2>
           <span className="text-xs font-mono text-gray-500">{students.length} Total Records</span>

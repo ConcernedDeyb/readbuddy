@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PenTool, Camera, FileText, Lock, AlertTriangle } from 'lucide-react';
 
 interface InputMethodStepProps {
   language: 'en' | 'tl';
@@ -63,7 +64,8 @@ export default function InputMethodStep({
         className="text-2xl mb-2 flex items-center gap-2"
         style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, color: '#1F4D3A' }}
       >
-        <span aria-hidden>✏️</span> How do you have your passage?
+        <PenTool className="w-6 h-6 text-[#1F4D3A]" strokeWidth={2.25} />
+        <span>How do you have your passage?</span>
       </h1>
       <p className="mb-6" style={{ fontFamily: "'Figtree', sans-serif", color: '#5B6B62' }}>
         Pick whichever is easiest for you.
@@ -142,7 +144,8 @@ export default function InputMethodStep({
               className="text-sm mb-0.5 flex items-center gap-1.5"
               style={{ fontFamily: "'Figtree', sans-serif", fontWeight: 600, color: '#1F4D3A' }}
             >
-              <span aria-hidden>📷</span> Take or upload a photo
+              <Camera className="w-4 h-4 text-[#1F4D3A]" strokeWidth={2.25} />
+              <span>Take or upload a photo</span>
             </h2>
             <p className="text-xs" style={{ fontFamily: "'Figtree', sans-serif", color: '#8A9089' }}>
               {isUploading ? (
@@ -155,12 +158,10 @@ export default function InputMethodStep({
               )}
             </p>
           </div>
-          <span
-            className="text-2xl group-hover:scale-110 transition-transform"
-            aria-hidden
-          >
-            📷
-          </span>
+          <Camera
+            className="w-6 h-6 text-[#1F4D3A] group-hover:scale-110 transition-transform"
+            strokeWidth={2.25}
+          />
         </div>
         <input
           type="file"
@@ -182,13 +183,14 @@ export default function InputMethodStep({
               className="text-sm mb-0.5 flex items-center gap-1.5"
               style={{ fontFamily: "'Figtree', sans-serif", fontWeight: 600, color: '#1F4D3A' }}
             >
-              <span aria-hidden>📄</span> Upload a document
+              <FileText className="w-4 h-4 text-[#1F4D3A]" strokeWidth={2.25} />
+              <span>Upload a document</span>
             </h2>
             <p className="text-xs" style={{ fontFamily: "'Figtree', sans-serif", color: '#8A9089' }}>
               PDF or Word — coming soon
             </p>
           </div>
-          <span className="text-2xl" aria-hidden>🔒</span>
+          <Lock className="w-5 h-5 text-[#8A9089]" strokeWidth={2.25} />
         </div>
       </div>
 
@@ -202,7 +204,7 @@ export default function InputMethodStep({
             border: '1px solid #EFD9AC',
           }}
         >
-          <span aria-hidden>⚠️</span>
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" strokeWidth={2.25} />
           {error}
         </div>
       )}

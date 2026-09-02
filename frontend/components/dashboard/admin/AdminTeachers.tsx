@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { SectionHeader, Card, Badge, EmptyState, Avatar, FONT_MONO, FONT_SERIF, FONT_SANS, MUTED, CHALK_GREEN, TAN_BORDER, CREAM } from '../_shared';
 import { recordAuthLog, recordActivity } from '@/utils/auditLogger';
+import { ShieldCheck, Check, X } from 'lucide-react';
 
 const ADMIN_ACCENT = '#7A4A6B';
 
@@ -322,7 +323,7 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
   }
 
   function handleDeleteTeacher(schoolIdOrEmail: string, name: string) {
-    if (!window.confirm(`⚠️ Are you sure you want to permanently delete teacher account "${name}"?`)) return;
+    if (!window.confirm(`Are you sure you want to permanently delete teacher account "${name}"?`)) return;
 
     try {
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
@@ -475,8 +476,8 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
       {feedback && (
         <div className="mb-4 p-3.5 rounded-xl bg-[#EBF3F8] border border-[#A8C5DA] text-[#3D6B8A] text-xs font-sans font-semibold flex items-center justify-between rb-fade-in-up">
           <span>{feedback}</span>
-          <button onClick={() => setFeedback(null)} className="text-gray-400 hover:text-gray-600 cursor-pointer text-sm">
-            ✕
+          <button onClick={() => setFeedback(null)} className="text-gray-400 hover:text-gray-600 cursor-pointer flex items-center">
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
@@ -486,7 +487,7 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className="text-base">🛡️</span>
+              <ShieldCheck className="w-5 h-5 text-[#7A4A6B]" strokeWidth={2.25} />
               <h3 className="text-sm font-bold uppercase tracking-wide font-mono" style={{ color: ADMIN_ACCENT }}>
                 Teacher Account Creation Limiter & Anti-Impersonation Control
               </h3>
@@ -676,7 +677,8 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
                       className="px-3 py-1.5 rounded-lg text-xs font-sans font-bold text-white shadow-sm hover:opacity-95 transition-all cursor-pointer flex items-center gap-1"
                       style={{ background: 'linear-gradient(135deg, #2E7D4F, #1F4D3A)' }}
                     >
-                      <span>✓ Approve</span>
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      <span>Approve</span>
                     </button>
                   ) : (
                     <button
@@ -716,7 +718,7 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
               onClick={() => setIsAddModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer"
             >
-              ✕
+              <X className="w-4 h-4" strokeWidth={2.25} />
             </button>
 
             <h3 className="text-lg font-serif font-bold text-[#1F4D3A] mb-1">

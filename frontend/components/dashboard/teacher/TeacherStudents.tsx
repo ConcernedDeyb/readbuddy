@@ -18,6 +18,7 @@ import {
   MUTED,
   CHALK_GREEN,
 } from '../_shared';
+import { Check, X } from 'lucide-react';
 
 const TEACHER_ACCENT = '#3D6B8A';
 const DEFAULT_STUDENT_PASSWORD = 'smcc2026';
@@ -887,7 +888,7 @@ export function TeacherStudents({
 
   // ─── ACTION 2: Permanently Delete Student Account from System & Database ───
   async function handlePermanentDeleteStudent(studentId: string, studentName: string) {
-    if (!window.confirm(`⚠️ PERMANENT DELETION:\nAre you sure you want to completely delete the student account for "${studentName}"?\n\nThis will permanently delete their account from the PostgreSQL database and all class rosters.`)) return;
+    if (!window.confirm(`PERMANENT DELETION:\nAre you sure you want to completely delete the student account for "${studentName}"?\n\nThis will permanently delete their account from the PostgreSQL database and all class rosters.`)) return;
 
     const studentObj = allRegisteredStudents.find((s) => s.id === studentId || s.school_id === studentId || s.username === studentId);
     const schoolId = studentObj?.school_id || studentObj?.username || studentId;
@@ -1060,10 +1061,12 @@ export function TeacherStudents({
       {notification && (
         <div className="mb-4 p-3.5 rounded-xl bg-[#E6F4EA] border border-[#BFE0CC] text-[#2E7D4F] text-xs font-sans font-semibold flex items-center justify-between shadow-sm rb-fade-in-up">
           <div className="flex items-center gap-2">
-            <span>✓</span>
+            <Check className="w-4 h-4 text-[#2E7D4F]" strokeWidth={2.5} />
             <span>{notification}</span>
           </div>
-          <button onClick={() => setNotification(null)} className="text-gray-500 hover:text-gray-700 cursor-pointer">✕</button>
+          <button onClick={() => setNotification(null)} className="text-gray-500 hover:text-gray-700 cursor-pointer flex items-center">
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
@@ -1234,7 +1237,7 @@ export function TeacherStudents({
                 onClick={() => setShowModal(false)}
                 className="text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors font-sans"
               >
-                ✕
+                <X className="w-4 h-4" strokeWidth={2.25} />
               </button>
             </div>
 
@@ -1280,7 +1283,9 @@ export function TeacherStudents({
             {formError && (
               <div className="mb-4 p-3 rounded-xl bg-[#FDF2E9] border border-[#F0C99A] text-[#B4602E] text-xs font-sans font-medium flex items-center justify-between">
                 <span>{formError}</span>
-                <button onClick={() => setFormError(null)} className="text-gray-400 hover:text-gray-600 cursor-pointer ml-2">✕</button>
+                <button onClick={() => setFormError(null)} className="text-gray-400 hover:text-gray-600 cursor-pointer ml-2 flex items-center">
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
 
@@ -1465,7 +1470,7 @@ export function TeacherStudents({
                     <GhostButton onClick={() => setShowModal(false)}>Cancel</GhostButton>
                     <PrimaryButton type="submit" accent={TEACHER_ACCENT} disabled={selectedDbStudentIds.size === 0}>
                       <span className="flex items-center gap-1.5">
-                        <span>✓</span>
+                        <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                         <span>
                           Enroll {selectedDbStudentIds.size > 0 ? selectedDbStudentIds.size : ''} Student{selectedDbStudentIds.size === 1 ? '' : 's'} to Section {dbTargetSection === '__custom__' ? (dbCustomSection || 'Custom') : dbTargetSection}
                         </span>

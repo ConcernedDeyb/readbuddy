@@ -13,6 +13,7 @@ import {
   CREAM,
   CHALK_GREEN,
 } from '../_shared';
+import { Lightbulb, FileText, Search, HelpCircle } from 'lucide-react';
 
 const STUDENT_ACCENT = '#E8873A';
 
@@ -196,27 +197,28 @@ export default function NotebookAIChat({
         {/* Quick Suggestion Prompts */}
         <div className="flex flex-wrap gap-1.5 mb-3">
           {[
-            '💡 Summarize main idea',
-            '📝 3 Key Takeaways',
-            '🔍 Explain tricky words',
-            '❓ Quiz me with a practice question',
-          ].map((prompt) => (
+            { text: 'Summarize main idea', icon: Lightbulb },
+            { text: '3 Key Takeaways', icon: FileText },
+            { text: 'Explain tricky words', icon: Search },
+            { text: 'Quiz me with a practice question', icon: HelpCircle },
+          ].map(({ text, icon: IconComponent }) => (
             <button
-              key={prompt}
+              key={text}
               type="button"
               disabled={isLoading}
               onClick={() => {
-                setInput(prompt.replace(/^[^\w\s]+\s*/, ''));
+                setInput(text);
                 setTimeout(() => inputRef.current?.focus(), 50);
               }}
-              className="text-[11px] px-2.5 py-1 rounded-full font-sans font-medium transition-all duration-150 cursor-pointer border hover:bg-amber-50"
+              className="text-[11px] px-2.5 py-1 rounded-full font-sans font-medium transition-all duration-150 cursor-pointer border hover:bg-amber-50 flex items-center gap-1.5"
               style={{
                 background: CREAM,
                 borderColor: TAN_BORDER,
                 color: INK,
               }}
             >
-              {prompt}
+              <IconComponent className="w-3 h-3 text-[#E8873A]" strokeWidth={2.25} />
+              <span>{text}</span>
             </button>
           ))}
         </div>

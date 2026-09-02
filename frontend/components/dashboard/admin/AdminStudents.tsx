@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { SectionHeader, Card, Badge, EmptyState, Avatar, PhilIRIBadge, FONT_MONO, FONT_SERIF, MUTED, CHALK_GREEN, PhilIRILevel } from '../_shared';
 import { recordAuthLog, recordActivity } from '@/utils/auditLogger';
+import { Check, X } from 'lucide-react';
 
 const ADMIN_ACCENT = '#7A4A6B';
 
@@ -303,7 +304,7 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
   }
 
   async function handleDeleteStudent(studentId: string, studentName: string) {
-    if (!window.confirm(`⚠️ PERMANENT DELETION (Admin):\nAre you sure you want to permanently delete the student account for "${studentName}"?`)) return;
+    if (!window.confirm(`PERMANENT DELETION (Admin):\nAre you sure you want to permanently delete the student account for "${studentName}"?`)) return;
 
     const studentObj = students.find((s) => s.id === studentId || s.school_id === studentId || s.username === studentId);
     const schoolId = studentObj?.school_id || studentObj?.username || studentId;
@@ -525,10 +526,12 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
       {notification && (
         <div className="mb-4 p-3.5 rounded-xl bg-[#E6F4EA] border border-[#BFE0CC] text-[#2E7D4F] text-xs font-sans font-semibold flex items-center justify-between shadow-sm rb-fade-in-up">
           <div className="flex items-center gap-2">
-            <span>✓</span>
+            <Check className="w-4 h-4 text-[#2E7D4F]" strokeWidth={2.5} />
             <span>{notification}</span>
           </div>
-          <button onClick={() => setNotification(null)} className="text-gray-500 hover:text-gray-700 cursor-pointer">✕</button>
+          <button onClick={() => setNotification(null)} className="text-gray-500 hover:text-gray-700 cursor-pointer flex items-center">
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
@@ -652,7 +655,7 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
               onClick={() => setIsAddModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer"
             >
-              ✕
+              <X className="w-4 h-4" strokeWidth={2.25} />
             </button>
 
             <h3 className="text-lg font-serif font-bold text-[#1F4D3A] mb-1">

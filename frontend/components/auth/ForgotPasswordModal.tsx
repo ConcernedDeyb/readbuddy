@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './auth.module.css';
+import { X, Check } from 'lucide-react';
 
 interface ForgotPasswordModalProps {
   open: boolean;
@@ -219,10 +220,10 @@ export function ForgotPasswordModal({ open, onClose, onSuccess }: ForgotPassword
           <button
             type="button"
             onClick={handleResetForm}
-            className="text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer font-sans transition-colors shrink-0 -mr-2 -mt-1 text-base"
+            className="text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer font-sans transition-colors shrink-0 -mr-2 -mt-1"
             aria-label="Close"
           >
-            ✕
+            <X className="w-4 h-4" strokeWidth={2.25} />
           </button>
         </div>
 
@@ -272,7 +273,10 @@ export function ForgotPasswordModal({ open, onClose, onSuccess }: ForgotPassword
             {verifiedEmail && (
               <div className="p-2.5 rounded-xl bg-[#F3F8F5] border border-[#C5E1D4] flex items-center justify-between text-xs font-sans">
                 <span className="text-gray-600 font-medium">Verified Email:</span>
-                <span className="font-mono font-bold text-[#1F4D3A]">{verifiedEmail} ✓</span>
+                <span className="font-mono font-bold text-[#1F4D3A] flex items-center gap-1">
+                  <span>{verifiedEmail}</span>
+                  <Check className="w-3.5 h-3.5 text-[#2E7D4F]" strokeWidth={2.5} />
+                </span>
               </div>
             )}
 

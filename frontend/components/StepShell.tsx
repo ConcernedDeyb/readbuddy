@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ReadBuddyLogo } from './brand';
+import { AlertTriangle, Check } from 'lucide-react';
 
 export type SessionStep = 'input' | 'review' | 'reading' | 'comprehension' | 'result' | 'briefing' | 'submission';
 
@@ -153,7 +154,7 @@ export default function StepShell({
                         fontWeight: 700,
                       }}
                     >
-                      {done ? '✓' : i + 1}
+                      {done ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : i + 1}
                     </div>
                     <span
                       className="text-[10px] whitespace-nowrap"
@@ -198,7 +199,7 @@ export default function StepShell({
           <div className="w-full max-w-md p-6 rounded-2xl bg-[#FFFDF8] border-2 border-[#1F4D3A] shadow-[6px_6px_0px_#1F4D3A] rb-fade-in-up">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-[#FCEDDE] text-[#B4602E] border-2 border-[#1F4D3A] flex items-center justify-center font-bold text-lg">
-                ⚠️
+                <AlertTriangle className="w-5 h-5 text-[#B4602E]" strokeWidth={2.25} />
               </div>
               <div>
                 <h3 className="font-serif font-bold text-lg text-[#1F4D3A]">

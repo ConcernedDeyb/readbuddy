@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { SectionHeader, Card, Badge, EmptyState, PrimaryButton, GhostButton, FONT_SANS, FONT_MONO, FONT_SERIF, MUTED, CHALK_GREEN, TAN_BORDER } from '../_shared';
+import { Check, Trash2 } from 'lucide-react';
 
 const TEACHER_ACCENT = '#3D6B8A';
 
@@ -305,9 +306,16 @@ export function TeacherClasses({
                   <span className="font-mono font-bold text-[#1F4D3A]">{c.class_code}</span>
                   <button
                     onClick={() => copyCode(c.class_code)}
-                    className="text-[11px] font-sans font-semibold text-[#3D6B8A] hover:underline cursor-pointer"
+                    className="text-[11px] font-sans font-semibold text-[#3D6B8A] hover:underline cursor-pointer flex items-center gap-1"
                   >
-                    {copiedCode === c.class_code ? '✓ Copied' : 'Copy Code'}
+                    {copiedCode === c.class_code ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-700" strokeWidth={2.5} />
+                        <span className="text-emerald-700 font-bold">Copied</span>
+                      </>
+                    ) : (
+                      'Copy Code'
+                    )}
                   </button>
                 </div>
               </div>
@@ -326,10 +334,10 @@ export function TeacherClasses({
                   )}
                   <button
                     onClick={() => handleDeleteClass(c.id, c.name)}
-                    className="text-xs text-red-500 hover:text-red-700 cursor-pointer"
+                    className="text-xs text-red-500 hover:text-red-700 cursor-pointer p-1"
                     title="Delete Class"
                   >
-                    ✕
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

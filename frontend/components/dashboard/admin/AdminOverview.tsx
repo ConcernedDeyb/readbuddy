@@ -1,6 +1,7 @@
 'use client';
 
 import { SectionHeader, StatCard, Card, ProgressRing, PhilIRIBadge, FONT_SANS, FONT_MONO, FONT_SERIF, MUTED, CHALK_GREEN, TAN_BORDER, PhilIRILevel } from '../_shared';
+import { AlertTriangle, UserPlus, ShieldCheck, Settings, Cpu, History } from 'lucide-react';
 
 const ADMIN_ACCENT = '#7A4A6B';
 
@@ -58,8 +59,8 @@ export function AdminOverview({
           className="mb-6 p-4 rounded-2xl border-2 border-[#E8873A] bg-[#FFF8F0] shadow-[4px_4px_0px_rgba(232,135,58,0.2)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:-translate-y-0.5 transition-all rb-fade-in-up"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FCEDDE] border border-[#F0C99A] text-[#B4602E] flex items-center justify-center text-lg shrink-0">
-              ⚠️
+            <div className="w-10 h-10 rounded-xl bg-[#FCEDDE] border border-[#F0C99A] text-[#B4602E] flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5 text-[#B4602E]" strokeWidth={2.25} />
             </div>
             <div>
               <div className="text-sm font-bold text-[#B4602E] font-sans">
@@ -94,25 +95,29 @@ export function AdminOverview({
           onClick={() => onNavigate('teachers')}
           className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
         >
-          <span>➕ Add Teacher</span>
+          <UserPlus className="w-3.5 h-3.5 text-[#2B2621]" strokeWidth={2.25} />
+          <span>Add Teacher</span>
         </button>
         <button
           onClick={() => onNavigate('students')}
           className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
         >
-          <span>➕ Add Student</span>
+          <UserPlus className="w-3.5 h-3.5 text-[#2B2621]" strokeWidth={2.25} />
+          <span>Add Student</span>
         </button>
         <button
           onClick={() => onNavigate('logs')}
           className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
         >
-          <span>🛡️ Auth & SSO Logs</span>
+          <ShieldCheck className="w-3.5 h-3.5 text-[#2B2621]" strokeWidth={2.25} />
+          <span>Auth & SSO Logs</span>
         </button>
         <button
           onClick={() => onNavigate('settings')}
           className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
         >
-          <span>⚙️ System Settings</span>
+          <Settings className="w-3.5 h-3.5 text-[#2B2621]" strokeWidth={2.25} />
+          <span>System Settings</span>
         </button>
       </div>
 
@@ -121,7 +126,7 @@ export function AdminOverview({
         <Card className="flex flex-col gap-4">
           <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: TAN_BORDER }}>
             <h3 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
-              <span>⚡</span>
+              <Cpu className="w-4 h-4 text-emerald-700" strokeWidth={2.25} />
               <span>GPU VRAM Telemetry</span>
             </h3>
             <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold border border-[#DED2B4] bg-[#FFFDF8] text-gray-600">
@@ -161,7 +166,7 @@ export function AdminOverview({
         <Card className="flex flex-col gap-3">
           <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: TAN_BORDER }}>
             <h3 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
-              <span>📜</span>
+              <History className="w-4 h-4 text-[#1F4D3A]" strokeWidth={2.25} />
               <span>Platform Activity Stream</span>
             </h3>
             <span className="text-xs font-mono text-gray-500">{recentActivity.length} Events</span>

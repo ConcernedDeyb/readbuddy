@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './auth.module.css';
 import { recordAuthLog, recordActivity } from '@/utils/auditLogger';
+import { Eye, EyeOff, ShieldCheck, Mail, KeyRound, AlertTriangle, Check, X, CheckCircle2, XCircle } from 'lucide-react';
 
 export type RegistrationRole = 'student' | 'teacher';
 
@@ -447,7 +448,7 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer font-sans transition-colors"
           aria-label="Close modal"
         >
-          ✕
+          <X className="w-4 h-4" strokeWidth={2.25} />
         </button>
 
         {!isSuccess ? (
@@ -476,7 +477,7 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
 
             {error && (
               <div className="mb-4 p-3.5 rounded-xl bg-[#FDF2E9] border border-[#F0C99A] text-[#B4602E] text-xs font-sans font-medium flex items-start gap-2">
-                <span className="text-base shrink-0">⚠️</span>
+                <AlertTriangle className="w-4 h-4 text-[#B4602E] shrink-0 mt-0.5" strokeWidth={2.25} />
                 <span className="leading-relaxed">{error}</span>
               </div>
             )}
@@ -496,8 +497,8 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                   className={styles.input}
                   style={{ background: '#FFFFFF', fontWeight: 600 }}
                 >
-                  <option value="student">🎓 Student Account (Basic Education Learner)</option>
-                  <option value="teacher">👨‍🏫 Teacher / Educator Account (SMCC Faculty)</option>
+                  <option value="student">Student Account (Basic Education Learner)</option>
+                  <option value="teacher">Teacher / Educator Account (SMCC Faculty)</option>
                 </select>
                 <p className="text-[11px] text-[#7C6E5C] mt-1.5 font-sans">
                   {selectedRole === 'student'
@@ -572,10 +573,10 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                     <button
                       type="button"
                       onClick={() => setShowStudentPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer text-xs"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer flex items-center justify-center"
                       title={showStudentPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showStudentPassword ? '🙈' : '👁️'}
+                      {showStudentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
@@ -630,7 +631,7 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
               <form onSubmit={handleVerifyAndFinalizeTeacher} className="flex flex-col gap-4 rb-fade-in-up">
                 <div className="p-4 rounded-xl bg-[#EBF3F8] border border-[#A8C5DA] text-left">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-sm">🛡️</span>
+                    <ShieldCheck className="w-4 h-4 text-[#3D6B8A]" strokeWidth={2.25} />
                     <span className="text-xs font-bold text-[#3D6B8A] uppercase tracking-wider font-mono">
                       Faculty Anti-Impersonation Protection
                     </span>
@@ -638,8 +639,9 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                   <p className="text-xs text-[#2C4E66] font-sans leading-relaxed mb-2">
                     To prevent unauthorized teacher accounts, a 6-digit authorization code was dispatched to:
                   </p>
-                  <div className="font-mono text-xs font-bold text-[#1F4D3A] bg-white px-3 py-1.5 rounded-lg border border-[#A8C5DA] inline-block">
-                    📧 {teacherEmail}
+                  <div className="font-mono text-xs font-bold text-[#1F4D3A] bg-white px-3 py-1.5 rounded-lg border border-[#A8C5DA] inline-flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-[#3D6B8A]" strokeWidth={2.25} />
+                    <span>{teacherEmail}</span>
                   </div>
                 </div>
 
@@ -647,7 +649,8 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                 {teacherVerificationCode && (
                   <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#DED2B4] flex items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="text-amber-600 font-bold">📬 Demo Code:</span>
+                      <KeyRound className="w-4 h-4 text-amber-600" strokeWidth={2.25} />
+                      <span className="text-amber-600 font-bold">Demo Code:</span>
                       <span className="font-mono font-bold text-base text-[#1F4D3A] tracking-wider">
                         {teacherVerificationCode}
                       </span>
@@ -808,15 +811,16 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                       <button
                         type="button"
                         onClick={() => setShowTeacherPassword((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer text-xs"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer flex items-center justify-center"
                         title={showTeacherPassword ? 'Hide password' : 'Show password'}
                       >
-                        {showTeacherPassword ? '🙈' : '👁️'}
+                        {showTeacherPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                     {hasTeacherPwd && isTeacherPwdTooShort && (
-                      <span className="text-[11px] text-red-600 font-sans mt-1 block font-medium">
-                        ⚠️ Must be at least 8 characters.
+                      <span className="text-[11px] text-red-600 font-sans mt-1 flex items-center gap-1 font-medium">
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                        <span>Must be at least 8 characters.</span>
                       </span>
                     )}
                   </div>
@@ -828,10 +832,10 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                       </label>
                       {hasTeacherConfirm && (
                         <span
-                          className="text-[10px] font-mono font-bold"
+                          className="text-[10px] font-mono font-bold flex items-center gap-0.5"
                           style={{ color: isTeacherPwdMismatch ? '#E53E3E' : '#2E7D4F' }}
                         >
-                          {isTeacherPwdMismatch ? '✕ Mismatch' : '✓ Matches'}
+                          {isTeacherPwdMismatch ? <><X className="w-3 h-3" /> Mismatch</> : <><Check className="w-3 h-3" /> Matches</>}
                         </span>
                       )}
                     </div>
@@ -855,22 +859,22 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                       <button
                         type="button"
                         onClick={() => setShowTeacherConfirmPassword((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer text-xs"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer flex items-center justify-center"
                         title={showTeacherConfirmPassword ? 'Hide password' : 'Show password'}
                       >
-                        {showTeacherConfirmPassword ? '🙈' : '👁️'}
+                        {showTeacherConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
 
                     {/* Clear, bold real-time indication */}
                     {isTeacherPwdMismatch ? (
                       <div className="flex items-start gap-1 text-[11px] text-red-600 font-sans mt-1 font-semibold leading-tight">
-                        <span className="shrink-0">❌</span>
+                        <XCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                         <span>Passwords do not match. Please re-enter the exact password.</span>
                       </div>
                     ) : isTeacherPwdMatch ? (
                       <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-sans mt-1 font-semibold leading-tight">
-                        <span className="shrink-0">✓</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                         <span>Passwords match!</span>
                       </div>
                     ) : null}

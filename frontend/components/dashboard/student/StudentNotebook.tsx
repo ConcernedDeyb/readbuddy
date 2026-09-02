@@ -24,6 +24,7 @@ import {
   StudentPersonalNote,
   StudyHistoryItem,
 } from '../_shared';
+import { PenLine, FileText, Bot, Mic, X } from 'lucide-react';
 
 const STUDENT_ACCENT = '#E8873A';
 const LANG_LABEL: Record<string, string> = { en: 'English', tl: 'Tagalog' };
@@ -613,7 +614,8 @@ export default function StudentNotebook({
                                 className="text-xs px-3 py-1.5 rounded-full font-semibold border flex items-center gap-1.5 transition-colors cursor-pointer hover:bg-white"
                                 style={{ color: INK, borderColor: TAN_BORDER, fontFamily: FONT_SANS }}
                               >
-                                <span>📝 Take Personal Note</span>
+                                <PenLine className="w-3.5 h-3.5 text-[#1F4D3A]" strokeWidth={2.25} />
+                                <span>Take Personal Note</span>
                               </button>
                             </div>
 
@@ -732,9 +734,9 @@ export default function StudentNotebook({
                             <button
                               type="button"
                               onClick={() => removeNoteFile(f.id)}
-                              className="hover:opacity-70 cursor-pointer ml-1"
+                              className="hover:opacity-70 cursor-pointer ml-1 flex items-center"
                             >
-                              ✕
+                              <X className="w-3 h-3" />
                             </button>
                           </div>
                         );
@@ -790,10 +792,10 @@ export default function StudentNotebook({
                         <button
                           type="button"
                           onClick={() => handleDeletePersonalNote(note.id)}
-                          className="text-gray-400 hover:text-red-600 transition-colors p-1 cursor-pointer"
+                          className="text-gray-400 hover:text-red-600 transition-colors p-1 cursor-pointer flex items-center"
                           title="Delete note"
                         >
-                          ✕
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
@@ -881,20 +883,23 @@ export default function StudentNotebook({
               ) : (
                 <div className="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#DED2B4]">
                   {studyHistory.map((item) => {
-                    const iconConfig: Record<StudyHistoryItem['activity_type'], { icon: string; bg: string; color: string }> = {
-                      reviewed_material: { icon: '📄', bg: '#E8F0F8', color: '#3D6B8A' },
-                      created_note: { icon: '📝', bg: '#FCF1DD', color: '#8A5A1E' },
-                      ai_study_session: { icon: '🤖', bg: '#E6F4EA', color: '#2E7D4F' },
-                      reading_practice: { icon: '🎤', bg: '#FBEAE3', color: '#A4432A' },
+                    const iconConfig: Record<StudyHistoryItem['activity_type'], { icon: typeof FileText; bg: string; color: string }> = {
+                      reviewed_material: { icon: FileText, bg: '#E8F0F8', color: '#3D6B8A' },
+                      created_note: { icon: PenLine, bg: '#FCF1DD', color: '#8A5A1E' },
+                      ai_study_session: { icon: Bot, bg: '#E6F4EA', color: '#2E7D4F' },
+                      reading_practice: { icon: Mic, bg: '#FBEAE3', color: '#A4432A' },
                     };
                     const cfg = iconConfig[item.activity_type] || iconConfig.reviewed_material;
+                    const IconComp = cfg.icon;
 
                     return (
                       <div key={item.id} className="relative rb-fade-in-up">
                         <span
-                          className="absolute -left-6 top-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center text-[9px]"
+                          className="absolute -left-6 top-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center"
                           style={{ background: cfg.color }}
-                        />
+                        >
+                          <IconComp className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
+                        </span>
                         <div className="p-3.5 rounded-xl border bg-white" style={{ borderColor: `${TAN_BORDER}88` }}>
                           <div className="flex items-center justify-between gap-2 mb-1">
                             <span className="text-xs font-semibold" style={{ fontFamily: FONT_SANS, color: INK }}>

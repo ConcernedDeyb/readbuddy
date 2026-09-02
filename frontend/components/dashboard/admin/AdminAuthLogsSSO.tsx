@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { SectionHeader, Card, Badge, EmptyState, Avatar, FONT_MONO, FONT_SERIF, FONT_SANS, MUTED, CHALK_GREEN, TAN_BORDER, CREAM } from '../_shared';
 import { recordAuthLog, recordActivity } from '@/utils/auditLogger';
+import { Check, X } from 'lucide-react';
 
 const ADMIN_ACCENT = '#7A4A6B';
 
@@ -54,7 +55,7 @@ export function AdminAuthLogsSSO() {
         const initialLogs: AuthLog[] = [
           {
             id: 'log-1',
-            timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
+            timestamp: new Date().toISOString(),
             identifier: 'readbuddyadmin',
             display_name: 'SMCC System Administrator',
             role: 'admin',
@@ -62,50 +63,6 @@ export function AdminAuthLogsSSO() {
             status: 'SUCCESS',
             ip_address: '192.168.1.100 (SMCC LAN)',
             details: 'Admin dashboard login session initiated',
-          },
-          {
-            id: 'log-2',
-            timestamp: new Date(Date.now() - 25 * 60000).toISOString(),
-            identifier: '2024001',
-            display_name: 'Maria Santos',
-            role: 'teacher',
-            method: 'SMCC Google SSO',
-            status: 'SUCCESS',
-            ip_address: '192.168.1.105',
-            details: 'Institutional faculty OAuth token validated (@smccnasipit.edu.ph)',
-          },
-          {
-            id: 'log-3',
-            timestamp: new Date(Date.now() - 48 * 60000).toISOString(),
-            identifier: '202612345',
-            display_name: 'Juan dela Cruz',
-            role: 'student',
-            method: 'Local Password',
-            status: 'SUCCESS',
-            ip_address: '192.168.1.142',
-            details: 'Student session verified (Grade 7 - Section St. Jude)',
-          },
-          {
-            id: 'log-4',
-            timestamp: new Date(Date.now() - 110 * 60000).toISOString(),
-            identifier: '202699999',
-            display_name: 'Unknown User',
-            role: 'student',
-            method: 'Local Password',
-            status: 'FAILED',
-            ip_address: '192.168.1.189',
-            details: 'Invalid School ID Number or unapproved account attempt',
-          },
-          {
-            id: 'log-5',
-            timestamp: new Date(Date.now() - 210 * 60000).toISOString(),
-            identifier: 'msantos@smccnasipit.edu.ph',
-            display_name: 'Maria Santos',
-            role: 'teacher',
-            method: 'Local Password',
-            status: 'APPROVED',
-            ip_address: '192.168.1.100',
-            details: 'Teacher account approved and verified by System Admin',
           },
         ];
         setAuthLogs(initialLogs);
@@ -333,7 +290,9 @@ export function AdminAuthLogsSSO() {
       {feedback && (
         <div className="mb-4 p-3.5 rounded-xl bg-[#E6F4EA] border border-[#BFE0CC] text-[#2E7D4F] text-xs font-sans font-semibold flex items-center justify-between shadow-sm rb-fade-in-up">
           <span>{feedback}</span>
-          <button onClick={() => setFeedback(null)} className="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
+          <button onClick={() => setFeedback(null)} className="text-gray-400 hover:text-gray-600 cursor-pointer flex items-center">
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
@@ -497,7 +456,7 @@ export function AdminAuthLogsSSO() {
                                 : 'bg-[#FDF2E9] text-[#B4602E] border border-[#F0C99A]'
                             }`}
                           >
-                            <span>{isSuccess ? '✓' : '✕'}</span>
+                            <span>{isSuccess ? <Check className="w-3 h-3" strokeWidth={2.5} /> : <X className="w-3 h-3" strokeWidth={2.5} />}</span>
                             <span>{log.status}</span>
                           </span>
                         </td>

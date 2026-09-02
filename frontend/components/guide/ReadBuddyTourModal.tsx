@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ReadBuddyMascot, MascotMood } from '../brand';
+import { Sparkles, Lightbulb, Check, X, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export type TourRole = 'student' | 'teacher' | 'admin';
 
@@ -193,7 +194,11 @@ export function ReadBuddyTourModal({
         {/* Floating Confetti Elements */}
         {showConfetti && (
           <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
-            <div className="text-4xl animate-ping">🎉 🌟 ✨ 📚 🏆</div>
+            <div className="flex items-center gap-3 animate-ping text-[#E8873A]">
+              <Sparkles className="w-8 h-8" />
+              <Sparkles className="w-10 h-10 text-amber-400" />
+              <Sparkles className="w-8 h-8" />
+            </div>
           </div>
         )}
 
@@ -210,9 +215,10 @@ export function ReadBuddyTourModal({
 
           <button
             onClick={onClose}
-            className="text-xs font-bold font-sans text-gray-400 hover:text-[#1F4D3A] transition-colors cursor-pointer"
+            className="text-xs font-bold font-sans text-gray-400 hover:text-[#1F4D3A] transition-colors cursor-pointer flex items-center gap-1"
           >
-            Skip Guide ✕
+            <span>Skip Guide</span>
+            <X className="w-3.5 h-3.5" strokeWidth={2.5} />
           </button>
         </div>
 
@@ -256,9 +262,10 @@ export function ReadBuddyTourModal({
             {currentSlide.badges.map((b, i) => (
               <span
                 key={i}
-                className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-md bg-[#FFFDF8] border border-[#1F4D3A] text-[#1F4D3A] shadow-[1.5px_1.5px_0px_#1F4D3A]"
+                className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-md bg-[#FFFDF8] border border-[#1F4D3A] text-[#1F4D3A] shadow-[1.5px_1.5px_0px_#1F4D3A] flex items-center gap-1"
               >
-                ✓ {b}
+                <Check className="w-3 h-3 text-[#1F4D3A]" strokeWidth={2.5} />
+                <span>{b}</span>
               </span>
             ))}
           </div>
@@ -266,7 +273,7 @@ export function ReadBuddyTourModal({
 
         {currentSlide.tips && (
           <div className="mt-3 p-2.5 rounded-xl bg-[#FCEDDE]/60 border border-[#F0C99A] text-[11px] font-sans text-[#8A481E] flex items-center gap-2">
-            <span className="text-sm shrink-0">💡</span>
+            <Lightbulb className="w-4 h-4 text-[#8A481E] shrink-0" strokeWidth={2.25} />
             <span>{currentSlide.tips}</span>
           </div>
         )}
@@ -294,9 +301,10 @@ export function ReadBuddyTourModal({
             {!isFirst && (
               <button
                 onClick={handlePrev}
-                className="px-3.5 py-1.5 rounded-xl bg-[#FFFDF8] text-[#1F4D3A] font-bold text-xs font-sans border-2 border-[#1F4D3A] shadow-[2px_2px_0px_#1F4D3A] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F4D3A] transition-all cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-[#FFFDF8] text-[#1F4D3A] font-bold text-xs font-sans border-2 border-[#1F4D3A] shadow-[2px_2px_0px_#1F4D3A] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F4D3A] transition-all cursor-pointer flex items-center gap-1"
               >
-                ← Back
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back</span>
               </button>
             )}
 
@@ -304,7 +312,8 @@ export function ReadBuddyTourModal({
               onClick={handleNext}
               className="px-4 py-2 rounded-xl bg-[#1F4D3A] text-white font-bold text-xs font-sans border-2 border-[#133326] shadow-[3px_3px_0px_#133326] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#133326] transition-all cursor-pointer flex items-center gap-1.5"
             >
-              <span>{isLast ? "Let's Get Started! 🚀" : 'Next Step →'}</span>
+              <span>{isLast ? "Let's Get Started!" : 'Next Step'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

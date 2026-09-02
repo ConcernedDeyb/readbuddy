@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './auth.module.css';
+import { X, Check } from 'lucide-react';
 
 interface StudentRegisterModalProps {
   open: boolean;
@@ -175,10 +176,10 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
           <button
             type="button"
             onClick={handleReset}
-            className="text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer font-sans transition-colors shrink-0 -mr-2 -mt-1 text-base"
+            className="text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer font-sans transition-colors shrink-0 -mr-2 -mt-1"
             aria-label="Close"
           >
-            ✕
+            <X className="w-4 h-4" strokeWidth={2.25} />
           </button>
         </div>
 
@@ -188,8 +189,8 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
 
         {createdCredentials ? (
           <div className="text-center py-2 rb-fade-in-up">
-            <div className="w-12 h-12 rounded-full bg-[#FCEDDE] text-[#E8873A] flex items-center justify-center mx-auto mb-3 text-xl font-bold">
-              ✓
+            <div className="w-12 h-12 rounded-full bg-[#FCEDDE] text-[#E8873A] flex items-center justify-center mx-auto mb-3">
+              <Check className="w-6 h-6" strokeWidth={2.5} />
             </div>
             <h4 className="text-base font-semibold text-[#1F4D3A] mb-1 font-serif">
               Student Account Created!

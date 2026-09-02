@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { SearchCheck } from 'lucide-react';
 
 interface ReviewTextStepProps {
   initialText: string;
@@ -29,7 +30,8 @@ export default function ReviewTextStep({ initialText, onConfirm }: ReviewTextSte
         className="text-2xl mb-2 flex items-center gap-2"
         style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, color: '#1F4D3A' }}
       >
-        <span aria-hidden>🔍</span> Check the text before you read
+        <SearchCheck className="w-6 h-6 text-[#1F4D3A]" strokeWidth={2.25} />
+        <span>Check the text before you read</span>
       </h1>
       <p className="mb-4" style={{ fontFamily: "'Figtree', sans-serif", color: '#5B6B62' }}>
         Sometimes photos aren&apos;t read perfectly. Fix anything that looks wrong below —

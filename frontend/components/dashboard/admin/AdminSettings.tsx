@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { SectionHeader, Card, PrimaryButton, FONT_SANS, FONT_MONO, FONT_SERIF, MUTED, INK, CHALK_GREEN, TAN_BORDER, CREAM } from '../_shared';
 import { recordActivity } from '@/utils/auditLogger';
+import { ShieldCheck } from 'lucide-react';
 
 const ADMIN_ACCENT = '#7A4A6B';
 
@@ -216,7 +217,7 @@ export function AdminSettings({
           {activeSubTab === 'security' && (
             <Card className="rb-fade-in-up">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-base">🛡️</span>
+                <ShieldCheck className="w-5 h-5 text-[#1F4D3A]" strokeWidth={2.25} />
                 <h3 className="text-base font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
                   Teacher Account Limiter & Anti-Impersonation
                 </h3>

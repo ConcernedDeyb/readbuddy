@@ -15,6 +15,7 @@ import {
 import { DashboardSkeleton } from '@/components/shared/SkeletonLoaders';
 
 import { PhilIRILevel } from '@/components/dashboard/_shared';
+import { initializeRealisticSystemData } from '@/utils/seedData';
 
 interface Passage {
   id: string;
@@ -66,6 +67,7 @@ export default function TeacherDashboardPage() {
   useEffect(() => {
     function loadData() {
       try {
+        initializeRealisticSystemData();
         const savedUser = localStorage.getItem('readbuddy_user');
         let currentTeacherId = '';
         let currentTeacherName = '';
@@ -296,10 +298,10 @@ export default function TeacherDashboardPage() {
         <AccountSettings
           profile={{
             displayName: teacherName,
-            email: teacherEmail || (teacherUsername ? `${teacherUsername}@smccnasipit.edu.ph` : 'teacher@smccnasipit.edu.ph'),
-            username: teacherUsername || 'teacher',
+            email: teacherEmail || (teacherUsername ? `${teacherUsername}@smccnasipit.edu.ph` : (schoolId ? `${schoolId}@smccnasipit.edu.ph` : '')),
+            username: teacherUsername || schoolId || '',
             role: 'teacher',
-            schoolId: schoolId || 'SMCC-FACULTY',
+            schoolId: schoolId || '',
           }}
           accent="#3D6B8A"
         />

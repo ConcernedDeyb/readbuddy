@@ -23,6 +23,7 @@ import {
 import StudentProgressChart from './StudentProgressChart';
 import { ReadBuddyMascot } from '@/components/brand';
 import { useState, useEffect } from 'react';
+import { BookOpen, FileText, BarChart2, BookMarked } from 'lucide-react';
 
 const STUDENT_ACCENT = '#E8873A';
 const LANG_LABEL: Record<string, string> = { en: 'English', tl: 'Tagalog' };
@@ -117,7 +118,7 @@ export function StudentDashboard({
             <span className="text-xs uppercase font-bold tracking-wider block mb-1 text-gray-500 font-mono">Current Reading Tier</span>
             <PhilIRIBadge level={currentLevel} />
           </div>
-          <span className="text-2xl">📖</span>
+          <BookOpen className="w-6 h-6 text-[#1F4D3A]" strokeWidth={2.25} />
         </Card>
       </div>
 
@@ -127,7 +128,7 @@ export function StudentDashboard({
         <Card className="mb-6 border-2 border-[#E8873A] shadow-[4px_4px_0px_rgba(232,135,58,0.2)]">
           <div className="flex items-center justify-between mb-3 border-b pb-2" style={{ borderColor: TAN_BORDER }}>
             <h2 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
-              <span>📝</span>
+              <FileText className="w-4 h-4 text-[#E8873A]" strokeWidth={2.25} />
               <span>Assigned Tests ({pendingTests.length})</span>
             </h2>
             <span className="text-xs font-mono text-[#E8873A] font-bold">Action Required</span>
@@ -167,7 +168,7 @@ export function StudentDashboard({
         <Card>
           <div className="flex items-center justify-between mb-3 border-b pb-2" style={{ borderColor: TAN_BORDER }}>
             <h2 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
-              <span>📊</span>
+              <BarChart2 className="w-4 h-4 text-[#1F4D3A]" strokeWidth={2.25} />
               <span>Recent Reading History</span>
             </h2>
           </div>
@@ -265,7 +266,7 @@ function NotebookWidget({
     <Card className="mb-6 border-2 border-[#3D6B8A] shadow-[4px_4px_0px_rgba(61,107,138,0.18)]">
       <div className="flex items-center justify-between mb-3 border-b pb-2" style={{ borderColor: TAN_BORDER }}>
         <div className="flex items-center gap-2">
-          <span className="text-base">📚</span>
+          <BookMarked className="w-5 h-5 text-[#3D6B8A]" strokeWidth={2.25} />
           <h2 className="text-base font-bold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
             My Course Handouts & Notebook
           </h2>

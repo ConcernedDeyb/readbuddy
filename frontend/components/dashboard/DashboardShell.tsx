@@ -4,6 +4,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { FONT_SERIF, FONT_SANS, FONT_MONO, CREAM, MUTED, TAN_BORDER, CHALK_GREEN } from './_shared';
 import { ReadBuddyLogo } from '../brand';
 import { ReadBuddyTourModal } from '../guide';
+import { BookOpen } from 'lucide-react';
 
 export type DashboardRole = 'teacher' | 'admin' | 'student';
 
@@ -357,7 +358,7 @@ export default function DashboardShell({
             className="px-3 py-1 rounded-xl bg-[#FFFDF8] hover:bg-[#FCEDDE] text-[#1F4D3A] font-bold text-xs font-sans border-2 border-[#1F4D3A] shadow-[2px_2px_0px_#1F4D3A] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F4D3A] transition-all flex items-center gap-1.5 cursor-pointer"
             title="Open interactive mascot guide"
           >
-            <span>📖</span>
+            <BookOpen className="w-3.5 h-3.5" strokeWidth={2.25} />
             <span>Quick Guide</span>
           </button>
         </div>

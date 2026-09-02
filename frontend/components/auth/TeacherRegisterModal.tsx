@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './auth.module.css';
+import { Eye, EyeOff, X, Check, XCircle, CheckCircle2 } from 'lucide-react';
 
 interface TeacherRegisterModalProps {
   open: boolean;
@@ -140,7 +141,7 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer font-sans transition-colors"
           aria-label="Close modal"
         >
-          ✕
+          <X className="w-4 h-4" strokeWidth={2.25} />
         </button>
 
         {!submitted ? (
@@ -259,10 +260,10 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer text-xs"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer flex items-center justify-center"
                       title={showPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showPassword ? '🙈' : '👁️'}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
@@ -274,10 +275,10 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
                     </label>
                     {confirmPassword.length > 0 && (
                       <span
-                        className="text-[10px] font-mono font-bold"
+                        className="text-[10px] font-mono font-bold flex items-center gap-0.5"
                         style={{ color: password !== confirmPassword ? '#E53E3E' : '#2E7D4F' }}
                       >
-                        {password !== confirmPassword ? '✕ Mismatch' : '✓ Matches'}
+                        {password !== confirmPassword ? <><X className="w-3 h-3" /> Mismatch</> : <><Check className="w-3 h-3" /> Matches</>}
                       </span>
                     )}
                   </div>
@@ -311,20 +312,20 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer text-xs"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer flex items-center justify-center"
                       title={showConfirmPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showConfirmPassword ? '🙈' : '👁️'}
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   {confirmPassword.length > 0 && password !== confirmPassword ? (
                     <div className="flex items-start gap-1 text-[11px] text-red-600 font-sans mt-1 font-semibold leading-tight">
-                      <span className="shrink-0">❌</span>
+                      <XCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                       <span>Passwords do not match. Please re-enter the exact password.</span>
                     </div>
                   ) : confirmPassword.length > 0 && password === confirmPassword ? (
                     <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-sans mt-1 font-semibold leading-tight">
-                      <span className="shrink-0">✓</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                       <span>Passwords match!</span>
                     </div>
                   ) : null}
@@ -352,8 +353,8 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
           </>
         ) : (
           <div className="text-center py-4 flex flex-col items-center gap-3 rb-fade-in-up">
-            <div className="w-12 h-12 rounded-full bg-[#EBF3F8] text-[#3D6B8A] flex items-center justify-center text-xl font-bold border border-[#A8C5DA]">
-              ✓
+            <div className="w-12 h-12 rounded-full bg-[#EBF3F8] text-[#3D6B8A] flex items-center justify-center border border-[#A8C5DA]">
+              <Check className="w-6 h-6" strokeWidth={2.5} />
             </div>
             <h3 className="text-xl font-serif font-bold text-[#3D6B8A]">
               Account Registered in Database!

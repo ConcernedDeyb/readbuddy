@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, ReactNode } from 'react';
+import { Sparkles, HelpCircle, Zap, Flame, Heart } from 'lucide-react';
 
 export type MascotMood = 'happy' | 'reading' | 'listening' | 'cheering' | 'thinking';
 
@@ -26,7 +27,7 @@ type EmotionalState =
 
 interface ActionParticle {
   id: number;
-  symbol: string;
+  symbol: ReactNode;
   color: string;
   x: number;
   y: number;
@@ -110,11 +111,11 @@ function playEmotionSound(type: 'curious' | 'dizzy' | 'angry' | 'tantrum' | 'soo
 /**
  * ReadBuddy Interactive Companion Mascot — "Buddy the Bookworm"
  * Features Multi-Click Emotional Escalation (Pou / Talking Tom style):
- * - Click 1: Curious tilt ("Huh?") with floating ❓
- * - Click 2: Confused & dizzy wobble with swirly eyes & 💫
- * - Click 3: Grumpy angry pout with red cheeks & puffing steam 💨
- * - Click 4+: Funny shock tantrum with comic fiery sparks 🔥
- * - Hover / Pet: Soothes him instantly with happy eyes ( ◜◡◝ ) & hearts 💖
+ * - Click 1: Curious tilt ("Huh?") with floating inquiry particles
+ * - Click 2: Confused & dizzy wobble with swirly eyes & dizzy sparks
+ * - Click 3: Grumpy angry pout with red cheeks & puffing steam
+ * - Click 4+: Funny shock tantrum with comic fiery sparks
+ * - Hover / Pet: Soothes him instantly with happy eyes and hearts
  * - Inactivity (6s): Sleeps peacefully with floating Zzz particles
  * - Cursor tracking: Smooth real-time eye tracking
  */
@@ -222,7 +223,7 @@ export function ReadBuddyMascot({
   }, [animated, isSleeping, emotion]);
 
   // ─── 3. Particle Emitter ───
-  function spawnParticle(symbol: string, color: string) {
+  function spawnParticle(symbol: ReactNode, color: string) {
     const newP: ActionParticle = {
       id: Date.now() + Math.random(),
       symbol,
@@ -244,7 +245,7 @@ export function ReadBuddyMascot({
       setEmotion('idle');
       setClickStreak(0);
       if (soundEnabled) playEmotionSound('wake');
-      spawnParticle('✨', '#F5A623');
+      spawnParticle(<Sparkles className="w-3.5 h-3.5" />, '#F5A623');
       if (onClick) onClick();
       return;
     }
@@ -256,7 +257,7 @@ export function ReadBuddyMascot({
       // ─── 1st Click: Curious ("Huh?") ───
       setEmotion('curious');
       if (soundEnabled) playEmotionSound('curious');
-      spawnParticle('❓', '#E8873A');
+      spawnParticle(<HelpCircle className="w-3.5 h-3.5" />, '#E8873A');
 
       setTimeout(() => {
         setEmotion((curr) => (curr === 'curious' ? 'idle' : curr));
@@ -265,8 +266,8 @@ export function ReadBuddyMascot({
       // ─── 2nd Click: Confused & Dizzy Wobble ───
       setEmotion('dizzy');
       if (soundEnabled) playEmotionSound('dizzy');
-      spawnParticle('💫', '#F5A623');
-      spawnParticle('❓', '#E8873A');
+      spawnParticle(<Zap className="w-3.5 h-3.5" />, '#F5A623');
+      spawnParticle(<HelpCircle className="w-3.5 h-3.5" />, '#E8873A');
 
       setTimeout(() => {
         setEmotion((curr) => (curr === 'dizzy' ? 'idle' : curr));
@@ -275,8 +276,8 @@ export function ReadBuddyMascot({
       // ─── 3rd Click: Angry Pout with Steam Puffs ───
       setEmotion('angry');
       if (soundEnabled) playEmotionSound('angry');
-      spawnParticle('💨', '#A8A29E');
-      spawnParticle('💢', '#E83A50');
+      spawnParticle(<Flame className="w-3.5 h-3.5" />, '#A8A29E');
+      spawnParticle(<Flame className="w-3.5 h-3.5" />, '#E83A50');
 
       setTimeout(() => {
         setEmotion((curr) => (curr === 'angry' ? 'idle' : curr));
@@ -285,8 +286,8 @@ export function ReadBuddyMascot({
       // ─── 4+ Clicks: Funny Tantrum & Shock Jump ───
       setEmotion('tantrum');
       if (soundEnabled) playEmotionSound('tantrum');
-      spawnParticle('🔥', '#FF5722');
-      spawnParticle('💥', '#F5A623');
+      spawnParticle(<Flame className="w-4 h-4" />, '#FF5722');
+      spawnParticle(<Zap className="w-4 h-4" />, '#F5A623');
 
       setTimeout(() => {
         setEmotion('angry');
@@ -309,7 +310,7 @@ export function ReadBuddyMascot({
     setEmotion('petting');
     setClickStreak(0);
     if (soundEnabled) playEmotionSound('soothe');
-    spawnParticle('💖', '#E83A50');
+    spawnParticle(<Heart className="w-3.5 h-3.5 fill-current" />, '#E83A50');
   }
 
   function handleMouseLeave() {
@@ -321,12 +322,11 @@ export function ReadBuddyMascot({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-flex items-center justify-center shrink-0 select-none ${className}`}
+      className={`relative inline-block select-none ${className}`}
       style={{
         width: size,
         height: size,
-        minWidth: size,
-        minHeight: size,
+        filter: badgeFramed ? 'drop-shadow(0 6px 12px rgba(31,77,58,0.18))' : 'none',
       }}
     >
       {/* ─── Floating Action Particles ─── */}
@@ -370,10 +370,10 @@ export function ReadBuddyMascot({
           isSleeping
             ? "Buddy is sleeping. Tap to wake him!"
             : emotion === 'angry'
-            ? "Buddy is angry! Pet him to calm him down! 💖"
+            ? "Buddy is angry! Pet him to calm him down!"
             : emotion === 'dizzy'
             ? "Buddy is dizzy! Whoa!"
-            : "Click to interact! Hover to pet! ✨"
+            : "Click to interact! Hover to pet!"
         }
       >
         <svg

@@ -23,6 +23,7 @@ import {
   INK,
   PhilIRILevel,
 } from '@/components/dashboard/_shared';
+import { initializeRealisticSystemData } from '@/utils/seedData';
 
 const STUDENT_ACCENT = '#E8873A';
 const LANG_LABEL: Record<string, string> = { en: 'English', tl: 'Tagalog' };
@@ -77,6 +78,7 @@ export default function StudentDashboardPage() {
   useEffect(() => {
     function loadData() {
       try {
+        initializeRealisticSystemData();
         const saved = localStorage.getItem('readbuddy_user');
         let currentUsername = '';
         let currentDisplayName = '';
@@ -128,7 +130,19 @@ export default function StudentDashboardPage() {
         if (savedSessions) {
           const parsedSes = JSON.parse(savedSessions);
           if (Array.isArray(parsedSes)) {
-            setSessions(parsedSes);
+            const mySessions = parsedSes.filter((ses: any) => {
+              const sId = (ses.student_id || '').toLowerCase().trim();
+              const sName = (ses.student_name || '').toLowerCase().trim();
+              const curId = currentSchoolId.toLowerCase().trim();
+              const curUser = currentUsername.toLowerCase().trim();
+              const curName = currentDisplayName.toLowerCase().trim();
+              return (
+                (curId && sId === curId) ||
+                (curUser && sId === curUser) ||
+                (curName && sName === curName)
+              );
+            });
+            setSessions(mySessions.length > 0 ? mySessions : parsedSes);
           }
         } else {
           setSessions([]);
@@ -354,9 +368,9 @@ export default function StudentDashboardPage() {
           <AccountSettings
             profile={{
               displayName: student.name,
-              email: studentEmail || (student.username ? `${student.username}@smccnasipit.edu.ph` : 'student@smccnasipit.edu.ph'),
-              username: student.username || 'student',
-              schoolId: student.schoolId || student.username,
+              email: studentEmail || (student.username ? `${student.username}@smccnasipit.edu.ph` : (student.schoolId ? `${student.schoolId}@smccnasipit.edu.ph` : '')),
+              username: student.username || student.schoolId || '',
+              schoolId: student.schoolId || student.username || '',
               role: 'student',
               gradeLevel: student.gradeLevel,
               teacherName: student.teacherName,

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { DashboardShell, AdminOverview, AdminTeachers, AdminStudents, AdminContent, AdminAuthLogsSSO, AdminSettings, AccountSettings } from '@/components/dashboard';
 import { DashboardSkeleton } from '@/components/shared/SkeletonLoaders';
+import { initializeRealisticSystemData } from '@/utils/seedData';
 
 const MOCK_ADAPTER_BENCHMARK = {
   fleursWer: 0.1244,
@@ -31,6 +32,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     function loadData() {
       try {
+        initializeRealisticSystemData();
         const saved = localStorage.getItem('readbuddy_user');
         if (saved) {
           const parsed = JSON.parse(saved);
