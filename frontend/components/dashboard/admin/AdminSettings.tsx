@@ -194,7 +194,7 @@ export function AdminSettings({
           {activeSubTab === 'vram' && (
             <Card className="rb-fade-in-up">
               <h3 className="text-base font-semibold mb-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>GPU Memory & VRAM Limits</h3>
-              <p className="text-xs mb-4" style={{ fontFamily: FONT_SANS, color: MUTED }}>ReadBuddy is constrained to run on RTX 4070 (8GB VRAM) target GPUs (Rule R-5).</p>
+              <p className="text-xs mb-4" style={{ fontFamily: FONT_SANS, color: MUTED }}>ReadBuddy is constrained to run on RTX 2070 (8GB VRAM) target GPUs (Rule R-5).</p>
               
               <div className="mb-4">
                 <label className="block text-xs font-semibold mb-1 text-gray-700 font-sans">Max VRAM Budget (MB)</label>

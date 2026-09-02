@@ -102,7 +102,7 @@
 ---
 
 ### 3. On-Premise Server & Local AI GPU Workstation
-All computational, database, and AI workloads execute locally on dedicated institutional hardware (e.g., an on-premise workstation equipped with an **NVIDIA RTX 4070 8GB VRAM**):
+All computational, database, and AI workloads execute locally on dedicated institutional hardware / development laptop equipped with an **Intel Core i7-9750H CPU @ 2.60GHz, 32GB RAM, and NVIDIA RTX 2070 8GB VRAM**:
 
 1. **Next.js 14 Web Frontend Server**:
    - Serves modern responsive web clients to student phones, tablets, Chromebooks, and PCs without requiring native app installations.

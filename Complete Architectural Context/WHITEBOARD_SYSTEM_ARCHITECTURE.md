@@ -65,7 +65,7 @@
        │    • Raw Spoken Audio Chunks (Overlapping Sliding Window + RMS Silence Gate)              │
        │    • Reading Passages (Text Upload, PDF, Word Mammoth, EasyOCR Camera Photos)             │
        │                                                                                           │
-       │ 🤖 LOCAL AI ENGINE (AS) — Sequential Phase VRAM Budget (RTX 4070 8GB):                    │
+       │ 🤖 LOCAL AI ENGINE (AS) — Sequential Phase VRAM Budget (RTX 2070 8GB):                    │
        │    • Phase 1 (Oral Reading): facebook/mms-1b-all (CTC Base) + Swapped eng/tgl Adapters   │
        │    • Memory Release Hook: gc.collect() + torch.cuda.empty_cache() (<0.3GB VRAM)           │
        │    • Phase 2 (Comprehension): Gemma 3 4B (Q4_K_M via Ollama) Bloom's Taxonomy Quizzes     │

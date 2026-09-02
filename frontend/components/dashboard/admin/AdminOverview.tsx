@@ -125,7 +125,7 @@ export function AdminOverview({
               <span>GPU VRAM Telemetry</span>
             </h3>
             <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold border border-[#DED2B4] bg-[#FFFDF8] text-gray-600">
-              RTX 4070 · 8GB GDDR6
+              RTX 2070 · 8GB GDDR6
             </span>
           </div>
 

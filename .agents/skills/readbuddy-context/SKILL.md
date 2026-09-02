@@ -100,17 +100,27 @@ Always respect these — reference by number when relevant:
 ## 5. User Flow & Screen Map
 
 ```
-Teacher Register → Email Verification → Teacher Login → Teacher Dashboard
-                                                          ├─ Overview / Students / Passages
-                                                          ├─ Reading Tests & Phil-IRI Grading
-                                                          └─ Account Settings
+Admin Login → Admin Dashboard (/admin)
+               ├─ Overview (Telemetry, VRAM monitor: RTX 2070 8GB GDDR6)
+               ├─ Teachers & Students (Account management & approvals)
+               ├─ Content (Platform passage audit)
+               ├─ System Settings (ASR & LLM configurations, VRAM ceiling)
+               └─ My Account
 
-Student Login → Student Dashboard
-                 ├─ My Progress (trend charts, level badge, recent sessions)
-                 ├─ Assigned Tests (view teacher notes & launch test)
+Teacher Register → Email Verification → Admin Approval → Teacher Dashboard (/teacher)
+                                                          ├─ Overview (Class metrics & active assignments)
+                                                          ├─ My Students (Roster management & student creation)
+                                                          ├─ Classes (Section codes & grade levels)
+                                                          ├─ My Passages (Passage authoring & publishing)
+                                                          ├─ Reading Tests (Batch assignment & Phil-IRI grading)
+                                                          └─ Settings (Profile & notification preferences)
+
+Student Login → Student Dashboard (/student)
+                 ├─ My Progress (trend charts, Phil-IRI level badge, recent sessions)
+                 ├─ Assigned Tests (view teacher notes & launch assigned test flow)
                  ├─ Reading History (full session logs)
                  ├─ Settings (language preferences, speed, account info)
-                 └─ New Reading Session (Step 1 -> Step 5)
+                 └─ New Reading Session (Self-directed: Step 1 -> Step 5)
 ```
 
 ### Key UX Principles
@@ -136,33 +146,39 @@ Overall level = the **lower** of the two tiers.
 
 ## 7. Database Schema (PostgreSQL)
 
-7 tables:
+12 tables:
 
 ```
-teachers ──< students ──< reading_sessions >── passages
-                               │
-                               ├──< miscue_tokens
-                               └──< comprehension_tests ──< comprehension_questions ──< comprehension_answers
+admins
+admin_settings
+teachers ──< classes ──< students ──< reading_sessions >── passages
+   │                       │                │                  │
+   │                       │                ├──< miscue_tokens ├──< test_assignments
+   │                       │                └──< comp_answers  └──< comp_tests ──< comp_questions
+   └───────────────────────┴───────────────────────────────────────┘
 ```
 
 ### Key table details:
-- **teachers**: id, display_name, school_id (unique, login identifier), email (unique, verified), password_hash, email_verified, email_verification_token
-- **students**: id, display_name, username (unique), password_hash, teacher_id (FK), grade_level (0–12), section, preferred_language ("en"/"tl")
-- **passages**: id, student_id, source_type, source_language, raw_extracted_text, confirmed_text, word_count
-- **reading_sessions**: id, student_id, passage_id, word_recognition_score, comprehension_score, phil_iri_level, guidance_message, timestamps
+- **admins**: id, display_name, username (unique), email (unique), password_hash, role ('admin'), created_at
+- **teachers**: id, display_name, school_id (unique, login identifier), email (unique, verified), password_hash, role ('teacher'), admin_approved, email_verified, email_verification_token, password_reset_token, password_reset_expires_at, created_at
+- **classes**: id, teacher_id (FK), name (e.g. "Section St. Jude"), grade_level (1-12), class_code (unique, e.g. "SMCC-G7-STJUDE"), created_at
+- **students**: id, display_name, school_id (unique), username (unique), email, password_hash, role ('student'), teacher_id (FK), class_id (FK), section_name, grade_level (0–12), preferred_language ("en"/"tl"), password_reset_token, password_reset_expires_at, created_at
+- **passages**: id, teacher_id (FK), student_id (FK), title, source_type ("typed"/"photo_ocr"/"document_upload"), source_language ("en"/"tl"), raw_extracted_text, confirmed_text, word_count, is_published, created_at
+- **reading_sessions**: id, student_id, passage_id, passage_preview, source_language, started_at, finished_reading_at, word_recognition_score, comprehension_score, phil_iri_level, guidance_message, completed_at, created_at
 - **miscue_tokens**: id, reading_session_id, word_index, expected_word, asr_transcribed_word, asr_model_used, is_correct, confidence_score
-- **comprehension_tests**: id, reading_session_id, generated_by_model
-- **comprehension_questions**: id, test_id, question_text, question_type (recall/inference/application), choices (jsonb), correct_choice_index
-- **comprehension_answers**: id, question_id, selected_choice_index, is_correct
+- **comprehension_tests**: id, passage_id, reading_session_id, generated_by_model, created_at
+- **comprehension_questions**: id, test_id, question_text, question_type (recall/inference/application), choices (jsonb/text), correct_choice_index, order_index
+- **comprehension_answers**: id, reading_session_id, question_id, selected_choice_index, is_correct, answered_at
+- **test_assignments**: id, passage_id (FK), teacher_id (FK), student_id (FK), status ('pending'/'completed'/'graded'), word_recognition_score, comprehension_score, phil_iri_level, teacher_remarks, audio_recording_url, assigned_at, completed_at, graded_at
+- **admin_settings**: id ('default'), asr_device ('cuda'/'cpu'), vram_budget_mb (8192), active_asr_model, active_llm_model, updated_at
 
 ### Indexes
-- `students(teacher_id)`, `reading_sessions(student_id, started_at)`, `miscue_tokens(reading_session_id, word_index)`, `passages(student_id, created_at)`
+- `students(school_id)`, `teachers(school_id)`, `students(teacher_id, class_id)`, `reading_sessions(student_id, completed_at DESC)`, `miscue_tokens(reading_session_id, word_index ASC)`, `test_assignments(teacher_id, status)`, `passages(teacher_id, created_at DESC)`
 
 ### Deliberately NOT included (yet)
-- No pgvector / vector columns
+- No pgvector / vector columns (relational only)
 - No per-grade difficulty tables
 - No aggregate class-results rollup tables
-- No password-reset or session-revocation tables
 
 ---
 

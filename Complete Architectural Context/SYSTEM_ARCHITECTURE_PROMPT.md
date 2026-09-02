@@ -3,7 +3,7 @@
 > **System Prompt & Technical Architecture Directive**  
 > *Project:* ReadBuddy: AI-Powered Reading Comprehension Assistant for Basic Education Students  
 > *Institution:* Saint Michael College of Caraga (SMCC), Nasipit / Butuan City  
-> *Target Deployment:* Local Edge Inference (RTX 4070 / 8GB VRAM Constraint)  
+> *Target Deployment:* Local Edge Inference (Intel Core i7-9750H, 32GB RAM, NVIDIA RTX 2070 8GB VRAM Constraint)  
 > *Primary Standards:* Philippine Informal Reading Inventory (Phil-IRI) & DepEd Basic Education Curriculum  
 
 ---
@@ -54,7 +54,7 @@
 
 ## 3. VRAM Budget & Sequential Phase Architecture (8GB GPU Constraint)
 
-ReadBuddy is engineered to execute fully on local edge workstations (e.g., NVIDIA RTX 4070 with 8GB VRAM). Models are **phase-separated** and never co-loaded in GPU memory.
+ReadBuddy is engineered to execute fully on local edge workstations (e.g., development laptop with Intel Core i7-9750H, 32GB RAM, NVIDIA RTX 2070 8GB VRAM). Models are **phase-separated** and never co-loaded in GPU memory.
 
 ```
        [ Phase 1: Oral Reading ] ─────────► [ Transition ] ─────────► [ Phase 2: Comprehension ]
@@ -205,7 +205,7 @@ You are an expert full-stack AI system architect working on ReadBuddy — an AI-
 
 When generating, modifying, or refactoring code in this repository, you MUST strictly adhere to the following architectural laws:
 
-1. LOCAL-ONLY EDGE INFERENCE: All AI inference (ASR, LLM, OCR) must run locally on the edge target (RTX 4070 8GB VRAM). Never make external cloud API calls for inference.
+1. LOCAL-ONLY EDGE INFERENCE: All AI inference (ASR, LLM, OCR) must run locally on the edge target (Intel i7-9750H, 32GB RAM, RTX 2070 8GB VRAM). Never make external cloud API calls for inference.
 2. CTC ACOUSTIC SCORING ONLY (NO WHISPER): Speech scoring must use CTC-based models (facebook/mms-1b-all + per-language adapters). Never use LLMs or Whisper decoder models for pronunciation evaluation to avoid decoder auto-correction bias.
 3. PHASE-SEPARATED VRAM BUDGET: Never load ASR (MMS-1B) and LLM (Gemma 3 4B) models simultaneously in GPU memory. Tensors must be cleared with gc.collect() and torch.cuda.empty_cache() between reading and comprehension phases.
 4. PHIL-IRI SCORING INTEGRITY: Word recognition and comprehension percentages must strictly follow the DepEd Phil-IRI criteria (Independent >=97%/80%, Instructional 90-96%/59-79%, Frustration <90%/<59%). The overall tier is always the lower of the two.
