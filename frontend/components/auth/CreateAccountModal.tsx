@@ -22,6 +22,7 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
   const [studentName, setStudentName] = useState('');
   const [studentSchoolId, setStudentSchoolId] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
+  const [studentPhone, setStudentPhone] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
   const [showStudentPassword, setShowStudentPassword] = useState(false);
   const [gradeLevel, setGradeLevel] = useState('7');
@@ -31,6 +32,7 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
   const [teacherName, setTeacherName] = useState('');
   const [teacherSchoolId, setTeacherSchoolId] = useState('');
   const [teacherEmail, setTeacherEmail] = useState('');
+  const [teacherPhone, setTeacherPhone] = useState('');
   const [teacherPassword, setTeacherPassword] = useState('');
   const [teacherConfirmPassword, setTeacherConfirmPassword] = useState('');
   const [showTeacherPassword, setShowTeacherPassword] = useState(false);
@@ -190,6 +192,8 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
       username: formalUsername,
       school_id: cleanId,
       email: cleanEmail,
+      phone_number: studentPhone.trim(),
+      phone_verified: false,
       password: pwd,
       role: 'student',
       grade_level: Number(gradeLevel),
@@ -367,6 +371,8 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
       username: username,
       school_id: cleanId,
       email: cleanEmail,
+      phone_number: teacherPhone.trim(),
+      phone_verified: false,
       password: teacherPassword,
       role: 'teacher',
       admin_approved: true,
@@ -552,6 +558,19 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                     placeholder="e.g. jdelacruz@student.smccnasipit.edu.ph"
                     value={studentEmail}
                     onChange={(e) => setStudentEmail(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+
+                <div>
+                  <label className={styles.label}>
+                    Mobile Phone Number <span className="text-gray-400 font-normal">(for 2FA & SMS verification)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. 0917 123 4567 or +63 917 123 4567"
+                    value={studentPhone}
+                    onChange={(e) => setStudentPhone(e.target.value)}
                     className={styles.input}
                   />
                 </div>
@@ -773,6 +792,19 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                   <span className="text-[10px] text-gray-500 block mt-0.5">
                     A 6-digit verification code will be sent to this email to prevent student impersonation.
                   </span>
+                </div>
+
+                <div>
+                  <label className={styles.label}>
+                    Mobile Phone Number <span className="text-gray-400 font-normal">(for 2FA & SMS verification)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. 0917 123 4567 or +63 917 123 4567"
+                    value={teacherPhone}
+                    onChange={(e) => setTeacherPhone(e.target.value)}
+                    className={styles.input}
+                  />
                 </div>
 
                 {/* ─── PASSWORD AND CONFIRM PASSWORD WITH CLEAR INDICATION ─── */}

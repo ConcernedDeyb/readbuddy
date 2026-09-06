@@ -250,7 +250,7 @@ export function AdminAuthLogsSSO() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div id="tour-admin-logs-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <SectionHeader
           title="Activity, Auth Logs & SSO"
           subtitle="Audit authentication attempts, user activity timestamps, and manage institutional Single Sign-On (SSO)."

@@ -57,6 +57,10 @@ export default function TeacherDashboardPage() {
   const [teacherEmail, setTeacherEmail] = useState('');
   const [teacherUsername, setTeacherUsername] = useState('');
   const [schoolId, setSchoolId] = useState('');
+  const [teacherPhone, setTeacherPhone] = useState('');
+  const [teacherPhoneVerified, setTeacherPhoneVerified] = useState(false);
+  const [teacherTwoFactor, setTeacherTwoFactor] = useState(false);
+  const [teacherAvatarUrl, setTeacherAvatarUrl] = useState('');
 
   // Live state tracking
   const [passages, setPassages] = useState<Passage[]>([]);
@@ -85,6 +89,10 @@ export default function TeacherDashboardPage() {
             if (parsed.school_id) setSchoolId(parsed.school_id);
             if (parsed.email) setTeacherEmail(parsed.email);
             else if (parsed.username) setTeacherEmail(`${parsed.username}@smccnasipit.edu.ph`);
+            if (parsed.phone_number) setTeacherPhone(parsed.phone_number);
+            if (parsed.phone_verified !== undefined) setTeacherPhoneVerified(parsed.phone_verified);
+            if (parsed.two_factor_enabled !== undefined) setTeacherTwoFactor(parsed.two_factor_enabled);
+            if (parsed.avatar_url) setTeacherAvatarUrl(parsed.avatar_url);
           }
         }
 
@@ -302,6 +310,10 @@ export default function TeacherDashboardPage() {
             username: teacherUsername || schoolId || '',
             role: 'teacher',
             schoolId: schoolId || '',
+            phoneNumber: teacherPhone,
+            isPhoneVerified: teacherPhoneVerified,
+            twoFactorEnabled: teacherTwoFactor,
+            avatarUrl: teacherAvatarUrl,
           }}
           accent="#3D6B8A"
         />

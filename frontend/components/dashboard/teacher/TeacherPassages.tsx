@@ -77,7 +77,7 @@ export function TeacherPassages({
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div id="tour-teacher-passages-header" className="flex items-start justify-between gap-4 mb-6">
         <SectionHeader title="My Passages" subtitle="Reading passages you've authored for your class." accent={TEACHER_ACCENT} />
         <PrimaryButton accent={TEACHER_ACCENT} onClick={onAuthorNew}>+ Author New Passage</PrimaryButton>
       </div>

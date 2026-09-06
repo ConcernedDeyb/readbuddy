@@ -1,8 +1,30 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import { Card, PrimaryButton, GhostButton, FONT_SERIF, FONT_SANS, CHALK_GREEN, TAN_BORDER, MUTED, INK, AccountProfile } from '../_shared';
+import {
+  Card,
+  PrimaryButton,
+  GhostButton,
+  Avatar,
+  AvatarCropperModal,
+  PhoneVerificationModal,
+  FONT_SERIF,
+  FONT_SANS,
+  CHALK_GREEN,
+  TAN_BORDER,
+  MUTED,
+  INK,
+  AccountProfile,
+} from '../_shared';
 import { SettingFieldRow, Input, SuccessToast, ToggleSwitch } from './AccountFormControls';
+import {
+  Camera,
+  Crop,
+  Smartphone,
+  ShieldCheck,
+  Check,
+  Trash2,
+  AlertCircle,
+  Sparkles,
+} from 'lucide-react';
 
 export function ProfileTab({
   profile,
@@ -11,19 +33,46 @@ export function ProfileTab({
 }: {
   profile: AccountProfile;
   accent: string;
-  onProfileUpdate?: (updated: { displayName: string; email: string }) => void;
+  onProfileUpdate?: (updated: {
+    displayName: string;
+    email: string;
+    phoneNumber?: string;
+    isPhoneVerified?: boolean;
+    twoFactorEnabled?: boolean;
+    avatarUrl?: string;
+  }) => void;
 }) {
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [email, setEmail] = useState(profile.email);
+  const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber || '');
+  const [isPhoneVerified, setIsPhoneVerified] = useState(profile.isPhoneVerified || false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatarUrl || null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+
   const [isEmailVerified, setIsEmailVerified] = useState(true);
   const [verificationSent, setVerificationSent] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
+  // Sync state from profile or localStorage
   useEffect(() => {
     setDisplayName(profile.displayName);
     setEmail(profile.email);
-  }, [profile.displayName, profile.email]);
+    if (profile.phoneNumber) setPhoneNumber(profile.phoneNumber);
+    if (profile.isPhoneVerified !== undefined) setIsPhoneVerified(profile.isPhoneVerified);
+    if (profile.avatarUrl !== undefined) setAvatarUrl(profile.avatarUrl || null);
+
+    try {
+      const savedUser = localStorage.getItem('readbuddy_user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        if (u.phone_number && !profile.phoneNumber) setPhoneNumber(u.phone_number);
+        if (u.phone_verified !== undefined && profile.isPhoneVerified === undefined) setIsPhoneVerified(u.phone_verified);
+        if (u.avatar_url && !profile.avatarUrl) setAvatarUrl(u.avatar_url);
+      }
+    } catch (e) {}
+  }, [profile]);
 
   function handleEmailChange(newEmail: string) {
     setEmail(newEmail);
@@ -32,6 +81,17 @@ export function ProfileTab({
       setVerificationSent(false);
     } else {
       setIsEmailVerified(true);
+    }
+  }
+
+  function handlePhoneChange(newPhone: string) {
+    setPhoneNumber(newPhone);
+    const cleanedStored = (profile.phoneNumber || '').replace(/\D/g, '');
+    const cleanedNew = newPhone.replace(/\D/g, '');
+    if (cleanedNew !== cleanedStored) {
+      setIsPhoneVerified(false);
+    } else {
+      setIsPhoneVerified(profile.isPhoneVerified || false);
     }
   }
 
@@ -46,12 +106,120 @@ export function ProfileTab({
     }, 1000);
   }
 
+  function handleSaveAvatar(croppedUrl: string) {
+    setAvatarUrl(croppedUrl);
+
+    // Immediate persistence
+    try {
+      const savedUser = localStorage.getItem('readbuddy_user');
+      let userObj = savedUser ? JSON.parse(savedUser) : {};
+      userObj.avatar_url = croppedUrl;
+      localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
+
+      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+      if (profile.username && accountsMap[profile.username]) accountsMap[profile.username].avatar_url = croppedUrl;
+      if (profile.schoolId && accountsMap[profile.schoolId]) accountsMap[profile.schoolId].avatar_url = croppedUrl;
+      if (profile.email && accountsMap[profile.email]) accountsMap[profile.email].avatar_url = croppedUrl;
+      localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
+
+      window.dispatchEvent(new Event('readbuddy_user_updated'));
+    } catch (e) {}
+
+    if (onProfileUpdate) {
+      onProfileUpdate({
+        displayName: displayName.trim(),
+        email: email.trim(),
+        phoneNumber: phoneNumber.trim(),
+        isPhoneVerified,
+        avatarUrl: croppedUrl,
+      });
+    }
+    setProfileSaved(true);
+    setTimeout(() => setProfileSaved(false), 3000);
+  }
+
+  function handleRemoveAvatar() {
+    setAvatarUrl(null);
+
+    try {
+      const savedUser = localStorage.getItem('readbuddy_user');
+      let userObj = savedUser ? JSON.parse(savedUser) : {};
+      delete userObj.avatar_url;
+      localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
+
+      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+      if (profile.username && accountsMap[profile.username]) delete accountsMap[profile.username].avatar_url;
+      if (profile.schoolId && accountsMap[profile.schoolId]) delete accountsMap[profile.schoolId].avatar_url;
+      if (profile.email && accountsMap[profile.email]) delete accountsMap[profile.email].avatar_url;
+      localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
+
+      window.dispatchEvent(new Event('readbuddy_user_updated'));
+    } catch (e) {}
+
+    if (onProfileUpdate) {
+      onProfileUpdate({
+        displayName: displayName.trim(),
+        email: email.trim(),
+        phoneNumber: phoneNumber.trim(),
+        isPhoneVerified,
+        avatarUrl: undefined,
+      });
+    }
+  }
+
+  function handlePhoneVerified() {
+    setIsPhoneVerified(true);
+
+    try {
+      const savedUser = localStorage.getItem('readbuddy_user');
+      let userObj = savedUser ? JSON.parse(savedUser) : {};
+      userObj.phone_number = phoneNumber.trim();
+      userObj.phone_verified = true;
+      localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
+
+      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+      if (profile.username && accountsMap[profile.username]) {
+        accountsMap[profile.username].phone_number = phoneNumber.trim();
+        accountsMap[profile.username].phone_verified = true;
+      }
+      if (profile.schoolId && accountsMap[profile.schoolId]) {
+        accountsMap[profile.schoolId].phone_number = phoneNumber.trim();
+        accountsMap[profile.schoolId].phone_verified = true;
+      }
+      if (profile.email && accountsMap[profile.email]) {
+        accountsMap[profile.email].phone_number = phoneNumber.trim();
+        accountsMap[profile.email].phone_verified = true;
+      }
+      localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
+
+      window.dispatchEvent(new Event('readbuddy_user_updated'));
+    } catch (e) {}
+
+    if (onProfileUpdate) {
+      onProfileUpdate({
+        displayName: displayName.trim(),
+        email: email.trim(),
+        phoneNumber: phoneNumber.trim(),
+        isPhoneVerified: true,
+        avatarUrl: avatarUrl || undefined,
+      });
+    }
+    setProfileSaved(true);
+    setTimeout(() => setProfileSaved(false), 3000);
+  }
+
   function handleProfileSave() {
     if (!displayName.trim() || !email.trim()) return;
 
     // 1. Notify parent component
     if (onProfileUpdate) {
-      onProfileUpdate({ displayName: displayName.trim(), email: email.trim() });
+      onProfileUpdate({
+        displayName: displayName.trim(),
+        email: email.trim(),
+        phoneNumber: phoneNumber.trim(),
+        isPhoneVerified,
+        avatarUrl: avatarUrl || undefined,
+      });
     }
 
     // 2. Persist to localStorage ('readbuddy_user')
@@ -60,6 +228,9 @@ export function ProfileTab({
       let userObj = savedUser ? JSON.parse(savedUser) : {};
       userObj.display_name = displayName.trim();
       userObj.email = email.trim();
+      userObj.phone_number = phoneNumber.trim();
+      userObj.phone_verified = isPhoneVerified;
+      userObj.avatar_url = avatarUrl;
       localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
 
       // Update in accounts map
@@ -67,15 +238,24 @@ export function ProfileTab({
       if (profile.username && accountsMap[profile.username]) {
         accountsMap[profile.username].display_name = displayName.trim();
         accountsMap[profile.username].email = email.trim();
+        accountsMap[profile.username].phone_number = phoneNumber.trim();
+        accountsMap[profile.username].phone_verified = isPhoneVerified;
+        accountsMap[profile.username].avatar_url = avatarUrl;
       }
       if (profile.schoolId && accountsMap[profile.schoolId]) {
         accountsMap[profile.schoolId].display_name = displayName.trim();
         accountsMap[profile.schoolId].email = email.trim();
+        accountsMap[profile.schoolId].phone_number = phoneNumber.trim();
+        accountsMap[profile.schoolId].phone_verified = isPhoneVerified;
+        accountsMap[profile.schoolId].avatar_url = avatarUrl;
       }
       accountsMap[email.trim()] = {
         ...userObj,
         display_name: displayName.trim(),
         email: email.trim(),
+        phone_number: phoneNumber.trim(),
+        phone_verified: isPhoneVerified,
+        avatar_url: avatarUrl,
       };
       localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
     } catch (e) {}
@@ -93,8 +273,54 @@ export function ProfileTab({
     <Card>
       <div className="mb-4 pb-3 border-b" style={{ borderColor: TAN_BORDER }}>
         <h3 className="text-base font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>Profile Details</h3>
-        <p className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED }}>Update your display name and institutional email address.</p>
+        <p className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED }}>Update your profile photo, display credentials, and secondary verification phone.</p>
       </div>
+
+      {/* Profile Picture & Cropper Section */}
+      <SettingFieldRow label="Profile Picture" hint="Upload and crop a custom avatar photo (JPG, PNG, WEBP).">
+        <div className="flex items-center gap-4">
+          <div className="relative group">
+            <Avatar name={displayName} accent={accent} size={64} src={avatarUrl} />
+            <button
+              type="button"
+              onClick={() => setIsCropperOpen(true)}
+              className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-[#E8873A] text-white border-2 border-[#1F4D3A] shadow-[1px_1px_0px_#1F4D3A] hover:scale-105 transition-all cursor-pointer"
+              title="Crop and edit photo"
+            >
+              <Crop className="w-3.5 h-3.5" strokeWidth={2.5} />
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCropperOpen(true)}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-white border-2 border-[#133326] shadow-[2px_2px_0px_#133326] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5 font-sans"
+                style={{ background: `linear-gradient(135deg, ${accent}, #1F4D3A)` }}
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Upload & Crop Photo</span>
+              </button>
+
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={handleRemoveAvatar}
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#A4432A] border-2 border-[#A4432A] bg-[#FDF2E9] hover:bg-[#FBEAE3] transition-all cursor-pointer flex items-center gap-1 font-sans"
+                  title="Remove custom photo"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Remove</span>
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-500 font-sans">
+              Square / circular 1:1 format. Live pan, zoom, and rotate cropper available.
+            </p>
+          </div>
+        </div>
+      </SettingFieldRow>
 
       <SettingFieldRow label="Display Name" hint="Shown across reports and dashboards.">
         <Input value={displayName} onChange={setDisplayName} placeholder="Your full name" autoComplete="name" />
@@ -132,20 +358,61 @@ export function ProfileTab({
           {/* Email Verification Status Note Below Email Input */}
           {!isEmailVerified && !verificationSent && (
             <p className="text-[11px] text-[#B4602E] font-medium flex items-center gap-1.5 font-sans">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>Email address is pending verification. Click <strong>Verify Email</strong> to send a confirmation link to {email}.</span>
             </p>
           )}
           {verificationSent && (
             <p className="text-[11px] text-[#2E7D4F] font-semibold flex items-center gap-1.5 font-sans">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <Check className="w-3.5 h-3.5 shrink-0" />
               <span>Verification link sent to <strong>{email}</strong>! Please check your inbox to confirm.</span>
+            </p>
+          )}
+        </div>
+      </SettingFieldRow>
+
+      {/* Mobile Phone Number with Secondary Verification */}
+      <SettingFieldRow label="Mobile Phone Number" hint="Used for SMS secondary verification and 2FA login security.">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <Input
+                value={phoneNumber}
+                onChange={handlePhoneChange}
+                type="tel"
+                placeholder="0917 123 4567 or +63 917 123 4567"
+                autoComplete="tel"
+              />
+            </div>
+            {/* Phone Verification Status Badge / Button */}
+            {isPhoneVerified ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#E6F4EA] text-[#2E7D4F] border border-[#BFE0CC] shrink-0 font-mono">
+                <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                <span>Verified</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsPhoneModalOpen(true)}
+                disabled={!phoneNumber.trim() || phoneNumber.replace(/\D/g, '').length < 10}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FCEDDE] text-[#B4602E] border border-[#F0C99A] hover:bg-[#FBEBD3] transition-all cursor-pointer shrink-0 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Verify Mobile</span>
+              </button>
+            )}
+          </div>
+
+          {!isPhoneVerified && phoneNumber.trim() && (
+            <p className="text-[11px] text-[#B4602E] font-medium flex items-center gap-1.5 font-sans">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>Mobile number is unverified. Click <strong>Verify Mobile</strong> to send a 6-digit SMS verification code.</span>
+            </p>
+          )}
+          {isPhoneVerified && (
+            <p className="text-[11px] text-[#2E7D4F] font-semibold flex items-center gap-1.5 font-sans">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              <span>Verified for secondary authentication & 2FA account protection.</span>
             </p>
           )}
         </div>
@@ -159,6 +426,27 @@ export function ProfileTab({
         <PrimaryButton accent={accent} onClick={handleProfileSave} disabled={!displayName.trim() || !email.trim()}>Save Profile Changes</PrimaryButton>
         {profileSaved && <SuccessToast message="Profile updated and saved successfully!" />}
       </div>
+
+      {/* Avatar Cropper Modal */}
+      <AvatarCropperModal
+        open={isCropperOpen}
+        currentAvatarUrl={avatarUrl}
+        userName={displayName}
+        accent={accent}
+        onSave={handleSaveAvatar}
+        onRemove={handleRemoveAvatar}
+        onClose={() => setIsCropperOpen(false)}
+      />
+
+      {/* Phone Verification Modal */}
+      <PhoneVerificationModal
+        open={isPhoneModalOpen}
+        phoneNumber={phoneNumber}
+        userName={displayName}
+        accent={accent}
+        onVerified={handlePhoneVerified}
+        onClose={() => setIsPhoneModalOpen(false)}
+      />
     </Card>
   );
 }
@@ -246,6 +534,50 @@ export function SecurityTab({ profile, accent }: { profile?: AccountProfile; acc
   const [passwordError, setPasswordError] = useState('');
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // ─── Two-Factor Secondary Phone Verification ───
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(profile?.twoFactorEnabled || false);
+  const [hasVerifiedPhone, setHasVerifiedPhone] = useState(profile?.isPhoneVerified || false);
+  const [twoFactorSaved, setTwoFactorSaved] = useState(false);
+  const [twoFactorWarning, setTwoFactorWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('readbuddy_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u.two_factor_enabled !== undefined) setTwoFactorEnabled(u.two_factor_enabled);
+        if (u.phone_verified !== undefined) setHasVerifiedPhone(u.phone_verified);
+      }
+    } catch (e) {}
+  }, [profile]);
+
+  function handleToggleTwoFactor(enabled: boolean) {
+    setTwoFactorWarning(null);
+    if (enabled && !hasVerifiedPhone) {
+      setTwoFactorWarning('Please add and verify a mobile phone number in Profile Details first before enabling 2-step verification.');
+      return;
+    }
+
+    setTwoFactorEnabled(enabled);
+    try {
+      const saved = localStorage.getItem('readbuddy_user');
+      let userObj = saved ? JSON.parse(saved) : {};
+      userObj.two_factor_enabled = enabled;
+      localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
+
+      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+      if (profile?.username && accountsMap[profile.username]) accountsMap[profile.username].two_factor_enabled = enabled;
+      if (profile?.schoolId && accountsMap[profile.schoolId]) accountsMap[profile.schoolId].two_factor_enabled = enabled;
+      if (profile?.email && accountsMap[profile.email]) accountsMap[profile.email].two_factor_enabled = enabled;
+      localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
+
+      window.dispatchEvent(new Event('readbuddy_user_updated'));
+    } catch (e) {}
+
+    setTwoFactorSaved(true);
+    setTimeout(() => setTwoFactorSaved(false), 2500);
+  }
 
   async function handlePasswordSave() {
     setPasswordError('');
@@ -338,7 +670,7 @@ export function SecurityTab({ profile, accent }: { profile?: AccountProfile; acc
     <Card>
       <div className="mb-4 pb-3 border-b" style={{ borderColor: TAN_BORDER }}>
         <h3 className="text-base font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>Security & Password</h3>
-        <p className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED }}>Update your account password and security credentials.</p>
+        <p className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED }}>Update your account password and configure secondary authentication.</p>
       </div>
 
       <SettingFieldRow label="Current Password">
@@ -363,6 +695,52 @@ export function SecurityTab({ profile, accent }: { profile?: AccountProfile; acc
         </PrimaryButton>
         <GhostButton onClick={() => { setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setPasswordError(''); }}>Reset</GhostButton>
         {passwordSaved && <SuccessToast message="Password changed successfully!" />}
+      </div>
+
+      {/* ─── Two-Factor Secondary Verification Section ─── */}
+      <div className="mt-8 pt-5 border-t-2" style={{ borderColor: TAN_BORDER }}>
+        <div className="mb-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-[#1F4D3A]" strokeWidth={2.25} />
+            <h4 className="text-sm font-bold text-[#1F4D3A]" style={{ fontFamily: FONT_SERIF }}>
+              Two-Step Phone Verification (2FA)
+            </h4>
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: FONT_SANS }}>
+            Require a 6-digit SMS verification code whenever signing in from a new device to safeguard scholar records.
+          </p>
+        </div>
+
+        <SettingFieldRow
+          label="Require SMS Code on Login"
+          hint="Dispatches an OTP verification challenge to your verified mobile number."
+        >
+          <div className="flex items-center gap-3">
+            <ToggleSwitch
+              checked={twoFactorEnabled}
+              onChange={handleToggleTwoFactor}
+              accent={accent}
+            />
+            <span
+              className="text-xs font-semibold"
+              style={{
+                fontFamily: FONT_SANS,
+                color: twoFactorEnabled ? '#1F4D3A' : MUTED,
+              }}
+            >
+              {twoFactorEnabled ? '2FA Enabled (Active)' : 'Disabled'}
+            </span>
+          </div>
+        </SettingFieldRow>
+
+        {twoFactorWarning && (
+          <div className="mt-3 p-3 rounded-xl bg-[#FDF2E9] border-2 border-[#F0C99A] text-xs font-semibold text-[#B4602E] flex items-center gap-2 font-sans">
+            <AlertCircle className="w-4 h-4 shrink-0 text-[#B4602E]" />
+            <span>{twoFactorWarning}</span>
+          </div>
+        )}
+
+        {twoFactorSaved && <SuccessToast message="Two-factor security settings updated!" />}
       </div>
     </Card>
   );

@@ -109,7 +109,9 @@ export function AdminSettings({
 
   return (
     <div>
-      <SectionHeader title="System Settings" subtitle="Platform-wide ASR model parameters, account creation limits, and security configuration." accent={ADMIN_ACCENT} />
+      <div id="tour-admin-settings-header">
+        <SectionHeader title="System Settings" subtitle="Platform-wide ASR model parameters, account creation limits, and security configuration." accent={ADMIN_ACCENT} />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start min-h-[480px]">
         <div className="md:col-span-1 shrink-0">

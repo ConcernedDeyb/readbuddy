@@ -84,7 +84,7 @@ export function StudentDashboard({
   return (
     <div>
       {/* ─── Student Welcome Hero with Animated Mascot ─── */}
-      <div className="mb-6 p-5 rounded-2xl bg-[#FFFDF8] border-2 border-[#1F4D3A] shadow-[4px_4px_0px_#1F4D3A] flex flex-col sm:flex-row items-center justify-between gap-5 relative">
+      <div id="tour-student-welcome" className="mb-6 p-5 rounded-2xl bg-[#FFFDF8] border-2 border-[#1F4D3A] shadow-[4px_4px_0px_#1F4D3A] flex flex-col sm:flex-row items-center justify-between gap-5 relative">
         <div className="flex items-center gap-4">
           <ReadBuddyMascot
             mood={avgWordRecognition >= 85 ? 'cheering' : 'happy'}
@@ -105,12 +105,14 @@ export function StudentDashboard({
           </div>
         </div>
 
-        <PrimaryButton accent={STUDENT_ACCENT} onClick={onStartSession} className="shrink-0">
-          + Start Practice Session
-        </PrimaryButton>
+        <div id="tour-student-practice">
+          <PrimaryButton accent={STUDENT_ACCENT} onClick={onStartSession} className="shrink-0">
+            + Start Practice Session
+          </PrimaryButton>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div id="tour-student-stats" className="flex flex-wrap gap-4 mb-6">
         <StatCard label="Total Sessions" value={totalSessions} accent={STUDENT_ACCENT} />
         <StatCard label="Avg. Recognition" value={`${avgWordRecognition}%`} accent={STUDENT_ACCENT} />
         <Card className="flex-1 min-w-[180px] flex items-center justify-between gap-3">
@@ -125,7 +127,8 @@ export function StudentDashboard({
       <StudentProgressChart sessions={sessions as any} />
 
       {pendingTests.length > 0 && (
-        <Card className="mb-6 border-2 border-[#E8873A] shadow-[4px_4px_0px_rgba(232,135,58,0.2)]">
+        <div id="tour-student-assigned">
+          <Card className="mb-6 border-2 border-[#E8873A] shadow-[4px_4px_0px_rgba(232,135,58,0.2)]">
           <div className="flex items-center justify-between mb-3 border-b pb-2" style={{ borderColor: TAN_BORDER }}>
             <h2 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
               <FileText className="w-4 h-4 text-[#E8873A]" strokeWidth={2.25} />
@@ -157,6 +160,7 @@ export function StudentDashboard({
             ))}
           </div>
         </Card>
+        </div>
       )}
 
       {/* ─── My Notebook Widget ─── */}

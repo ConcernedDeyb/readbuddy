@@ -1,9 +1,9 @@
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
-import { FONT_SERIF, FONT_SANS, FONT_MONO, CREAM, MUTED, TAN_BORDER, CHALK_GREEN } from './_shared';
+import { FONT_SERIF, FONT_SANS, FONT_MONO, CREAM, MUTED, TAN_BORDER, CHALK_GREEN, Avatar } from './_shared';
 import { ReadBuddyLogo } from '../brand';
-import { ReadBuddyTourModal } from '../guide';
+import { InteractiveFeatureTour } from '../guide';
 import { BookOpen } from 'lucide-react';
 
 export type DashboardRole = 'teacher' | 'admin' | 'student';
@@ -158,6 +158,23 @@ export default function DashboardShell({
   const nav = role === 'teacher' ? TEACHER_NAV : role === 'admin' ? ADMIN_NAV : STUDENT_NAV;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showTourModal, setShowTourModal] = useState(false);
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
+
+  // Load avatar from localStorage and keep updated on profile changes
+  useEffect(() => {
+    function loadAvatar() {
+      try {
+        const saved = localStorage.getItem('readbuddy_user');
+        if (saved) {
+          const u = JSON.parse(saved);
+          setUserAvatarUrl(u.avatar_url || null);
+        }
+      } catch (e) {}
+    }
+    loadAvatar();
+    window.addEventListener('readbuddy_user_updated', loadAvatar);
+    return () => window.removeEventListener('readbuddy_user_updated', loadAvatar);
+  }, []);
 
   // Auto-prompt onboarding tour on first login for new users
   useEffect(() => {
@@ -231,6 +248,8 @@ export default function DashboardShell({
               return (
                 <button
                   key={item.key}
+                  id={`tour-nav-${item.key}`}
+                  data-tour={`nav-${item.key}`}
                   onClick={() => {
                     onSectionChange(item.key);
                     setMobileNavOpen(false);
@@ -259,23 +278,7 @@ export default function DashboardShell({
           className="p-4 m-3 rounded-2xl shrink-0 bg-black/20 border border-white/10"
         >
           <div className="flex items-center gap-3 mb-2.5">
-            <span
-              className="rb-avatar"
-              style={{
-                width: 34,
-                height: 34,
-                fontSize: 12,
-                background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentDark})`,
-                borderColor: '#FFFFFF',
-              }}
-            >
-              {userName
-                .split(/\s+/)
-                .map((w) => w[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2)}
-            </span>
+            <Avatar name={userName} accent={theme.accent} size={34} src={userAvatarUrl} />
             <div className="min-w-0 flex-1">
               <div
                 className="text-xs font-bold truncate"
@@ -354,6 +357,8 @@ export default function DashboardShell({
           </div>
 
           <button
+            id="tour-quick-guide"
+            data-tour="quick-guide"
             onClick={() => setShowTourModal(true)}
             className="px-3 py-1 rounded-xl bg-[#FFFDF8] hover:bg-[#FCEDDE] text-[#1F4D3A] font-bold text-xs font-sans border-2 border-[#1F4D3A] shadow-[2px_2px_0px_#1F4D3A] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F4D3A] transition-all flex items-center gap-1.5 cursor-pointer"
             title="Open interactive mascot guide"
@@ -370,11 +375,13 @@ export default function DashboardShell({
         </main>
       </div>
 
-      {/* ─── Interactive Mascot Onboarding & Feature Guide Modal ─── */}
-      <ReadBuddyTourModal
+      {/* ─── Interactive Live-Spotlight Feature Tour ─── */}
+      <InteractiveFeatureTour
         open={showTourModal}
         role={role}
         userName={userName}
+        activeSection={activeSection}
+        onSectionChange={onSectionChange}
         onClose={() => {
           setShowTourModal(false);
           try {

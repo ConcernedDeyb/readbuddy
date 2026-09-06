@@ -158,7 +158,7 @@ export default function TeacherTests({
   return (
     <ErrorBoundary fallbackTitle="Teacher Tests Module Encountered an Error">
       <div>
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div id="tour-teacher-tests-header" className="flex items-start justify-between gap-4 mb-6">
           <SectionHeader
             title="Reading Tests"
             subtitle="Create tests from your passages, assign to students, and grade with Phil-IRI."

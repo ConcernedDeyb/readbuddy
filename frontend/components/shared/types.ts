@@ -66,6 +66,10 @@ export interface AccountProfile {
   schoolId?: string;
   gradeLevel?: number;
   teacherName?: string;
+  phoneNumber?: string;
+  isPhoneVerified?: boolean;
+  twoFactorEnabled?: boolean;
+  avatarUrl?: string;
 }
 
 /* ─── Notebook Types ─── */

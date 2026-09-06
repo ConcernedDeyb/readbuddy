@@ -40,7 +40,7 @@ export function TeacherOverview({
       />
 
       {/* Metric Cards Row */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div id="tour-teacher-metrics" className="flex flex-wrap gap-4 mb-6">
         <StatCard label="Enrolled Students" value={studentCount} accent={TEACHER_ACCENT} onClick={() => onNavigate('students')} />
         <StatCard label="Authored Passages" value={passageCount} accent="#1F4D3A" onClick={() => onNavigate('passages')} />
         <StatCard label="Reading Tests" value={testCount} accent="#E8873A" onClick={() => onNavigate('tests')} />
@@ -48,7 +48,7 @@ export function TeacherOverview({
       </div>
 
       {/* Quick Actions Bar (Tactile Soft-Neobrutalism) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
+      <div id="tour-teacher-fast-actions" className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
         <button
           type="button"
           onClick={() => onNavigate('classes')}

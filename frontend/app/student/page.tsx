@@ -238,11 +238,13 @@ export default function StudentDashboardPage() {
       {/* ─── Assigned Tests Section ─── */}
       {section === 'tests' && (
         <div className="rb-fade-in-up">
-          <SectionHeader
-            title="Assigned Reading Tests"
-            subtitle="Tests set by your teacher to evaluate your reading and comprehension."
-            accent={STUDENT_ACCENT}
-          />
+          <div id="tour-student-tests-header">
+            <SectionHeader
+              title="Assigned Reading Tests"
+              subtitle="Tests set by your teacher to evaluate your reading and comprehension."
+              accent={STUDENT_ACCENT}
+            />
+          </div>
 
           {pendingTests.length === 0 ? (
             <EmptyState
@@ -292,11 +294,13 @@ export default function StudentDashboardPage() {
       {/* ─── Reading History Section ─── */}
       {section === 'history' && (
         <div className="rb-fade-in-up">
-          <SectionHeader
-            title="Reading History"
-            subtitle="Your past reading sessions and assessment scores."
-            accent={STUDENT_ACCENT}
-          />
+          <div id="tour-student-history-header">
+            <SectionHeader
+              title="Reading History"
+              subtitle="Your past reading sessions and assessment scores."
+              accent={STUDENT_ACCENT}
+            />
+          </div>
 
           {sessions.length === 0 ? (
             <EmptyState
@@ -374,6 +378,10 @@ export default function StudentDashboardPage() {
               role: 'student',
               gradeLevel: student.gradeLevel,
               teacherName: student.teacherName,
+              phoneNumber: (student as any).phoneNumber || (student as any).phone_number || '',
+              isPhoneVerified: (student as any).isPhoneVerified || (student as any).phone_verified || false,
+              twoFactorEnabled: (student as any).twoFactorEnabled || (student as any).two_factor_enabled || false,
+              avatarUrl: (student as any).avatarUrl || (student as any).avatar_url || '',
             }}
             accent={STUDENT_ACCENT}
           />

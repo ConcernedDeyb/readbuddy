@@ -16,6 +16,7 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
   const [fullName, setFullName] = useState('');
   const [schoolId, setSchoolId] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [gradeLevel, setGradeLevel] = useState('7');
   const [preferredLang, setPreferredLang] = useState<'en' | 'tl'>('en');
@@ -110,6 +111,8 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
       username: formalUsername,
       school_id: trimmedSchoolId,
       email: studentEmail.trim(),
+      phone_number: phoneNumber.trim(),
+      phone_verified: false,
       password: studentPassword,
       role: 'student',
       grade_level: Number(gradeLevel),
@@ -268,6 +271,19 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
                 placeholder="e.g. jdelacruz@student.smccnasipit.edu.ph"
                 value={studentEmail}
                 onChange={(e) => setStudentEmail(e.target.value)}
+                className={styles.input}
+              />
+            </div>
+
+            <div>
+              <label className={styles.label}>
+                Mobile Phone Number <span className="text-gray-400 font-normal">(for 2FA & SMS verification)</span>
+              </label>
+              <input
+                type="tel"
+                placeholder="e.g. 0917 123 4567 or +63 917 123 4567"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
                 className={styles.input}
               />
             </div>

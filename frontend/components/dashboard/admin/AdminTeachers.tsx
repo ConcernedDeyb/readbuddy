@@ -420,7 +420,7 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div id="tour-admin-teachers-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <SectionHeader
           title="Teachers & Faculty Management"
           subtitle="Add, edit, review, approve, and export educator credentials across SMCC."
@@ -642,7 +642,7 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
             return (
               <Card key={t.id} hoverable className="flex flex-col md:flex-row md:items-center justify-between gap-4 rb-fade-in-up">
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  <Avatar name={t.display_name} accent={isApproved ? '#2E7D4F' : '#B4602E'} />
+                  <Avatar name={t.display_name} accent={isApproved ? '#2E7D4F' : '#B4602E'} src={(t as any).avatar_url || (t as any).avatarUrl} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap" style={{ fontFamily: FONT_SERIF, fontWeight: 600, color: CHALK_GREEN }}>
                       <span className="text-base truncate">{t.display_name}</span>
@@ -660,6 +660,12 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
                       <span><strong>ID:</strong> {t.school_id}</span>
                       <span>•</span>
                       <span><strong>Email:</strong> {t.email}</span>
+                      {(t as any).phone_number && (
+                        <>
+                          <span>•</span>
+                          <span><strong>Mobile:</strong> {(t as any).phone_number}</span>
+                        </>
+                      )}
                       {t.created_at && (
                         <>
                           <span>•</span>

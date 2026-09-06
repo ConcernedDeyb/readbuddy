@@ -16,6 +16,7 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
   const [displayName, setDisplayName] = useState('');
   const [schoolId, setSchoolId] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -89,6 +90,8 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
       username: username,
       school_id: cleanId,
       email: cleanEmail,
+      phone_number: phoneNumber.trim(),
+      phone_verified: false,
       password: password,
       role: 'teacher',
       admin_approved: true,
@@ -211,6 +214,19 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
                   placeholder="e.g. msantos@smccnasipit.edu.ph"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className={styles.input}
+                />
+              </div>
+
+              <div>
+                <label className={styles.label}>
+                  Mobile Phone Number <span className="text-gray-400 font-normal">(for 2FA & SMS verification)</span>
+                </label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 0917 123 4567 or +63 917 123 4567"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
                   className={styles.input}
                 />
               </div>

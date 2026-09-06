@@ -1,6 +1,6 @@
 # ReadBuddy — Product Requirements Document
 
-**Full title:** ReadBuddy: An AI-Powered Reading Comprehension Assistant for Basic Education Students
+**Full title:** ReadBuddy: An Intelligent Reading Comprehensive Assistant for Basic Education Students
 **Status:** Pre-development / Title Hearing stage
 **Institution:** Saint Michael College of Caraga (SMCC), Butuan City
 

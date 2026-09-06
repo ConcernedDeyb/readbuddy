@@ -235,6 +235,10 @@ export default function AdminDashboardPage() {
             username: adminUsername || 'admin',
             role: 'admin',
             schoolId: 'SMCC-ADMIN',
+            phoneNumber: (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').phone_number : '') || '',
+            isPhoneVerified: (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').phone_verified : false) || false,
+            twoFactorEnabled: (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').two_factor_enabled : false) || false,
+            avatarUrl: (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').avatar_url : '') || '',
           }}
           accent="#7A4A6B"
         />

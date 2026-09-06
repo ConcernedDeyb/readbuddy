@@ -462,7 +462,7 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div id="tour-admin-students-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <SectionHeader
           title="Students & Classroom Roster"
           subtitle="Manage student profiles, grade level assignments, reading assessment history, and roster export."
@@ -573,7 +573,7 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
             return (
               <Card key={s.id || s.school_id || s.username} hoverable className="flex items-center justify-between gap-4 flex-wrap rb-fade-in-up">
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  <Avatar name={s.display_name} accent={gradeColor(s.grade_level)} />
+                  <Avatar name={s.display_name} accent={gradeColor(s.grade_level)} src={(s as any).avatar_url || (s as any).avatarUrl} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap" style={{ fontFamily: FONT_SERIF, fontWeight: 600, color: CHALK_GREEN }}>
                       <span className="text-base">{s.display_name}</span>
@@ -593,6 +593,12 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
                         <>
                           <span>•</span>
                           <span className="truncate">{s.email}</span>
+                        </>
+                      )}
+                      {(s as any).phone_number && (
+                        <>
+                          <span>•</span>
+                          <span><strong>Mobile:</strong> {(s as any).phone_number}</span>
                         </>
                       )}
                       {hasTeacher && isAssigned && (

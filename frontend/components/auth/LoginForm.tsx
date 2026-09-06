@@ -6,6 +6,7 @@ import styles from './auth.module.css';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { CreateAccountModal } from './CreateAccountModal';
 import { LoginLoadingScreen } from './LoginLoadingScreen';
+import { PhoneVerificationModal } from '../shared/PhoneVerificationModal';
 import { recordAuthLog, recordActivity } from '@/utils/auditLogger';
 
 export interface LoginFormProps {
@@ -22,6 +23,12 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [loginSuccessData, setLoginSuccessData] = useState<{ role: 'student' | 'teacher' | 'admin'; name: string } | null>(null);
+  const [pending2FA, setPending2FA] = useState<{
+    account: any;
+    sessionData: any;
+    userRole: 'student' | 'teacher' | 'admin';
+    trimmedId: string;
+  } | null>(null);
 
   // Modal dialog states
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
@@ -254,7 +261,23 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         role: userRole,
         grade_level: matchedAccount.grade_level,
         password: password,
+        phone_number: matchedAccount.phone_number,
+        phone_verified: matchedAccount.phone_verified,
+        two_factor_enabled: matchedAccount.two_factor_enabled,
+        avatar_url: matchedAccount.avatar_url,
       };
+
+      // ─── SECONDARY VERIFICATION / 2FA CHALLENGE ───
+      if (matchedAccount.two_factor_enabled && matchedAccount.phone_number) {
+        setLoading(false);
+        setPending2FA({
+          account: matchedAccount,
+          sessionData,
+          userRole: userRole as 'student' | 'teacher' | 'admin',
+          trimmedId,
+        });
+        return;
+      }
 
       localStorage.setItem('readbuddy_user', JSON.stringify(sessionData));
 
@@ -315,6 +338,34 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
       setError('An error occurred during authentication. Please try again.');
       setLoading(false);
     }
+  }
+
+  function handle2FAVerified() {
+    if (!pending2FA) return;
+    const { sessionData, userRole, account, trimmedId } = pending2FA;
+    localStorage.setItem('readbuddy_user', JSON.stringify(sessionData));
+
+    recordAuthLog({
+      identifier: trimmedId,
+      display_name: account.display_name,
+      role: userRole,
+      method: 'SMS 2FA Verified',
+      status: 'SUCCESS',
+      details: `Secondary 2FA phone challenge passed for ${userRole}`,
+    });
+
+    recordActivity({
+      user_name: account.display_name,
+      role: userRole,
+      action: '2FA Challenge Passed',
+      details: `SMS secondary verification verified for ${account.display_name}`,
+    });
+
+    setPending2FA(null);
+    setLoginSuccessData({
+      role: userRole,
+      name: account.display_name,
+    });
   }
 
   if (loginSuccessData) {
@@ -444,6 +495,17 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
           setSuccessMsg('Account registered successfully! Enter your password to sign in.');
         }}
       />
+
+      {pending2FA && (
+        <PhoneVerificationModal
+          open={Boolean(pending2FA)}
+          phoneNumber={pending2FA.account.phone_number}
+          userName={pending2FA.account.display_name}
+          accent={pending2FA.userRole === 'teacher' ? '#3D6B8A' : pending2FA.userRole === 'admin' ? '#7A4A6B' : '#E8873A'}
+          onVerified={handle2FAVerified}
+          onClose={() => setPending2FA(null)}
+        />
+      )}
     </>
   );
 }

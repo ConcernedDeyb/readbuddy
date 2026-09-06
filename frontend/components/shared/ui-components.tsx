@@ -292,7 +292,33 @@ export function ScoreDisplay({ label, value, color }: { label: string; value: nu
 }
 
 /* ─── Avatar (Soft-Neobrutalism) ─── */
-export function Avatar({ name, accent, size = 38 }: { name: string; accent: string; size?: number }) {
+export function Avatar({
+  name,
+  accent,
+  size = 38,
+  src,
+}: {
+  name: string;
+  accent: string;
+  size?: number;
+  src?: string | null;
+}) {
+  if (src) {
+    return (
+      <span
+        className="rb-avatar overflow-hidden inline-flex items-center justify-center shrink-0 border-2"
+        style={{
+          width: size,
+          height: size,
+          borderColor: '#1F4D3A',
+          boxShadow: '1.5px 1.5px 0px #1F4D3A',
+        }}
+      >
+        <img src={src} alt={name || 'Avatar'} className="w-full h-full object-cover select-none pointer-events-none" />
+      </span>
+    );
+  }
+
   const initials = (name || 'User').split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 2);
   return (
     <span

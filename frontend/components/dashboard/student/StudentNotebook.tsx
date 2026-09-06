@@ -353,7 +353,7 @@ export default function StudentNotebook({
         </div>
 
         {/* Navigation Tabs (Soft-Neobrutalism Tactile Pill Buttons) */}
-        <div className="flex items-center gap-3 overflow-x-auto pt-1 pb-2 mb-6">
+        <div id="tour-student-notebook-tabs" className="flex items-center gap-3 overflow-x-auto pt-1 pb-2 mb-6">
           {/* Tab 1: Materials */}
           <button
             type="button"

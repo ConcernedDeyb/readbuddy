@@ -6,7 +6,7 @@ export interface AuthLogEntry {
   identifier: string;
   display_name: string;
   role: 'student' | 'teacher' | 'admin';
-  method: 'Local Password' | 'SMCC Google SSO' | 'Microsoft 365 SAML' | 'Session Token';
+  method: 'Local Password' | 'SMCC Google SSO' | 'Microsoft 365 SAML' | 'Session Token' | 'SMS 2FA Verified';
   status: 'SUCCESS' | 'FAILED' | 'PASSWORD_RESET' | 'APPROVED' | 'REVOKED' | 'CREATED' | 'UPDATED' | 'DELETED';
   ip_address?: string;
   details: string;

@@ -89,7 +89,7 @@ export function AdminOverview({
       </div>
 
       {/* Quick Actions Panel (Tactile Soft-Neobrutalism) */}
-      <div className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-[#FFFDF8] border-2 border-[#DED2B4] shadow-[3px_3px_0px_rgba(31,77,58,0.08)] flex-wrap">
+      <div id="tour-admin-fast-actions" className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-[#FFFDF8] border-2 border-[#DED2B4] shadow-[3px_3px_0px_rgba(31,77,58,0.08)] flex-wrap">
         <span className="text-xs font-bold font-serif text-[#1F4D3A] mr-1">Admin Fast Actions:</span>
         <button
           onClick={() => onNavigate('teachers')}
@@ -123,7 +123,8 @@ export function AdminOverview({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* VRAM / Model State Card */}
-        <Card className="flex flex-col gap-4">
+        <div id="tour-admin-vram">
+          <Card className="flex flex-col gap-4">
           <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: TAN_BORDER }}>
             <h3 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
               <Cpu className="w-4 h-4 text-emerald-700" strokeWidth={2.25} />
@@ -161,6 +162,7 @@ export function AdminOverview({
             <span className="font-mono text-[11px] text-[#2E7D4F] font-bold">Optimal</span>
           </div>
         </Card>
+        </div>
 
         {/* Activity Card */}
         <Card className="flex flex-col gap-3">

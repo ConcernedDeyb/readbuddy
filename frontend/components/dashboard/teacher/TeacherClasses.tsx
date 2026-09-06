@@ -198,7 +198,7 @@ export function TeacherClasses({
 
   return (
     <div className="rb-fade-in-up">
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div id="tour-teacher-classes-header" className="flex items-start justify-between gap-4 mb-6">
         <SectionHeader
           title="Class Sections"
           subtitle="Manage your grade sections and invite codes."

@@ -13,16 +13,29 @@ export default function AccountSettings({
 }: {
   profile: AccountProfile;
   accent: string;
-  onProfileUpdate?: (updated: { displayName: string; email: string }) => void;
+  onProfileUpdate?: (updated: {
+    displayName: string;
+    email: string;
+    phoneNumber?: string;
+    isPhoneVerified?: boolean;
+    twoFactorEnabled?: boolean;
+    avatarUrl?: string;
+  }) => void;
 }) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [profile, setProfile] = useState<AccountProfile>(initialProfile);
 
-  function handleProfileUpdated(updated: { displayName: string; email: string }) {
+  function handleProfileUpdated(updated: {
+    displayName: string;
+    email: string;
+    phoneNumber?: string;
+    isPhoneVerified?: boolean;
+    twoFactorEnabled?: boolean;
+    avatarUrl?: string;
+  }) {
     setProfile((prev) => ({
       ...prev,
-      displayName: updated.displayName,
-      email: updated.email,
+      ...updated,
     }));
     if (onProfileUpdate) {
       onProfileUpdate(updated);
@@ -43,13 +56,16 @@ export default function AccountSettings({
 
         <Card className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Avatar name={profile.displayName} accent={accent} size={52} />
+            <Avatar name={profile.displayName} accent={accent} size={54} src={profile.avatarUrl} />
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>{profile.displayName}</h2>
                 <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-bold" style={{ background: `${accent}15`, color: accent, fontFamily: FONT_MONO }}>{profile.role}</span>
               </div>
-              <p className="text-xs mt-0.5" style={{ fontFamily: FONT_MONO, color: MUTED }}>School ID: {profile.schoolId || profile.username} · {profile.email}</p>
+              <p className="text-xs mt-0.5" style={{ fontFamily: FONT_MONO, color: MUTED }}>
+                School ID: {profile.schoolId || profile.username} · {profile.email}
+                {profile.phoneNumber && ` · ${profile.phoneNumber}`}
+              </p>
             </div>
           </div>
         </Card>

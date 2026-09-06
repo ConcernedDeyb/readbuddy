@@ -36,6 +36,9 @@ interface Student {
   section_name?: string;
   teacher_name?: string;
   preferred_language: 'en' | 'tl';
+  phone_number?: string;
+  phone_verified?: boolean;
+  avatar_url?: string;
   sessions_completed?: number;
   latest_level?: PhilIRILevel;
 }
@@ -88,6 +91,7 @@ export function TeacherStudents({
   const [draft, setDraft] = useState({
     display_name: '',
     school_id: '',
+    phone_number: '',
     grade_level: '7',
     section_name: '',
     custom_section_name: '',
@@ -544,6 +548,8 @@ export function TeacherStudents({
       section_name: chosenSection,
       teacher_name: teacherName,
       preferred_language: draft.preferred_language,
+      phone_number: draft.phone_number.trim(),
+      phone_verified: false,
       sessions_completed: 0,
     };
 
@@ -584,6 +590,8 @@ export function TeacherStudents({
         section_name: chosenSection,
         class_name: chosenSection,
         teacher_name: teacherName,
+        phone_number: draft.phone_number.trim(),
+        phone_verified: false,
         created_at: new Date().toISOString().split('T')[0],
       };
 
@@ -630,6 +638,7 @@ export function TeacherStudents({
     setDraft({
       display_name: '',
       school_id: '',
+      phone_number: '',
       grade_level: '7',
       section_name: availableClasses[0]?.name || '',
       custom_section_name: '',
@@ -1026,7 +1035,7 @@ export function TeacherStudents({
   return (
     <div className="rb-fade-in-up">
       {/* ─── Top Header & Primary Add Actions ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div id="tour-teacher-students-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <SectionHeader
           title="Student Roster"
           subtitle="Manage enrolled students across your class sections."
@@ -1151,10 +1160,10 @@ export function TeacherStudents({
                 <tr key={s.id || s.school_id || s.username} className="hover:bg-gray-50/80 transition-colors">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2.5">
-                      <Avatar name={s.display_name} accent={TEACHER_ACCENT} size={32} />
+                      <Avatar name={s.display_name} accent={TEACHER_ACCENT} size={32} src={(s as any).avatar_url || (s as any).avatarUrl} />
                       <div>
                         <div className="font-bold text-gray-900">{s.display_name}</div>
-                        <div className="text-[10px] text-gray-400 font-mono">{s.email || `${s.school_id}@smccnasipit.edu.ph`}</div>
+                        <div className="text-[10px] text-gray-400 font-mono">{s.email || `${s.school_id}@smccnasipit.edu.ph`}{(s as any).phone_number ? ` · ${(s as any).phone_number}` : ''}</div>
                       </div>
                     </div>
                   </td>
@@ -1425,7 +1434,7 @@ export function TeacherStudents({
                               onChange={() => toggleDbStudent(studentId)}
                               className="w-4 h-4 text-[#3D6B8A] rounded border-gray-300 focus:ring-[#3D6B8A] cursor-pointer shrink-0"
                             />
-                            <Avatar name={s.display_name} accent={TEACHER_ACCENT} size={32} />
+                            <Avatar name={s.display_name} accent={TEACHER_ACCENT} size={32} src={(s as any).avatar_url || (s as any).avatarUrl} />
                             <div className="min-w-0">
                               <div className="text-xs font-bold text-gray-900 truncate">
                                 {s.display_name}
@@ -1508,6 +1517,19 @@ export function TeacherStudents({
                       placeholder="e.g. 20261001"
                       value={draft.school_id}
                       onChange={(e) => setDraft((d) => ({ ...d, school_id: e.target.value }))}
+                      className="rb-input"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1.5 sm:col-span-2">
+                    <span className="text-xs font-medium font-sans" style={{ color: MUTED }}>
+                      Mobile Phone Number <span className="text-gray-400 font-normal">(for 2FA & SMS verification)</span>
+                    </span>
+                    <input
+                      type="tel"
+                      placeholder="e.g. 0917 123 4567 or +63 917 123 4567"
+                      value={draft.phone_number}
+                      onChange={(e) => setDraft((d) => ({ ...d, phone_number: e.target.value }))}
                       className="rb-input"
                     />
                   </label>

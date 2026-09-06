@@ -201,7 +201,126 @@ teachers ──< classes ──< students ──< reading_sessions >── passa
 
 ---
 
-## 10. Reference Files
+## 10. SMCC Capstone Project Manuscript Requirements (Revised Format 2025 v2 & Approved E-Uniserv Reference)
+
+Institutional standard for CCIS (BSIT, BSIS, DIT), prepared by CCIS Research Coordinator (Marlon Juhn M. Timogan, MIT) and noted by Dean (Daisa O. Gupit, MIT), verified against the approved 2026 capstone manuscript (*E-Uniserv*). **Cardinal Rule: Put ONLY the needed requirements in the capstone manuscript — no bloat, filler, or unapproved sections.**
+
+### Structural Checklist & Phrasing Formulas
+
+1. **Front Matter:**
+   - Title Page, Certificate of Research Approval, Abstract, Dedication, Acknowledgement, Table of Contents, List of Tables, List of Figures.
+   - **Abstract Formula:**
+     - Header: `TITLE:`, `AUTHOR:`, `DEGREE:`, `ADVISER:`, `PLACE OF PUBLICATION:`, `DATE:`, `PAGES:`, `DEVELOPMENTAL RESEARCH`
+     - Sub-headers:
+       - `I. OBJECTIVES`: *"The researchers’ study aims to develop... Specifically, it aims to: 1. ... 2. ... 3. ... 4. ... 5. ..."*
+       - `II. METHODOLOGY`: *"This study used a descriptive–developmental approach to design and implement... The system flow was visualized through structured models such as the Conceptual Framework, Use Case Diagram, Activity Diagram, Sequence Diagram, and ERD... Developed using [Stack]... Security features included [Auth & Security]... Ethical standards were observed throughout development..."*
+       - `III. FINDINGS`: *"The system demonstrated a high acceptance across all three ISO 25010 evaluation criteria: Functional Suitability, Performance Efficiency, and Usability... With an overall Grand Mean of [Score], the system was rated '[Verbal Interpretation]'..."*
+       - `IV. RECOMMENDATIONS`: *"To further sustain the [System], the institution should continue its development, maintenance, and improvement... Regular updates, monitoring, security checks, and backups are essential for stability. End-user training on [functions] will promote confident use..."*
+       - `KEYWORDS:` Comma-separated list.
+
+2. **Chapter I – Introduction:**
+   - **Project Context (Strict 6 paragraphs):**
+     - *Par 1:* Topic and relevance to status quo (Phil-IRI reading assessment, CRLA, ELLNA literacy gaps).
+     - *Par 2–3:* Literature review on international and local scales citing studies (`According to [Author] [1]...`, `Additionally, [Author] [2] highlights that...`), contrasting manual paper disadvantages against digital automated benefits, and identifying the research gap.
+     - *Par 4:* Institutional problem description at SMCC (`"Over the years, students at Saint Michael College of Caraga (SMCC) have mainly..."`).
+     - *Par 5:* Proposed solution introduction (`"To address service challenges at [Context], a [web-based / offline AI platform] could be created that enables users to [key functions]... This approach will reduce manual effort, eliminate errors, and ensure [outcomes]..."`).
+     - *Par 6:* Significance of the study and institutional necessity (`"The [Institution/Context] needs to implement and optimize a [System Type] to address existing inefficiencies... Implementing this system can improve [stakeholders'] productivity and performance..."`).
+   - **Literature Review:**
+     - IEEE format citations (`[1]`, `[2]`, ...).
+     - Begin with a listing of the subsections/themes.
+     - Use frequent headings to guide thoughts.
+     - Thematically arranged with critical RRL analysis; aligned with Literature Review Matrix.
+     - At least 30–50 related studies, strictly from the **past 5 years (2021–2026)**.
+     - Conclude each theme with a synthesis sentence (`"Conclusion: [Takeaway contrasting manual limitation against automated advantage]."`).
+     - Conclude entire literature review with an overarching summary.
+   - **Project Objectives:**
+     - General Objective: Develop ReadBuddy (bilingual AI-powered reading comprehension assistant).
+     - Specific Objectives (at least 3; ReadBuddy defines 5):
+       1. Bilingual speech-recognition module (CTC facebook/mms-1b-all adapter, >=85% word accuracy).
+       2. LLM comprehension test generator (gemma3:4b, recall/inference/application, reading specialist validation).
+       3. Deterministic scoring engine (>=80% agreement with teacher Phil-IRI levels).
+       4. Teacher management module (register, verify, manage students, assign passages, view results).
+       5. System evaluation using ISO 25010 Standards (functional suitability, performance efficiency, usability with SUS >= 68).
+   - **Scope and Limitation (Strict 2 paragraphs):**
+     - *Par 1 (Scope):* *"The [System Name] aims to design and develop an efficient [domain] platform for [Context], specifically implemented at Saint Michael College of Caraga, Nasipit, Agusan del Norte. The system is designed for use by [User Roles] to promote accessible, secure, and efficient [operations]. The system includes [Module 1], [Module 2], [Module 3], and [Module 4]."*
+     - *Par 2 (Limitation):* *"The system can only handle [domain scope] and cannot process [out-of-scope items]. It requires [prerequisite infrastructure], and its full capabilities rely on [specific local runtime/environment]."* (Covers 8GB VRAM single-session constraint, adult FLEURS baseline pending UP-DSP-PLD validation, offline local infra, no student self-registration).
+   - **Definition of Terms:**
+     - Introductory formula: *"The terms defined below explain the basic concepts and factors discussed during the conceptualization and development of the [System Name] as well as how the researchers apply these concepts in their study."*
+     - Format: `[Term] – Refers to [operational description of how it is applied in this research].` Arranged alphabetically.
+
+3. **Chapter II – Methodology:**
+   - **2.1 Research Design:** *"This study will use a Design and Development Research (DDR) approach, focusing on the creation and evaluation of the [System Name] as a technology-based solution to improve [Domain] operations."*
+   - **2.2 SDLC:** Agile Software Development Life Cycle (Figure depicting sprint loop + narrative of iterative cycles, user feedback, and testing).
+   - **2.3 System Architecture:** Figure showing end-to-end component flow + narrative explaining user interaction, backend processing, local AI inference, and database persistence.
+   - **2.4 Conceptual Framework (IPO Diagram):** Standard 3-stage narrative: *Input stage*, *Process stage*, and *Output stage* (followed by ISO 25010 evaluation).
+   - **2.5 Use Case Diagram:** Figure + narrative of actors (Student, Teacher, Admin) and use case functions.
+   - **2.6 Activity Diagram:** Split into **two distinct figures**: `Activity Diagram - User` and `Activity Diagram - Admin`, each with narrative tracing workflow from login to logout.
+   - **2.7 Sequence Diagram:** Split into **two distinct figures**: `Sequence Diagram - Student/Teacher` and `Sequence Diagram - Admin`, tracing module calls, data validation, and database returns.
+   - **2.8 ERD (Database Design):** Figure + narrative detailing normalized tables, primary/foreign keys, and relational integrity.
+   - **2.9 User Interface Design (Prototype):** Every single prototype screen must have its own figure and caption (`"Figure X depicts the [Screen Name] interface of [System Name]. The user may [actions]..."`).
+   - **2.10 Software Platforms, Development Environments, and Tools:** Table 1 (`Components`, `Specification`, `Usage`) grouped into Front-End, Back-End, AI Runtimes, Database/Server, Security.
+   - **2.11 Hardware Requirements:** Table 2 (`Components`, `Specification`, `Usage`) for Device RAM (Min 8GB, Rec 16GB), Processor, Dedicated GPU (NVIDIA >=8GB VRAM), Storage (SSD >=256GB), Audio Input Device (16kHz microphone).
+   - **2.12 System Evaluation:**
+     - 4-point Likert Scale:
+       - `4 (3.50 – 4.0)`: *Very Functional / Very Efficient / Very Usable / Strongly Acceptable*
+       - `3 (2.50 – 3.49)`: *Functional / Efficient / Usable / Acceptable*
+       - `2 (1.50 – 2.49)`: *Moderately Functional / Moderately Efficient / Moderately Usable / Unacceptable*
+       - `1 (1.0 – 1.49)`: *Poor Functional / Poor Efficient / Poor Usable / Strongly Unacceptable*
+     - Table 3 (Functional Suitability), Table 4 (Performance Efficiency), Table 5 (Usability), Table 6 (Respondent's Distribution).
+   - **2.13 Research Ethical Standards (Parts A through M):**
+     - A. Protection of IPR (RA 8293)
+     - B. Informed Consent (Voluntary participation, written consent)
+     - C. Data Privacy and Confidentiality (RA 10173, local storage of minor data)
+     - D. Voluntary Participation and Freedom to Withdraw
+     - E. Minimization of Harm and Risk Management
+     - F. Beneficence and Contribution to Knowledge
+     - G. Justice and Fair Participant Selection
+     - H. Data Integrity and Accuracy
+     - I. Transparency and Honesty in Reporting
+     - J. Use of Patented or Copyrighted Materials (Open-source license compliance)
+     - K. Ethical Considerations for Animal and Human Trials (Non-applicable)
+     - L. Responsible Use of AI and Other Related Technologies (Disclosure of assistive AI tools, human-led verification, no raw data leaks)
+     - M. Ethical Clearance and Institutional Approval (SMCC Institutional Review Board - IRB)
+
+4. **Chapter III – Results and Discussion (The UI + Code Snippet Pairing Mandate):**
+   - **Strict 1-to-1 Mapping:** Sub-sections 3.1 to 3.5 directly align with Specific Objectives 1 to 5.
+   - **The Defining SMCC Pattern:** For EVERY major feature module:
+     1. `Figure X: [Feature Name]` (UI screenshot) + narrative describing user interaction and input fields.
+     2. `Figure X+1: Snippet Code - [Feature Name]` (Source code screenshot) + line-by-line narrative:
+        > *"Figure X+1 shows the [Language/Framework] code that controls the display and functionality of [Feature Name]. Lines X to Y [logic 1]... Lines A to B [logic 2]... Lines C to D [logic 3]... Overall, this code [purpose summary]."*
+   - **3.5 System Evaluation Results:**
+     - Table 7: Functional Suitability Evaluation Results (Items, Mean, Interpretation VF, Weighted Mean) + narrative.
+     - Table 8: Performance Efficiency Evaluation Results (Items, Mean, Interpretation E/VE, Weighted Mean) + narrative.
+     - Table 9: Usability Evaluation Results (Items, Mean, Interpretation VU/U, Weighted Mean) + narrative.
+     - Table 10: Summary Table of the Over-all Mean and Grand Distribution of the Acceptability Level (Grand Mean, Rating SA) + narrative.
+
+5. **Chapter IV – Summary, Conclusion, and Recommendation (Strict 3-Paragraph Caps):**
+   - **4.1 Summary of Findings:** Synthesizes grand mean and scores per ISO characteristic.
+   - **4.2 Conclusion (Maximum 3 Paragraphs):**
+     - *Par 1:* Core purpose fulfillment and functional suitability achievements.
+     - *Par 2:* Overall acceptability rating (*Strongly Acceptable*) and operational benefits.
+     - *Par 3:* Maintenance and ongoing refinement requirements.
+   - **4.3 Recommendations (Maximum 3 Paragraphs):**
+     - *Par 1:* Institutional sustenance, regular updates, database monitoring, and backups.
+     - *Par 2:* End-user training and orientation for teachers and students.
+     - *Par 3:* Future researchers and developers, citing specific literature references for subsequent enhancements.
+
+6. **References:** IEEE format only.
+
+7. **Appendices (Strictly A through G + Institutional Forms):**
+   - Appendix A: Relevant Source Code
+   - Appendix B: User's Manual (Detailed, step-by-step with circled red numbers 1, 2, 3... on screenshots)
+   - Appendix C: Letter of Approval / Permit to Conduct Study
+   - Appendix D: Evaluation Instrument with Informed Consent (SMCC-REC Form 4)
+   - Appendix E: Instrument with Informed Consent (ISO 25010 4-point questionnaire)
+   - Appendix F: Map of Research Locale (Satellite image with coordinates $8.969^\circ\text{ N, } 125.294^\circ\text{ E}$)
+   - Appendix G: Narrative and Photo Documentation (Chronological: Title Hearing, Proposal Defense, Routing, Coding/Debugging, Pilot Testing, Final Defense, Deployment)
+   - Institutional Certifications: Certificate of Technology-Based Assessment (Grammarly/AI/Plagiarism test report), Protocol Evaluation Form (SMCC-REC Form 3).
+
+
+---
+
+## 11. Reference Files
 
 When in doubt, re-read the originals:
 - `Complete Architectural Context/architecture.md` — system design, VRAM, deployment, auth mechanism
@@ -209,3 +328,4 @@ When in doubt, re-read the originals:
 - `Complete Architectural Context/PRD.md` — problem, goals, non-goals, features, metrics
 - `Complete Architectural Context/Rules.md` — all 17 binding constraints
 - `Complete Architectural Context/Schema.md` — PostgreSQL tables, indexes, exclusions
+
