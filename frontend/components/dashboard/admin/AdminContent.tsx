@@ -68,7 +68,7 @@ export function AdminContent({ passages: initialPassages = [], onUnpublish }: { 
                   {p.confirmed_text}
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                 <button
                   onClick={() => handleTogglePublish(p.id)}
                   className="text-xs px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors font-sans text-gray-700 cursor-pointer"

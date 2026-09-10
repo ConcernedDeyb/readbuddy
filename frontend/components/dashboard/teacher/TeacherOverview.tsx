@@ -97,7 +97,7 @@ export function TeacherOverview({
 
       {/* Activity Card */}
       <Card>
-        <div className="flex items-center justify-between mb-3 border-b pb-2" style={{ borderColor: TAN_BORDER }}>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3 border-b pb-2" style={{ borderColor: TAN_BORDER }}>
           <h2 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
             <BarChart3 className="w-4 h-4 text-[#1F4D3A]" strokeWidth={2.25} />
             <span>Recent Student Reading Activity</span>
@@ -114,14 +114,14 @@ export function TeacherOverview({
             {students.map((s) => (
               <div
                 key={s.id}
-                className="flex items-center justify-between py-2.5 px-3 rounded-xl border mb-2 bg-[#FFFDF8]"
+                className="flex items-center justify-between py-2.5 px-3 rounded-xl border mb-2 bg-[#FFFDF8] gap-2"
                 style={{ borderColor: `${TAN_BORDER}88` }}
               >
-                <div>
-                  <span className="text-xs font-bold block text-[#1F4D3A]" style={{ fontFamily: FONT_SANS }}>{s.name}</span>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold block text-[#1F4D3A] truncate" style={{ fontFamily: FONT_SANS }}>{s.name}</span>
                   <span className="text-[11px] font-mono text-gray-500">{s.sessions_completed} session{s.sessions_completed === 1 ? '' : 's'} completed</span>
                 </div>
-                {s.latest_level && <PhilIRIBadge level={s.latest_level} />}
+                {s.latest_level && <div className="shrink-0"><PhilIRIBadge level={s.latest_level} /></div>}
               </div>
             ))}
           </div>

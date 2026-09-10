@@ -224,11 +224,11 @@ export function TestGradingModal({
           </div>
 
           {/* Save */}
-          <div className="flex gap-2">
-            <PrimaryButton accent={TEACHER_ACCENT} onClick={handleSaveGrade}>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <PrimaryButton accent={TEACHER_ACCENT} onClick={handleSaveGrade} className="w-full sm:w-auto">
               {gradingAssignment.assignment.status === 'graded' ? 'Update Grade' : 'Save Grade & Remarks'}
             </PrimaryButton>
-            <GhostButton onClick={onClose}>
+            <GhostButton onClick={onClose} className="w-full sm:w-auto">
               Cancel
             </GhostButton>
           </div>

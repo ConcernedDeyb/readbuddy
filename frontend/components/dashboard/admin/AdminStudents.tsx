@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { SectionHeader, Card, Badge, EmptyState, Avatar, PhilIRIBadge, FONT_MONO, FONT_SERIF, MUTED, CHALK_GREEN, PhilIRILevel } from '../_shared';
 import { recordAuthLog, recordActivity } from '@/utils/auditLogger';
-import { Check, X } from 'lucide-react';
+import { Check, X, Users } from 'lucide-react';
 
 const ADMIN_ACCENT = '#7A4A6B';
 
@@ -537,7 +537,7 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 p-3.5 rounded-2xl bg-[#FFFDF8] border border-[#DED2B4]">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 w-full sm:max-w-sm">
           <input
             type="text"
             placeholder="Search students by name, ID, or section..."
@@ -547,12 +547,12 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <span className="text-xs text-gray-600 font-sans font-semibold">Grade:</span>
           <select
             value={gradeFilter}
             onChange={(e) => setGradeFilter(e.target.value)}
-            className="rb-input text-xs py-1 px-2.5"
+            className="rb-input text-xs py-1 px-2.5 w-full sm:w-auto"
           >
             <option value="all">All Grades</option>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
@@ -571,18 +571,19 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
             const hasTeacher = Boolean(s.teacher_name && s.teacher_name !== 'Faculty');
 
             return (
-              <Card key={s.id || s.school_id || s.username} hoverable className="flex items-center justify-between gap-4 flex-wrap rb-fade-in-up">
+              <Card key={s.id || s.school_id || s.username} hoverable className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rb-fade-in-up">
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   <Avatar name={s.display_name} accent={gradeColor(s.grade_level)} src={(s as any).avatar_url || (s as any).avatarUrl} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap" style={{ fontFamily: FONT_SERIF, fontWeight: 600, color: CHALK_GREEN }}>
                       <span className="text-base">{s.display_name}</span>
                       {isAssigned ? (
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#F4F9FC] text-[#3D6B8A] font-sans font-semibold border border-[#D0E2EC]">
-                          Section: {s.class_name}
+                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-[#EBF3F8] text-[#3D6B8A] font-mono font-bold border border-[#BBD5E8] whitespace-nowrap shadow-2xs">
+                          <Users className="w-3 h-3 text-[#3D6B8A] shrink-0" strokeWidth={2.25} />
+                          <span>{s.class_name}</span>
                         </span>
                       ) : (
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 font-sans font-medium border border-gray-200">
+                        <span className="inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 font-mono font-medium border border-gray-200 whitespace-nowrap">
                           Unassigned
                         </span>
                       )}
@@ -611,7 +612,7 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 w-full sm:w-auto justify-end">
                   <Badge tone="info">Grade {s.grade_level}</Badge>
                   <Badge tone="neutral">
                     {s.session_count} session{s.session_count === 1 ? '' : 's'}
@@ -654,8 +655,8 @@ export function AdminStudents({ students: initialStudents = [] }: { students?: S
 
       {/* ─── ADD / EDIT STUDENT MODAL ─── */}
       {isAddModalOpen && mounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-md bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-6 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col rb-fade-in-up">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-md bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-4 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col rb-fade-in-up">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}

@@ -5,6 +5,8 @@
  * class sections, authored passages, reading history trends, and test assignments.
  */
 
+import { DEFAULT_SMCC_SECTIONS, MASTER_SECTIONS_STORAGE_KEY } from './sectionCatalog';
+
 export function initializeRealisticSystemData() {
   if (typeof window === 'undefined') return;
 
@@ -59,13 +61,75 @@ export function initializeRealisticSystemData() {
         created_at: '2026-08-20',
       },
 
+      // School Principal: Dr. Maria Elena Santos
+      'readbuddyprincipal': {
+        display_name: 'Dr. Maria Elena Santos',
+        school_id: 'SMCC-PRIN-001',
+        username: 'readbuddyprincipal',
+        email: 'principal@smccnasipit.edu.ph',
+        role: 'principal',
+        email_verified: true,
+        admin_approved: true,
+        created_at: '2026-08-15',
+      },
+      'readbuddyprincipal@smccnasipit.edu.ph': {
+        display_name: 'Dr. Maria Elena Santos',
+        school_id: 'SMCC-PRIN-001',
+        username: 'readbuddyprincipal',
+        email: 'principal@smccnasipit.edu.ph',
+        role: 'principal',
+        email_verified: true,
+        admin_approved: true,
+        created_at: '2026-08-15',
+      },
+      'principal': {
+        display_name: 'Dr. Maria Elena Santos',
+        school_id: 'SMCC-PRIN-001',
+        username: 'readbuddyprincipal',
+        email: 'principal@smccnasipit.edu.ph',
+        role: 'principal',
+        email_verified: true,
+        admin_approved: true,
+        created_at: '2026-08-15',
+      },
+      'principal@smccnasipit.edu.ph': {
+        display_name: 'Dr. Maria Elena Santos',
+        school_id: 'SMCC-PRIN-001',
+        username: 'readbuddyprincipal',
+        email: 'principal@smccnasipit.edu.ph',
+        role: 'principal',
+        email_verified: true,
+        admin_approved: true,
+        created_at: '2026-08-15',
+      },
+      'SMCC-PRIN-001': {
+        display_name: 'Dr. Maria Elena Santos',
+        school_id: 'SMCC-PRIN-001',
+        username: 'readbuddyprincipal',
+        email: 'principal@smccnasipit.edu.ph',
+        role: 'principal',
+        email_verified: true,
+        admin_approved: true,
+        created_at: '2026-08-15',
+      },
+      'smcc-prin-001': {
+        display_name: 'Dr. Maria Elena Santos',
+        school_id: 'SMCC-PRIN-001',
+        username: 'readbuddyprincipal',
+        email: 'principal@smccnasipit.edu.ph',
+        role: 'principal',
+        email_verified: true,
+        admin_approved: true,
+        created_at: '2026-08-15',
+      },
+
       // Student 1: Juan Delata
       '202450545': {
         id: 'std-juan-delata',
         display_name: 'Juan Delata',
         school_id: '202450545',
         username: 'juan_delata',
-        email: 'juan.delata@student.smccnasipit.edu.ph',
+        email: 'juan.delata@smccnasipit.edu.ph',
         role: 'student',
         grade_level: 7,
         section_name: 'St. John',
@@ -79,7 +143,7 @@ export function initializeRealisticSystemData() {
         display_name: 'Juan Delata',
         school_id: '202450545',
         username: 'juan_delata',
-        email: 'juan.delata@student.smccnasipit.edu.ph',
+        email: 'juan.delata@smccnasipit.edu.ph',
         role: 'student',
         grade_level: 7,
         section_name: 'St. John',
@@ -120,7 +184,39 @@ export function initializeRealisticSystemData() {
       },
     };
 
-    const mergedAccounts = { ...retainedAccounts, ...existingAccounts };
+    const mergedAccounts: Record<string, any> = { ...retainedAccounts };
+    Object.keys(existingAccounts).forEach((k) => {
+      if (mergedAccounts[k]) {
+        mergedAccounts[k] = { ...mergedAccounts[k], ...existingAccounts[k] };
+      } else {
+        mergedAccounts[k] = existingAccounts[k];
+      }
+    });
+
+    // Synchronize section assignments across account aliases (school_id vs username)
+    // If ANY alias was unassigned in existing accounts, mirror it across all aliases so it never re-attaches
+    const studentAliasPairs = [
+      ['202450543', 'darriel_dave_abad'],
+      ['202450545', 'juan_delata'],
+    ];
+    studentAliasPairs.forEach(([sid, un]) => {
+      const accSid = existingAccounts[sid] || mergedAccounts[sid];
+      const accUn = existingAccounts[un] || mergedAccounts[un];
+
+      if (accSid?.section_name === 'Unassigned' || accUn?.section_name === 'Unassigned') {
+        if (mergedAccounts[sid]) {
+          mergedAccounts[sid].section_name = 'Unassigned';
+          mergedAccounts[sid].class_name = 'Unassigned';
+          mergedAccounts[sid].teacher_name = undefined;
+        }
+        if (mergedAccounts[un]) {
+          mergedAccounts[un].section_name = 'Unassigned';
+          mergedAccounts[un].class_name = 'Unassigned';
+          mergedAccounts[un].teacher_name = undefined;
+        }
+      }
+    });
+
     localStorage.setItem('readbuddy_accounts', JSON.stringify(mergedAccounts));
 
     const defaultPasswords: Record<string, string> = {
@@ -133,9 +229,20 @@ export function initializeRealisticSystemData() {
       '202450543': 'smcc2026',
       'darriel_dave_abad': 'smcc2026',
       'readbuddyadmin': 'smcc2026',
+      'readbuddyprincipal': 'smcc2026',
+      'readbuddyprincipal@smccnasipit.edu.ph': 'smcc2026',
+      'principal': 'smcc2026',
+      'principal@smccnasipit.edu.ph': 'smcc2026',
+      'SMCC-PRIN-001': 'smcc2026',
+      'smcc-prin-001': 'smcc2026',
     };
     const mergedPasswords = { ...defaultPasswords, ...existingPasswords };
     localStorage.setItem('readbuddy_passwords', JSON.stringify(mergedPasswords));
+
+    // ─── MASTER SCHOOL SECTIONS CATALOG (CANONICAL) ───
+    if (!localStorage.getItem(MASTER_SECTIONS_STORAGE_KEY)) {
+      localStorage.setItem(MASTER_SECTIONS_STORAGE_KEY, JSON.stringify(DEFAULT_SMCC_SECTIONS));
+    }
 
     // ─── 2. TEACHER ROSTERS & CLASS SECTIONS ───
     if (!localStorage.getItem('readbuddy_teacher_classes')) {
@@ -258,90 +365,365 @@ export function initializeRealisticSystemData() {
     }
 
     // ─── 4. STUDENT READING SESSIONS & PHIL-IRI SCORES ───
-    if (!localStorage.getItem('readbuddy_student_sessions')) {
-      const realisticSessions = [
-        // Juan Delata's Sessions (Progressing from Instructional to Independent)
-        {
-          id: 'ses-juan-3',
-          student_id: '202450545',
-          student_name: 'Juan Delata',
-          teacher_name: 'Jhon Mark Durano',
-          passage_title: 'The Legend of Mount Mayon',
-          passage_preview: 'The Legend of Mount Mayon (Diagnostic Assessment)',
-          source_language: 'en',
-          word_recognition_score: 98,
-          comprehension_score: 90,
-          phil_iri_level: 'independent',
-          date: '2026-09-01',
-        },
-        {
-          id: 'ses-juan-2',
-          student_id: '202450545',
-          student_name: 'Juan Delata',
-          teacher_name: 'Jhon Mark Durano',
-          passage_title: 'Ang Alamat ng Pinya',
-          passage_preview: 'Ang Alamat ng Pinya (Oral Practice #2)',
-          source_language: 'tl',
-          word_recognition_score: 96,
-          comprehension_score: 80,
-          phil_iri_level: 'instructional',
-          date: '2026-08-31',
-        },
-        {
-          id: 'ses-juan-1',
-          student_id: '202450545',
-          student_name: 'Juan Delata',
-          teacher_name: 'Jhon Mark Durano',
-          passage_title: 'The Legend of Mount Mayon',
-          passage_preview: 'The Legend of Mount Mayon (Oral Practice #1)',
-          source_language: 'en',
-          word_recognition_score: 94,
-          comprehension_score: 75,
-          phil_iri_level: 'instructional',
-          date: '2026-08-29',
-        },
+    const realisticSessions = [
+      // Juan Delata's Sessions (Progressing from Instructional/Frustration to Independent mastery)
+      {
+        id: 'ses-juan-19',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Legend of Mount Mayon',
+        passage_preview: 'The Legend of Mount Mayon (Oral Reading Mastery)',
+        source_language: 'en',
+        word_recognition_score: 99,
+        comprehension_score: 92,
+        phil_iri_level: 'independent',
+        date: '2026-09-10',
+      },
+      {
+        id: 'ses-juan-18',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Agusan Marsh Wildlife Sanctuary',
+        passage_preview: 'The Agusan Marsh Wildlife Sanctuary (Review)',
+        source_language: 'en',
+        word_recognition_score: 98,
+        comprehension_score: 88,
+        phil_iri_level: 'independent',
+        date: '2026-09-09',
+      },
+      {
+        id: 'ses-juan-17',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'Ang Alamat ng Pinya',
+        passage_preview: 'Ang Alamat ng Pinya (Tagalog Fluency)',
+        source_language: 'tl',
+        word_recognition_score: 97,
+        comprehension_score: 85,
+        phil_iri_level: 'independent',
+        date: '2026-09-09',
+      },
+      {
+        id: 'ses-juan-16',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'Si Pagong at si Matsing',
+        passage_preview: 'Si Pagong at si Matsing (Oral Retelling)',
+        source_language: 'tl',
+        word_recognition_score: 97,
+        comprehension_score: 82,
+        phil_iri_level: 'independent',
+        date: '2026-09-08',
+      },
+      {
+        id: 'ses-juan-15',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Legend of Mount Mayon',
+        passage_preview: 'The Legend of Mount Mayon (Fluency Check)',
+        source_language: 'en',
+        word_recognition_score: 96,
+        comprehension_score: 80,
+        phil_iri_level: 'instructional',
+        date: '2026-09-07',
+      },
+      {
+        id: 'ses-juan-14',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'Ang Alamat ng Pinya',
+        passage_preview: 'Ang Alamat ng Pinya (Vocabulary Focus)',
+        source_language: 'tl',
+        word_recognition_score: 96,
+        comprehension_score: 85,
+        phil_iri_level: 'instructional',
+        date: '2026-09-06',
+      },
+      {
+        id: 'ses-juan-13',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Agusan Marsh Wildlife Sanctuary',
+        passage_preview: 'The Agusan Marsh Wildlife Sanctuary (Comprehension)',
+        source_language: 'en',
+        word_recognition_score: 95,
+        comprehension_score: 78,
+        phil_iri_level: 'instructional',
+        date: '2026-09-05',
+      },
+      {
+        id: 'ses-juan-12',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'Si Pagong at si Matsing',
+        passage_preview: 'Si Pagong at si Matsing (Story Structure)',
+        source_language: 'tl',
+        word_recognition_score: 95,
+        comprehension_score: 75,
+        phil_iri_level: 'instructional',
+        date: '2026-09-03',
+      },
+      {
+        id: 'ses-juan-11',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Legend of Mount Mayon',
+        passage_preview: 'The Legend of Mount Mayon (Pronunciation Drill)',
+        source_language: 'en',
+        word_recognition_score: 96,
+        comprehension_score: 80,
+        phil_iri_level: 'instructional',
+        date: '2026-09-02',
+      },
+      {
+        id: 'ses-juan-10',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Legend of Mount Mayon',
+        passage_preview: 'The Legend of Mount Mayon (Diagnostic Assessment)',
+        source_language: 'en',
+        word_recognition_score: 98,
+        comprehension_score: 90,
+        phil_iri_level: 'independent',
+        date: '2026-09-01',
+      },
+      {
+        id: 'ses-juan-9',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'Ang Alamat ng Pinya',
+        passage_preview: 'Ang Alamat ng Pinya (Oral Practice #2)',
+        source_language: 'tl',
+        word_recognition_score: 96,
+        comprehension_score: 80,
+        phil_iri_level: 'instructional',
+        date: '2026-08-31',
+      },
+      {
+        id: 'ses-juan-8',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'Si Pagong at si Matsing',
+        passage_preview: 'Si Pagong at si Matsing (Comprehension Check)',
+        source_language: 'tl',
+        word_recognition_score: 95,
+        comprehension_score: 78,
+        phil_iri_level: 'instructional',
+        date: '2026-08-30',
+      },
+      {
+        id: 'ses-juan-7',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Legend of Mount Mayon',
+        passage_preview: 'The Legend of Mount Mayon (Oral Practice #1)',
+        source_language: 'en',
+        word_recognition_score: 94,
+        comprehension_score: 75,
+        phil_iri_level: 'instructional',
+        date: '2026-08-29',
+      },
+      {
+        id: 'ses-juan-6',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'Ang Alamat ng Pinya',
+        passage_preview: 'Ang Alamat ng Pinya (Early Practice)',
+        source_language: 'tl',
+        word_recognition_score: 93,
+        comprehension_score: 70,
+        phil_iri_level: 'instructional',
+        date: '2026-08-28',
+      },
+      {
+        id: 'ses-juan-5',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Agusan Marsh Wildlife Sanctuary',
+        passage_preview: 'The Agusan Marsh Wildlife Sanctuary (Vocabulary)',
+        source_language: 'en',
+        word_recognition_score: 92,
+        comprehension_score: 72,
+        phil_iri_level: 'instructional',
+        date: '2026-08-26',
+      },
+      {
+        id: 'ses-juan-4',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Legend of Mount Mayon',
+        passage_preview: 'The Legend of Mount Mayon (Baseline Diagnostic)',
+        source_language: 'en',
+        word_recognition_score: 92,
+        comprehension_score: 68,
+        phil_iri_level: 'instructional',
+        date: '2026-08-24',
+      },
+      {
+        id: 'ses-juan-3',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'Ang Alamat ng Pinya',
+        passage_preview: 'Ang Alamat ng Pinya (Baseline Session)',
+        source_language: 'tl',
+        word_recognition_score: 91,
+        comprehension_score: 65,
+        phil_iri_level: 'instructional',
+        date: '2026-08-22',
+      },
+      {
+        id: 'ses-juan-2',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'The Legend of Mount Mayon',
+        passage_preview: 'The Legend of Mount Mayon (Initial Screener)',
+        source_language: 'en',
+        word_recognition_score: 90,
+        comprehension_score: 60,
+        phil_iri_level: 'instructional',
+        date: '2026-08-20',
+      },
+      {
+        id: 'ses-juan-1',
+        student_id: '202450545',
+        student_name: 'Juan Delata',
+        teacher_name: 'Jhon Mark Durano',
+        passage_title: 'Si Pagong at si Matsing',
+        passage_preview: 'Si Pagong at si Matsing (Diagnostic Baseline)',
+        source_language: 'tl',
+        word_recognition_score: 88,
+        comprehension_score: 55,
+        phil_iri_level: 'frustration',
+        date: '2026-08-15',
+      },
 
-        // Darriel Dave Abad's Sessions
-        {
-          id: 'ses-darriel-3',
-          student_id: '202450543',
-          student_name: 'Darriel Dave Abad',
-          teacher_name: 'Marie Santos',
-          passage_title: 'The Agusan Marsh Wildlife Sanctuary',
-          passage_preview: 'The Agusan Marsh Wildlife Sanctuary (Session #3)',
-          source_language: 'en',
-          word_recognition_score: 95,
-          comprehension_score: 80,
-          phil_iri_level: 'instructional',
-          date: '2026-09-01',
-        },
-        {
-          id: 'ses-darriel-2',
-          student_id: '202450543',
-          student_name: 'Darriel Dave Abad',
-          teacher_name: 'Marie Santos',
-          passage_title: 'Si Pagong at si Matsing',
-          passage_preview: 'Si Pagong at si Matsing (Session #2)',
-          source_language: 'tl',
-          word_recognition_score: 93,
-          comprehension_score: 75,
-          phil_iri_level: 'instructional',
-          date: '2026-08-30',
-        },
-        {
-          id: 'ses-darriel-1',
-          student_id: '202450543',
-          student_name: 'Darriel Dave Abad',
-          teacher_name: 'Marie Santos',
-          passage_title: 'The Agusan Marsh Wildlife Sanctuary',
-          passage_preview: 'The Agusan Marsh Wildlife Sanctuary (Session #1)',
-          source_language: 'en',
-          word_recognition_score: 91,
-          comprehension_score: 67,
-          phil_iri_level: 'instructional',
-          date: '2026-08-28',
-        },
-      ];
+      // Darriel Dave Abad's Sessions
+      {
+        id: 'ses-darriel-8',
+        student_id: '202450543',
+        student_name: 'Darriel Dave Abad',
+        teacher_name: 'Marie Santos',
+        passage_title: 'The Agusan Marsh Wildlife Sanctuary',
+        passage_preview: 'The Agusan Marsh Wildlife Sanctuary (Mastery Practice)',
+        source_language: 'en',
+        word_recognition_score: 96,
+        comprehension_score: 82,
+        phil_iri_level: 'instructional',
+        date: '2026-09-09',
+      },
+      {
+        id: 'ses-darriel-7',
+        student_id: '202450543',
+        student_name: 'Darriel Dave Abad',
+        teacher_name: 'Marie Santos',
+        passage_title: 'Si Pagong at si Matsing',
+        passage_preview: 'Si Pagong at si Matsing (Oral Retelling)',
+        source_language: 'tl',
+        word_recognition_score: 95,
+        comprehension_score: 80,
+        phil_iri_level: 'instructional',
+        date: '2026-09-08',
+      },
+      {
+        id: 'ses-darriel-6',
+        student_id: '202450543',
+        student_name: 'Darriel Dave Abad',
+        teacher_name: 'Marie Santos',
+        passage_title: 'The Legend of Mount Mayon',
+        passage_preview: 'The Legend of Mount Mayon (Fluency Test)',
+        source_language: 'en',
+        word_recognition_score: 94,
+        comprehension_score: 78,
+        phil_iri_level: 'instructional',
+        date: '2026-09-06',
+      },
+      {
+        id: 'ses-darriel-5',
+        student_id: '202450543',
+        student_name: 'Darriel Dave Abad',
+        teacher_name: 'Marie Santos',
+        passage_title: 'Ang Alamat ng Pinya',
+        passage_preview: 'Ang Alamat ng Pinya (Tagalog Session)',
+        source_language: 'tl',
+        word_recognition_score: 93,
+        comprehension_score: 75,
+        phil_iri_level: 'instructional',
+        date: '2026-09-04',
+      },
+      {
+        id: 'ses-darriel-4',
+        student_id: '202450543',
+        student_name: 'Darriel Dave Abad',
+        teacher_name: 'Marie Santos',
+        passage_title: 'The Agusan Marsh Wildlife Sanctuary',
+        passage_preview: 'The Agusan Marsh Wildlife Sanctuary (Session #3)',
+        source_language: 'en',
+        word_recognition_score: 95,
+        comprehension_score: 80,
+        phil_iri_level: 'instructional',
+        date: '2026-09-01',
+      },
+      {
+        id: 'ses-darriel-3',
+        student_id: '202450543',
+        student_name: 'Darriel Dave Abad',
+        teacher_name: 'Marie Santos',
+        passage_title: 'Si Pagong at si Matsing',
+        passage_preview: 'Si Pagong at si Matsing (Session #2)',
+        source_language: 'tl',
+        word_recognition_score: 93,
+        comprehension_score: 75,
+        phil_iri_level: 'instructional',
+        date: '2026-08-30',
+      },
+      {
+        id: 'ses-darriel-2',
+        student_id: '202450543',
+        student_name: 'Darriel Dave Abad',
+        teacher_name: 'Marie Santos',
+        passage_title: 'The Agusan Marsh Wildlife Sanctuary',
+        passage_preview: 'The Agusan Marsh Wildlife Sanctuary (Session #1)',
+        source_language: 'en',
+        word_recognition_score: 91,
+        comprehension_score: 67,
+        phil_iri_level: 'instructional',
+        date: '2026-08-28',
+      },
+      {
+        id: 'ses-darriel-1',
+        student_id: '202450543',
+        student_name: 'Darriel Dave Abad',
+        teacher_name: 'Marie Santos',
+        passage_title: 'The Legend of Mount Mayon',
+        passage_preview: 'The Legend of Mount Mayon (Diagnostic Baseline)',
+        source_language: 'en',
+        word_recognition_score: 89,
+        comprehension_score: 60,
+        phil_iri_level: 'frustration',
+        date: '2026-08-22',
+      },
+    ];
+
+    const storedSessions = JSON.parse(localStorage.getItem('readbuddy_student_sessions') || '[]');
+    if (!localStorage.getItem('readbuddy_student_sessions') || !Array.isArray(storedSessions) || storedSessions.length < 10) {
       localStorage.setItem('readbuddy_student_sessions', JSON.stringify(realisticSessions));
     }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SectionHeader, Card, Avatar, FONT_SANS, FONT_MONO, FONT_SERIF, MUTED, CHALK_GREEN, TAN_BORDER, CREAM, AccountProfile, ErrorBoundary } from '../_shared';
 import { ProfileTab, PreferencesTab, SecurityTab, NotificationsTab } from './AccountTabs';
 
@@ -25,6 +25,34 @@ export default function AccountSettings({
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [profile, setProfile] = useState<AccountProfile>(initialProfile);
 
+  // Keep profile synchronized when parent updates or initialProfile changes
+  useEffect(() => {
+    setProfile(initialProfile);
+  }, [initialProfile]);
+
+  // Keep synchronized with localStorage updates
+  useEffect(() => {
+    function reloadFromStorage() {
+      try {
+        const saved = localStorage.getItem('readbuddy_user');
+        if (saved) {
+          const u = JSON.parse(saved);
+          setProfile((prev) => ({
+            ...prev,
+            displayName: u.display_name || prev.displayName,
+            email: u.email || prev.email,
+            phoneNumber: u.phone_number !== undefined ? (u.phone_number || '') : prev.phoneNumber,
+            isPhoneVerified: u.phone_verified !== undefined ? Boolean(u.phone_verified) : prev.isPhoneVerified,
+            twoFactorEnabled: u.two_factor_enabled !== undefined ? Boolean(u.two_factor_enabled) : prev.twoFactorEnabled,
+            avatarUrl: u.avatar_url !== undefined ? (u.avatar_url || '') : prev.avatarUrl,
+          }));
+        }
+      } catch (e) {}
+    }
+    window.addEventListener('readbuddy_user_updated', reloadFromStorage);
+    return () => window.removeEventListener('readbuddy_user_updated', reloadFromStorage);
+  }, []);
+
   function handleProfileUpdated(updated: {
     displayName: string;
     email: string;
@@ -42,9 +70,17 @@ export default function AccountSettings({
     }
   }
 
+  useEffect(() => {
+    if (activeTab === 'preferences' && profile.role !== 'student') {
+      setActiveTab('profile');
+    }
+  }, [activeTab, profile.role]);
+
   const TABS: { id: SettingsTab; label: string }[] = [
     { id: 'profile', label: 'Profile Details' },
-    { id: 'preferences', label: profile.role === 'student' ? 'Reading & Speech' : 'Class & Test Options' },
+    ...(profile.role === 'student'
+      ? [{ id: 'preferences' as SettingsTab, label: 'Reading & Speech' }]
+      : []),
     { id: 'security', label: 'Security & Password' },
     { id: 'notifications', label: 'Notifications' },
   ];
@@ -93,7 +129,9 @@ export default function AccountSettings({
 
           <div className="md:col-span-3">
             {activeTab === 'profile' && <ProfileTab profile={profile} accent={accent} onProfileUpdate={handleProfileUpdated} />}
-            {activeTab === 'preferences' && <PreferencesTab profile={profile} accent={accent} />}
+            {activeTab === 'preferences' && profile.role === 'student' && (
+              <PreferencesTab profile={profile} accent={accent} />
+            )}
             {activeTab === 'security' && <SecurityTab profile={profile} accent={accent} />}
             {activeTab === 'notifications' && <NotificationsTab accent={accent} />}
           </div>

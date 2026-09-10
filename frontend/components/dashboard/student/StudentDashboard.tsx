@@ -21,9 +21,10 @@ import {
   NotebookEntry,
 } from '../_shared';
 import StudentProgressChart from './StudentProgressChart';
+import DailyReadingHeatmap from './DailyReadingHeatmap';
 import { ReadBuddyMascot } from '@/components/brand';
 import { useState, useEffect } from 'react';
-import { BookOpen, FileText, BarChart2, BookMarked } from 'lucide-react';
+import { BookOpen, FileText, BarChart2, BookMarked, Users } from 'lucide-react';
 
 const STUDENT_ACCENT = '#E8873A';
 const LANG_LABEL: Record<string, string> = { en: 'English', tl: 'Tagalog' };
@@ -97,16 +98,33 @@ export function StudentDashboard({
             <h1 className="text-2xl font-bold font-serif text-[#1F4D3A]" style={{ fontFamily: FONT_SERIF }}>
               Hello, {studentName}!
             </h1>
-            <p className="text-xs text-gray-600 font-sans mt-0.5">
-              {isAssigned
-                ? `Section ${sectionName} (Grade ${gradeLevel || 7})${teacherName ? ` · Teacher: ${teacherName}` : ''}`
-                : 'Account Status: Unassigned (Not yet enrolled in a section)'}
-            </p>
+            <div className="flex items-center gap-1.5 flex-wrap mt-1">
+              {isAssigned ? (
+                <>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-[#FAF7F2] text-gray-700 border border-[#DED2B4] shadow-2xs">
+                    Grade {gradeLevel || 7}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-[#EBF3F8] text-[#3D6B8A] border border-[#BBD5E8] shadow-2xs">
+                    <Users className="w-3 h-3 text-[#3D6B8A] shrink-0" strokeWidth={2.25} />
+                    <span>{sectionName}</span>
+                  </span>
+                  {teacherName && (
+                    <span className="text-xs text-gray-500 font-sans ml-1">
+                      Teacher: <span className="font-semibold text-gray-800">{teacherName}</span>
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono text-gray-500 bg-gray-100 border border-gray-200">
+                  Unassigned (Not yet enrolled in a section)
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        <div id="tour-student-practice">
-          <PrimaryButton accent={STUDENT_ACCENT} onClick={onStartSession} className="shrink-0">
+        <div id="tour-student-practice" className="w-full sm:w-auto flex justify-center sm:justify-end">
+          <PrimaryButton accent={STUDENT_ACCENT} onClick={onStartSession} className="w-full sm:w-auto shrink-0">
             + Start Practice Session
           </PrimaryButton>
         </div>
@@ -124,7 +142,24 @@ export function StudentDashboard({
         </Card>
       </div>
 
-      <StudentProgressChart sessions={sessions as any} />
+      <div id="tour-student-score-trend">
+        <StudentProgressChart
+          sessions={sessions as any}
+          title="Phil-IRI Reading Score Trend"
+          subtitle="Longitudinal oral reading accuracy and comprehension progress"
+          accentColor={STUDENT_ACCENT}
+        />
+      </div>
+
+      <div id="tour-student-reading-heatmap">
+        <DailyReadingHeatmap
+          sessions={sessions as any}
+          studentName={studentName}
+          title="Daily Reading Activity & Consistency"
+          subtitle="Track your daily oral reading practice, streaks, and engagement"
+          accentColor={STUDENT_ACCENT}
+        />
+      </div>
 
       {pendingTests.length > 0 && (
         <div id="tour-student-assigned">
@@ -140,20 +175,20 @@ export function StudentDashboard({
             {pendingTests.map((t) => (
               <div
                 key={t.id}
-                className="flex items-center justify-between p-3.5 rounded-xl border-2 transition-all hover:translate-x-1"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border-2 transition-all hover:translate-x-1"
                 style={{ background: '#FFFDF8', borderColor: TAN_BORDER }}
               >
                 <div>
                   <span className="text-xs font-bold block mb-1" style={{ fontFamily: FONT_SANS, color: INK }}>
                     {t.passage_preview}
                   </span>
-                  <div className="flex items-center gap-2 text-[11px]" style={{ fontFamily: FONT_MONO, color: MUTED }}>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px]" style={{ fontFamily: FONT_MONO, color: MUTED }}>
                     <span>Assigned by {t.teacher_name}</span>
                     <span>•</span>
                     <span className="font-bold text-[#3D6B8A]">{LANG_LABEL[t.source_language]}</span>
                   </div>
                 </div>
-                <PrimaryButton accent={STUDENT_ACCENT} onClick={() => onStartTest(t.id)}>
+                <PrimaryButton accent={STUDENT_ACCENT} onClick={() => onStartTest(t.id)} className="w-full sm:w-auto shrink-0">
                   Take Test ›
                 </PrimaryButton>
               </div>
@@ -180,14 +215,14 @@ export function StudentDashboard({
             {sessions.map((s) => (
               <div
                 key={s.id}
-                className="flex items-center justify-between py-2.5 px-3 rounded-xl border mb-2 bg-[#FFFDF8]"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2.5 px-3 rounded-xl border mb-2 bg-[#FFFDF8]"
                 style={{ borderColor: `${TAN_BORDER}88` }}
               >
                 <div>
                   <span className="text-xs font-bold block" style={{ fontFamily: FONT_SANS, color: INK }}>{s.passage_preview}</span>
                   <span className="text-[11px] font-mono text-gray-500">{s.date} · {LANG_LABEL[s.source_language]}</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
                   <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-gray-100" style={{ color: scoreColor(s.word_recognition_score) }}>
                     {s.word_recognition_score}% WR
                   </span>
@@ -268,8 +303,8 @@ function NotebookWidget({
 
   return (
     <Card className="mb-6 border-2 border-[#3D6B8A] shadow-[4px_4px_0px_rgba(61,107,138,0.18)]">
-      <div className="flex items-center justify-between mb-3 border-b pb-2" style={{ borderColor: TAN_BORDER }}>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3 border-b pb-2" style={{ borderColor: TAN_BORDER }}>
+        <div className="flex items-center gap-2 flex-wrap">
           <BookMarked className="w-5 h-5 text-[#3D6B8A]" strokeWidth={2.25} />
           <h2 className="text-base font-bold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
             My Course Handouts & Notebook
@@ -305,13 +340,13 @@ function NotebookWidget({
               onClick={onGoToNotebook}
             >
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-0.5">
+                <div className="flex flex-wrap items-center gap-2 mb-0.5">
                   <span className="text-xs font-bold truncate" style={{ fontFamily: FONT_SANS, color: INK }}>
                     {entry.title}
                   </span>
                   <Badge tone={badge.tone}>{badge.label}</Badge>
                 </div>
-                <span className="text-[11px]" style={{ fontFamily: FONT_MONO, color: MUTED }}>
+                <span className="text-[11px] block truncate" style={{ fontFamily: FONT_MONO, color: MUTED }}>
                   From {entry.teacher_name} · {entry.created_at}
                   {entry.files.length > 0 ? ` · ${entry.files.length} attachment${entry.files.length !== 1 ? 's' : ''}` : ''}
                 </span>

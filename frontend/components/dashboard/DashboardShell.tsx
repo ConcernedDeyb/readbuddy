@@ -5,8 +5,9 @@ import { FONT_SERIF, FONT_SANS, FONT_MONO, CREAM, MUTED, TAN_BORDER, CHALK_GREEN
 import { ReadBuddyLogo } from '../brand';
 import { InteractiveFeatureTour } from '../guide';
 import { BookOpen } from 'lucide-react';
+import { NotificationNav, loadNotifications } from './notifications';
 
-export type DashboardRole = 'teacher' | 'admin' | 'student';
+export type DashboardRole = 'teacher' | 'admin' | 'student' | 'principal';
 
 interface NavItem {
   key: string;
@@ -21,6 +22,7 @@ const ROLE_THEME: Record<
   teacher: { accent: '#3D6B8A', accentDark: '#2C4E66', badge: '#E8F0F8', badgeFg: '#2C4E66', label: 'Teacher' },
   admin: { accent: '#7A4A6B', accentDark: '#5C3650', badge: '#F3EAF0', badgeFg: '#5C3650', label: 'Admin' },
   student: { accent: '#E8873A', accentDark: '#C97C1F', badge: '#FCEDDE', badgeFg: '#B4602E', label: 'Student' },
+  principal: { accent: '#4A3D6B', accentDark: '#362A50', badge: '#EBE7F5', badgeFg: '#362A50', label: 'Principal' },
 };
 
 /* ─── SVG Icons ─── */
@@ -92,6 +94,12 @@ const IconShield = (
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
   </svg>
 );
+const IconBell = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
 
 const TEACHER_NAV: NavItem[] = [
   { key: 'overview', label: 'Overview', icon: IconHome },
@@ -100,16 +108,36 @@ const TEACHER_NAV: NavItem[] = [
   { key: 'passages', label: 'My Passages', icon: IconBook },
   { key: 'tests', label: 'Reading Tests', icon: IconClipboard },
   { key: 'notebook', label: 'Notebook', icon: IconNotebook },
+  { key: 'notifications', label: 'Notifications', icon: IconBell },
   { key: 'settings', label: 'Settings', icon: IconSettings },
 ];
 
+const IconSchool = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 22v-4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4" />
+    <path d="M18 10h4l-10-7L2 10h4v12h12V10z" />
+  </svg>
+);
+
 const ADMIN_NAV: NavItem[] = [
   { key: 'overview', label: 'Overview', icon: IconHome },
+  { key: 'sections', label: 'Class Sections', icon: IconSchool },
   { key: 'teachers', label: 'Teachers', icon: IconUsers },
   { key: 'students', label: 'Students', icon: IconUser },
   { key: 'content', label: 'Content', icon: IconFileText },
   { key: 'logs', label: 'Activity & SSO Logs', icon: IconShield },
+  { key: 'notifications', label: 'Notifications', icon: IconBell },
   { key: 'settings', label: 'System Settings', icon: IconSettings },
+  { key: 'account', label: 'My Account', icon: IconUser },
+];
+
+const PRINCIPAL_NAV: NavItem[] = [
+  { key: 'overview', label: 'Executive Overview', icon: IconHome },
+  { key: 'sections', label: 'Academic Sections', icon: IconSchool },
+  { key: 'teachers', label: 'Faculty Management', icon: IconUsers },
+  { key: 'students', label: 'Student Reading Progress', icon: IconUser },
+  { key: 'logs', label: 'School Activity Logs', icon: IconShield },
+  { key: 'notifications', label: 'Notifications', icon: IconBell },
   { key: 'account', label: 'My Account', icon: IconUser },
 ];
 
@@ -118,6 +146,7 @@ const STUDENT_NAV: NavItem[] = [
   { key: 'tests', label: 'Assigned Tests', icon: IconClipboard },
   { key: 'history', label: 'Reading History', icon: IconBook },
   { key: 'notebook', label: 'Notebook', icon: IconNotebook },
+  { key: 'notifications', label: 'Notifications', icon: IconBell },
   { key: 'settings', label: 'Settings', icon: IconSettings },
 ];
 
@@ -129,6 +158,7 @@ const SECTION_TITLES: Record<string, string> = {
   passages: 'Passages',
   content: 'Content',
   logs: 'Activity, Auth Logs & SSO',
+  notifications: 'Notifications & Alerts',
   settings: 'Settings',
   account: 'My Account',
   author: 'Author Passage',
@@ -144,6 +174,7 @@ export default function DashboardShell({
   activeSection,
   onSectionChange,
   userName,
+  userId,
   onLogout,
   children,
 }: {
@@ -151,14 +182,36 @@ export default function DashboardShell({
   activeSection: string;
   onSectionChange: (section: string) => void;
   userName: string;
+  userId?: string;
   onLogout: () => void;
   children: ReactNode;
 }) {
   const theme = ROLE_THEME[role];
-  const nav = role === 'teacher' ? TEACHER_NAV : role === 'admin' ? ADMIN_NAV : STUDENT_NAV;
+  const nav =
+    role === 'teacher'
+      ? TEACHER_NAV
+      : role === 'admin'
+      ? ADMIN_NAV
+      : role === 'principal'
+      ? PRINCIPAL_NAV
+      : STUDENT_NAV;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showTourModal, setShowTourModal] = useState(false);
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
+  const [unreadNotifsCount, setUnreadNotifsCount] = useState(0);
+
+  // Sync unread notification count
+  useEffect(() => {
+    function checkUnread() {
+      try {
+        const notifs = loadNotifications(role, userId);
+        setUnreadNotifsCount(notifs.filter((n) => !n.read).length);
+      } catch (e) {}
+    }
+    checkUnread();
+    window.addEventListener('readbuddy_notifications_updated', checkUnread);
+    return () => window.removeEventListener('readbuddy_notifications_updated', checkUnread);
+  }, [role, userId]);
 
   // Load avatar from localStorage and keep updated on profile changes
   useEffect(() => {
@@ -267,6 +320,11 @@ export default function DashboardShell({
                 >
                   <span className="opacity-90">{item.icon}</span>
                   <span className="text-sm">{item.label}</span>
+                  {item.key === 'notifications' && unreadNotifsCount > 0 && (
+                    <span className="ml-auto px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#E8873A] text-white border border-[#1F4D3A] shadow-[1px_1px_0px_#1F4D3A] font-mono leading-tight">
+                      {unreadNotifsCount}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -313,35 +371,45 @@ export default function DashboardShell({
       <div className="flex-1 min-w-0">
         {/* Mobile header */}
         <header
-          className="sm:hidden flex items-center justify-between px-4 py-3 rb-sidebar"
+          className="sm:hidden flex items-center justify-between px-3 py-2.5 rb-sidebar gap-2"
         >
-          <button
-            onClick={() => setMobileNavOpen(true)}
-            className="text-[#FBF7EE] p-1 cursor-pointer"
-            aria-label="Open menu"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-          <div
-            onClick={() => {
-              onSectionChange('overview');
-              setMobileNavOpen(false);
-            }}
-            className="cursor-pointer"
-            title="Return to Dashboard Overview"
-          >
-            <ReadBuddyLogo variant="header" size="sm" />
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setMobileNavOpen(true)}
+              className="text-[#FBF7EE] p-1.5 cursor-pointer"
+              aria-label="Open menu"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+            <div
+              onClick={() => {
+                onSectionChange('overview');
+                setMobileNavOpen(false);
+              }}
+              className="cursor-pointer"
+              title="Return to Dashboard Overview"
+            >
+              <ReadBuddyLogo variant="header" size="sm" />
+            </div>
           </div>
-          <span className="text-xs px-2 py-0.5 rounded-md font-mono font-bold bg-white/15 text-white">
-            {theme.label}
-          </span>
+          <div className="flex items-center gap-2">
+            <NotificationNav
+              role={role}
+              onSectionChange={onSectionChange}
+              variant="mobile"
+              userId={userId}
+            />
+            <span className="text-[11px] px-2 py-1 rounded-md font-mono font-bold bg-white/15 text-white shrink-0">
+              {theme.label}
+            </span>
+          </div>
         </header>
 
-        {/* Breadcrumb Header Bar & Quick Guide Button */}
+        {/* Breadcrumb Header Bar, Notification Nav & Quick Guide Button */}
         <div className="hidden sm:flex items-center justify-between px-8 pt-6 pb-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-[#FFFDF8] border border-[#DED2B4] shadow-[2px_2px_0px_rgba(31,77,58,0.06)] text-xs" style={{ fontFamily: FONT_SANS }}>
             <button
@@ -356,16 +424,24 @@ export default function DashboardShell({
             </span>
           </div>
 
-          <button
-            id="tour-quick-guide"
-            data-tour="quick-guide"
-            onClick={() => setShowTourModal(true)}
-            className="px-3 py-1 rounded-xl bg-[#FFFDF8] hover:bg-[#FCEDDE] text-[#1F4D3A] font-bold text-xs font-sans border-2 border-[#1F4D3A] shadow-[2px_2px_0px_#1F4D3A] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F4D3A] transition-all flex items-center gap-1.5 cursor-pointer"
-            title="Open interactive mascot guide"
-          >
-            <BookOpen className="w-3.5 h-3.5" strokeWidth={2.25} />
-            <span>Quick Guide</span>
-          </button>
+          <div className="flex items-center gap-2.5">
+            <NotificationNav
+              role={role}
+              onSectionChange={onSectionChange}
+              variant="desktop"
+              userId={userId}
+            />
+            <button
+              id="tour-quick-guide"
+              data-tour="quick-guide"
+              onClick={() => setShowTourModal(true)}
+              className="px-3 py-1 rounded-xl bg-[#FFFDF8] hover:bg-[#FCEDDE] text-[#1F4D3A] font-bold text-xs font-sans border-2 border-[#1F4D3A] shadow-[2px_2px_0px_#1F4D3A] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F4D3A] transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Open interactive mascot guide"
+            >
+              <BookOpen className="w-3.5 h-3.5" strokeWidth={2.25} />
+              <span>Quick Guide</span>
+            </button>
+          </div>
         </div>
 
         <main className="max-w-5xl mx-auto px-5 sm:px-8 py-6 sm:py-8">

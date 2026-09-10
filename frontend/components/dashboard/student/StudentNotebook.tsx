@@ -337,7 +337,7 @@ export default function StudentNotebook({
             accent={STUDENT_ACCENT}
           />
           {activeTab === 'notes' && !showNoteEditor && (
-            <PrimaryButton accent={STUDENT_ACCENT} onClick={() => setShowNoteEditor(true)}>
+            <PrimaryButton accent={STUDENT_ACCENT} onClick={() => setShowNoteEditor(true)} className="w-full sm:w-auto shrink-0">
               + New Study Note
             </PrimaryButton>
           )}
@@ -758,15 +758,16 @@ export default function StudentNotebook({
                   </label>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <PrimaryButton
                     accent={STUDENT_ACCENT}
                     onClick={handleSavePersonalNote}
                     disabled={!noteDraft.title.trim() || (!noteDraft.content.trim() && noteFiles.length === 0)}
+                    className="w-full sm:w-auto"
                   >
                     Save Note
                   </PrimaryButton>
-                  <GhostButton onClick={() => { setShowNoteEditor(false); setNoteFiles([]); }}>
+                  <GhostButton onClick={() => { setShowNoteEditor(false); setNoteFiles([]); }} className="w-full sm:w-auto">
                     Cancel
                   </GhostButton>
                 </div>

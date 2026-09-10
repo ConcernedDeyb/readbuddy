@@ -22,11 +22,11 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loginSuccessData, setLoginSuccessData] = useState<{ role: 'student' | 'teacher' | 'admin'; name: string } | null>(null);
+  const [loginSuccessData, setLoginSuccessData] = useState<{ role: 'student' | 'teacher' | 'admin' | 'principal'; name: string } | null>(null);
   const [pending2FA, setPending2FA] = useState<{
     account: any;
     sessionData: any;
-    userRole: 'student' | 'teacher' | 'admin';
+    userRole: 'student' | 'teacher' | 'admin' | 'principal';
     trimmedId: string;
   } | null>(null);
 
@@ -42,6 +42,14 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
     const trimmedId = identifier.trim();
     if (!trimmedId || !password) {
       setError('Please enter your School ID Number and password.');
+      return;
+    }
+
+    // ─── STRICT INSTITUTIONAL DOMAIN CHECK FOR EMAIL LOGINS ───
+    if (trimmedId.includes('@') && !trimmedId.toLowerCase().endsWith('@smccnasipit.edu.ph')) {
+      setError(
+        'Access restricted: Only official @smccnasipit.edu.ph institutional accounts are permitted to log in. Please use your @smccnasipit.edu.ph email address or School ID Number.'
+      );
       return;
     }
 
@@ -67,6 +75,38 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         const cleanIdent = trimmedId.replace(/_\d+$/, '').replace(/\d+$/, '');
         const displayName = data.display_name || cleanIdent.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
         const emailFromResponse = data.email || (trimmedId.includes('@') ? trimmedId : `${trimmedId}@smccnasipit.edu.ph`);
+
+        let localPhone = '';
+        let localPhoneVerified = false;
+        let local2FA = false;
+        let localAvatar: string | null = null;
+
+        try {
+          const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
+          const localAcc = accountsMap[trimmedId] || accountsMap[trimmedId.toLowerCase()] || (data.school_id && accountsMap[data.school_id]) || (data.username && accountsMap[data.username]);
+          if (localAcc) {
+            localPhone = localAcc.phone_number || '';
+            localPhoneVerified = Boolean(localAcc.phone_verified);
+            local2FA = Boolean(localAcc.two_factor_enabled);
+            localAvatar = localAcc.avatar_url || null;
+          }
+          const savedUser = localStorage.getItem('readbuddy_user');
+          if (savedUser) {
+            const u = JSON.parse(savedUser);
+            if (u.school_id === data.school_id || u.username === data.username || u.email === emailFromResponse) {
+              if (!localPhone && u.phone_number) localPhone = u.phone_number;
+              if (u.phone_verified) localPhoneVerified = true;
+              if (u.two_factor_enabled) local2FA = true;
+              if (!localAvatar && u.avatar_url) localAvatar = u.avatar_url;
+            }
+          }
+        } catch (e) {}
+
+        const finalPhone = data.phone_number || localPhone;
+        const finalPhoneVerified = data.phone_verified !== undefined ? data.phone_verified : localPhoneVerified;
+        const final2FA = data.two_factor_enabled !== undefined ? data.two_factor_enabled : local2FA;
+        const finalAvatar = data.avatar_url || localAvatar;
+
         const sessionData = {
           display_name: displayName,
           username: data.username || data.school_id || trimmedId.split('@')[0],
@@ -75,7 +115,24 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
           role: data.role,
           grade_level: data.grade_level,
           password: password,
+          phone_number: finalPhone,
+          phone_verified: finalPhoneVerified,
+          two_factor_enabled: final2FA,
+          avatar_url: finalAvatar,
         };
+
+        // If 2FA enabled, pause and challenge with SMS OTP modal
+        if (final2FA && finalPhone) {
+          setLoading(false);
+          setPending2FA({
+            account: { display_name: displayName, phone_number: finalPhone },
+            sessionData,
+            userRole: data.role as 'student' | 'teacher' | 'admin',
+            trimmedId,
+          });
+          return;
+        }
+
         localStorage.setItem('readbuddy_user', JSON.stringify(sessionData));
 
         recordAuthLog({
@@ -94,7 +151,7 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
           details: `Started session as ${data.role} (${trimmedId})`,
         });
 
-        const targetUrl = data.redirect_url || (data.role === 'admin' ? '/admin' : data.role === 'teacher' ? '/teacher' : '/student');
+        const targetUrl = data.redirect_url || (data.role === 'admin' ? '/admin' : data.role === 'principal' ? '/principal' : data.role === 'teacher' ? '/teacher' : '/student');
         setTimeout(() => {
           setLoading(false);
           router.push(targetUrl);
@@ -147,6 +204,47 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         setTimeout(() => {
           setLoading(false);
           router.push('/admin');
+        }, 300);
+        return;
+      }
+
+      // Check Principal
+      if (
+        lowerId === 'readbuddyprincipal' ||
+        lowerId === 'readbuddyprincipal@smccnasipit.edu.ph' ||
+        lowerId === 'principal' ||
+        lowerId === 'principal@smccnasipit.edu.ph' ||
+        lowerId === 'smcc-prin-001'
+      ) {
+        const principalSession = {
+          display_name: 'Dr. Maria Elena Santos',
+          username: 'readbuddyprincipal',
+          school_id: 'SMCC-PRIN-001',
+          email: 'principal@smccnasipit.edu.ph',
+          role: 'principal',
+          password: password,
+        };
+        localStorage.setItem('readbuddy_user', JSON.stringify(principalSession));
+
+        recordAuthLog({
+          identifier: 'readbuddyprincipal',
+          display_name: 'Dr. Maria Elena Santos',
+          role: 'principal',
+          method: 'Local Password',
+          status: 'SUCCESS',
+          details: 'Principal executive portal session initiated',
+        });
+
+        recordActivity({
+          user_name: 'Dr. Maria Elena Santos',
+          role: 'principal',
+          action: 'Principal Logged In',
+          details: 'Accessed school principal executive portal',
+        });
+
+        setTimeout(() => {
+          setLoading(false);
+          router.push('/principal');
         }, 300);
         return;
       }
@@ -235,7 +333,7 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         return;
       }
 
-      // ─── TEACHER ADMIN APPROVAL CHECK ───
+      // ─── TEACHER ADMIN / PRINCIPAL APPROVAL CHECK ───
       if (matchedAccount.role === 'teacher' && matchedAccount.admin_approved === false) {
         recordAuthLog({
           identifier: trimmedId,
@@ -243,10 +341,10 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
           role: 'teacher',
           method: 'Local Password',
           status: 'FAILED',
-          details: 'Login blocked: Pending admin approval',
+          details: 'Login blocked: Access revoked or pending principal review',
         });
 
-        setError('Pending Admin Approval: Your teacher registration is awaiting review by an SMCC Administrator.');
+        setError('Account Access Revoked: Your teacher access is inactive or has been revoked by the School Principal / Administrator. Please contact school administration.');
         setLoading(false);
         return;
       }
@@ -376,6 +474,8 @@ export function LoginForm({ onOpenTeacherRegister, onOpenStudentRegister }: Logi
         onComplete={() => {
           if (loginSuccessData.role === 'admin') {
             router.push('/admin');
+          } else if (loginSuccessData.role === 'principal') {
+            router.push('/principal');
           } else if (loginSuccessData.role === 'teacher') {
             router.push('/teacher');
           } else {

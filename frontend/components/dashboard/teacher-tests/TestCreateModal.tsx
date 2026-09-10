@@ -98,14 +98,14 @@ export function TestCreateModal({
 
       {/* Select Students & Section Filter */}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
           <span className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED, fontWeight: 500 }}>
             Assign to Students ({selectedStudentIds.size} selected)
           </span>
 
           {/* Quick Section Filter / Select All Pills */}
           {sections.length > 0 && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[11px] text-gray-500 font-sans">Quick Select:</span>
               <button
                 type="button"
@@ -168,14 +168,14 @@ export function TestCreateModal({
         </div>
 
         {students.length > 2 && (
-          <div className="flex items-center justify-between mt-2 text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mt-2 text-xs">
             <button
               type="button"
               onClick={() => {
                 if (selectedStudentIds.size === students.length) setSelectedStudentIds(new Set());
                 else setSelectedStudentIds(new Set(students.map((s) => s.id)));
               }}
-              className="font-sans font-semibold transition-colors hover:underline cursor-pointer"
+              className="font-sans font-semibold transition-colors hover:underline cursor-pointer text-left"
               style={{ color: TEACHER_ACCENT }}
             >
               {selectedStudentIds.size === students.length ? 'Deselect all students' : 'Select all students'}
@@ -187,15 +187,16 @@ export function TestCreateModal({
         )}
       </div>
 
-      <div className="flex gap-2 pt-2">
+      <div className="flex flex-col sm:flex-row gap-2 pt-2">
         <PrimaryButton
           accent={TEACHER_ACCENT}
           onClick={handleCreateTest}
           disabled={!selectedPassageId || selectedStudentIds.size === 0}
+          className="w-full sm:w-auto"
         >
           Assign Test ({selectedStudentIds.size} Student{selectedStudentIds.size !== 1 ? 's' : ''})
         </PrimaryButton>
-        <GhostButton onClick={onCancel}>
+        <GhostButton onClick={onCancel} className="w-full sm:w-auto">
           Cancel
         </GhostButton>
       </div>

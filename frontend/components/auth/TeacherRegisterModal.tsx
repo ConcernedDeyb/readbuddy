@@ -43,6 +43,10 @@ export function TeacherRegisterModal({ open, onClose, onSuccess }: TeacherRegist
       setError('Please fill in all required fields.');
       return;
     }
+    if (!cleanEmail.toLowerCase().endsWith('@smccnasipit.edu.ph')) {
+      setError('Only official @smccnasipit.edu.ph institutional email addresses are permitted.');
+      return;
+    }
     if (password.length < 8) {
       setError('Password must be at least 8 characters long.');
       return;

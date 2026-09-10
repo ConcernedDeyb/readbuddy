@@ -1,29 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DashboardShell, AdminOverview, AdminTeachers, AdminStudents, AdminContent, AdminAuthLogsSSO, AdminSettings, AccountSettings, NotificationsSection } from '@/components/dashboard';
+import {
+  DashboardShell,
+  AdminOverview,
+  AdminTeachers,
+  AdminStudents,
+  AdminAuthLogsSSO,
+  AccountSettings,
+  NotificationsSection,
+} from '@/components/dashboard';
 import { DashboardSkeleton } from '@/components/shared/SkeletonLoaders';
 import { initializeRealisticSystemData } from '@/utils/seedData';
-
-const MOCK_ADAPTER_BENCHMARK = {
-  fleursWer: 0.1244,
-  realAudioWerStock: 0.1507,
-  realAudioWerFinetuned: 0.1471,
-  sampleCount: 8,
-};
-
 import { AdminSectionManager } from '@/components/dashboard/admin/AdminSectionManager';
+import { ShieldCheck, UserCheck, AlertTriangle } from 'lucide-react';
 
-const MOCK_VRAM_STATUS = { activePhase: 'idle' as const, usedMb: 1400, budgetMb: 8192 };
+const PRINCIPAL_ACCENT = '#4A3D6B';
 
-type AdminSection = 'overview' | 'sections' | 'teachers' | 'students' | 'content' | 'logs' | 'notifications' | 'settings' | 'account';
+type PrincipalSection = 'overview' | 'sections' | 'teachers' | 'students' | 'logs' | 'notifications' | 'account';
 
-export default function AdminDashboardPage() {
-  const [section, setSection] = useState<AdminSection>('overview');
+export default function PrincipalDashboardPage() {
+  const [section, setSection] = useState<PrincipalSection>('overview');
   const [isLoading, setIsLoading] = useState(true);
-  const [adminName, setAdminName] = useState('System Admin');
-  const [adminEmail, setAdminEmail] = useState('admin@smccnasipit.edu.ph');
-  const [adminUsername, setAdminUsername] = useState('readbuddyadmin');
+  const [principalName, setPrincipalName] = useState('Dr. Maria Elena Santos');
+  const [principalEmail, setPrincipalEmail] = useState('principal@smccnasipit.edu.ph');
+  const [principalUsername, setPrincipalUsername] = useState('readbuddyprincipal');
+  const [principalSchoolId, setPrincipalSchoolId] = useState('SMCC-PRIN-001');
 
   // Dynamic live lists
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -38,26 +40,17 @@ export default function AdminDashboardPage() {
         const saved = localStorage.getItem('readbuddy_user');
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed.display_name) {
-            setAdminName(parsed.display_name);
-          }
-          if (parsed.username) {
-            setAdminUsername(parsed.username);
-          }
-          if (parsed.email) {
-            setAdminEmail(parsed.email);
-          } else if (parsed.username) {
-            setAdminEmail(`${parsed.username}@smccnasipit.edu.ph`);
-          }
+          if (parsed.display_name) setPrincipalName(parsed.display_name);
+          if (parsed.username) setPrincipalUsername(parsed.username);
+          if (parsed.email) setPrincipalEmail(parsed.email);
+          if (parsed.school_id) setPrincipalSchoolId(parsed.school_id);
         }
 
         // 1. Load registered teachers from accounts map
         const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
         const allAccounts = Object.values(accountsMap) as any[];
 
-        // Filter unique teachers
         const uniqueTeacherMap = new Map<string, any>();
-
         allAccounts
           .filter((acc) => acc.role === 'teacher')
           .forEach((acc, idx) => {
@@ -80,7 +73,7 @@ export default function AdminDashboardPage() {
         const teacherList = Array.from(uniqueTeacherMap.values());
         setTeachers(teacherList);
 
-        // 2. Load registered students from accounts map & teacher roster
+        // 2. Load registered students
         const deletedIds = new Set(
           (JSON.parse(localStorage.getItem('readbuddy_deleted_student_ids') || '[]') as string[]).map((x) =>
             x.toLowerCase().trim()
@@ -105,7 +98,12 @@ export default function AdminDashboardPage() {
                 username: acc.username,
                 school_id: acc.school_id || acc.username,
                 class_name: acc.section_name || acc.class_name,
-                teacher_name: acc.teacher_name && acc.teacher_name !== 'Faculty' ? acc.teacher_name : (acc.section_name ? `Section ${acc.section_name}` : 'SMCC Basic Ed'),
+                teacher_name:
+                  acc.teacher_name && acc.teacher_name !== 'Faculty'
+                    ? acc.teacher_name
+                    : acc.section_name
+                    ? `Section ${acc.section_name}`
+                    : 'SMCC Basic Ed',
                 grade_level: Number(acc.grade_level) || 7,
                 session_count: 0,
               });
@@ -129,7 +127,12 @@ export default function AdminDashboardPage() {
                 username: ts.username,
                 school_id: ts.school_id || ts.username,
                 class_name: ts.class_name || ts.section_name,
-                teacher_name: ts.teacher_name && ts.teacher_name !== 'Faculty' ? ts.teacher_name : (ts.class_name ? `Section ${ts.class_name}` : 'SMCC Basic Ed'),
+                teacher_name:
+                  ts.teacher_name && ts.teacher_name !== 'Faculty'
+                    ? ts.teacher_name
+                    : ts.class_name
+                    ? `Section ${ts.class_name}`
+                    : 'SMCC Basic Ed',
                 grade_level: Number(ts.grade_level) || 7,
                 session_count: 0,
               });
@@ -180,86 +183,122 @@ export default function AdminDashboardPage() {
 
   return (
     <DashboardShell
-      role="admin"
+      role="principal"
       activeSection={section}
-      onSectionChange={(s) => setSection(s as AdminSection)}
-      userName={adminName}
-      userId={adminUsername || 'admin'}
+      onSectionChange={(s) => setSection(s as PrincipalSection)}
+      userName={principalName}
+      userId={principalSchoolId || principalUsername}
       onLogout={() => {
-        try { localStorage.removeItem('readbuddy_user'); } catch (e) {}
+        try {
+          localStorage.removeItem('readbuddy_user');
+        } catch (e) {}
         window.location.href = '/';
       }}
     >
-      {section === 'overview' && (
-        isLoading ? (
+      {/* ─── Principal Institutional Authority Notice ─── */}
+      <div className="mb-6 p-4 rounded-2xl bg-[#F6F2FC] border border-[#D5C7EA] flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-[#4A3D6B] text-white flex items-center justify-center font-serif font-bold text-sm shrink-0 shadow-xs">
+            SMCC
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#4A3D6B] font-serif">
+              Office of the School Principal &bull; Saint Michael College of Caraga
+            </h3>
+            <p className="text-xs text-gray-600 font-sans">
+              Executive faculty governance, student reading progress oversight, and institutional credentials administration.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-white border border-[#D5C7EA] text-[#4A3D6B]">
+            {teachers.length} Faculty Members ({teachers.filter((t) => t.admin_approved).length} Active)
+          </span>
+        </div>
+      </div>
+
+      {/* ─── Executive Overview ─── */}
+      {section === 'overview' &&
+        (isLoading ? (
           <DashboardSkeleton role="admin" />
         ) : (
           <AdminOverview
+            role="principal"
             teacherCount={teachers.length}
             studentCount={students.length}
             passageCount={passages.length}
             testCount={passages.filter((p) => p.is_published).length}
             pendingTeacherCount={pendingTeacherCount}
-            vramStatus={MOCK_VRAM_STATUS}
             recentActivity={recentActivity}
-            onNavigate={(s) => setSection(s as AdminSection)}
+            onNavigate={(s) => setSection(s as PrincipalSection)}
           />
-        )
+        ))}
+
+      {/* ─── Official School Sections Catalog (Principal Governance) ─── */}
+      {section === 'sections' && (
+        <AdminSectionManager accent={PRINCIPAL_ACCENT} roleTitle="School Principal" />
       )}
 
-      {section === 'sections' && <AdminSectionManager accent="#1F4D3A" roleTitle="IT Administrator" />}
+      {/* ─── Faculty Management & Affiliation ─── */}
+      {section === 'teachers' && (
+        <div className="space-y-4">
+          <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-amber-900 text-xs font-sans flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+            <span>
+              <strong>Faculty Affiliation Governance:</strong> If a teacher is no longer affiliated with SMCC, you can <strong>Revoke Access</strong> to immediately suspend their login permissions, or <strong>Delete</strong> the account permanently.
+            </span>
+          </div>
+          <AdminTeachers teachers={teachers} />
+        </div>
+      )}
 
-      {section === 'teachers' && <AdminTeachers teachers={teachers} />}
-
+      {/* ─── Student Reading Progress Oversight ─── */}
       {section === 'students' && <AdminStudents students={students} />}
 
-      {section === 'content' && (
-        <AdminContent
-          passages={passages}
-          onUnpublish={() => {
-            const saved = JSON.parse(localStorage.getItem('readbuddy_teacher_passages') || '[]');
-            setPassages(saved);
-          }}
-        />
-      )}
+      {/* ─── School Activity & Audit Logs ─── */}
+      {section === 'logs' && <AdminAuthLogsSSO hideSsoConfig={true} />}
 
-      {section === 'logs' && <AdminAuthLogsSSO />}
-
-      {/* ─── Admin Notification Center ─── */}
+      {/* ─── Principal Notification Center ─── */}
       {section === 'notifications' && (
         <div className="rb-fade-in-up">
           <NotificationsSection
-            role="admin"
-            onNavigate={(s) => setSection(s as AdminSection)}
-            userId={adminUsername || 'admin'}
+            role="principal"
+            onNavigate={(s) => setSection(s as PrincipalSection)}
+            userId={principalSchoolId || principalUsername}
           />
         </div>
       )}
 
-      {section === 'settings' && (
-        <AdminSettings
-          finetunedAdapterEnabled={true}
-          finetunedAdapterBenchmark={MOCK_ADAPTER_BENCHMARK}
-        />
-      )}
-
+      {/* ─── Principal Account Settings ─── */}
       {section === 'account' && (
         <AccountSettings
           profile={{
-            displayName: adminName,
-            email: adminEmail || 'admin@smccnasipit.edu.ph',
-            username: adminUsername || 'admin',
-            role: 'admin',
-            schoolId: 'SMCC-ADMIN',
-            phoneNumber: (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').phone_number : '') || '',
-            isPhoneVerified: (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').phone_verified : false) || false,
-            twoFactorEnabled: (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').two_factor_enabled : false) || false,
-            avatarUrl: (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').avatar_url : '') || '',
+            displayName: principalName,
+            email: principalEmail || 'principal@smccnasipit.edu.ph',
+            username: principalUsername || 'readbuddyprincipal',
+            role: 'principal',
+            schoolId: principalSchoolId || 'SMCC-PRIN-001',
+            phoneNumber:
+              (typeof window !== 'undefined'
+                ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').phone_number
+                : '') || '',
+            isPhoneVerified:
+              (typeof window !== 'undefined'
+                ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').phone_verified
+                : false) || false,
+            twoFactorEnabled:
+              (typeof window !== 'undefined'
+                ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').two_factor_enabled
+                : false) || false,
+            avatarUrl:
+              (typeof window !== 'undefined'
+                ? JSON.parse(localStorage.getItem('readbuddy_user') || '{}').avatar_url
+                : '') || '',
           }}
-          accent="#7A4A6B"
+          accent={PRINCIPAL_ACCENT}
           onProfileUpdate={(updated) => {
-            setAdminName(updated.displayName);
-            setAdminEmail(updated.email);
+            setPrincipalName(updated.displayName);
+            setPrincipalEmail(updated.email);
           }}
         />
       )}

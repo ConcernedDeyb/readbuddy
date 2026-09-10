@@ -1,9 +1,10 @@
 'use client';
 
 import { SectionHeader, StatCard, Card, ProgressRing, PhilIRIBadge, FONT_SANS, FONT_MONO, FONT_SERIF, MUTED, CHALK_GREEN, TAN_BORDER, PhilIRILevel } from '../_shared';
-import { AlertTriangle, UserPlus, ShieldCheck, Settings, Cpu, History } from 'lucide-react';
+import { AlertTriangle, UserPlus, ShieldCheck, Settings, Cpu, History, BookOpen, Award } from 'lucide-react';
 
 const ADMIN_ACCENT = '#7A4A6B';
+const PRINCIPAL_ACCENT = '#4A3D6B';
 
 interface VramStatus {
   activePhase: 'idle' | 'asr' | 'llm';
@@ -35,22 +36,35 @@ export function AdminOverview({
   vramStatus,
   recentActivity,
   onNavigate,
+  role = 'admin',
 }: {
   teacherCount: number;
   studentCount: number;
   passageCount: number;
   testCount: number;
   pendingTeacherCount?: number;
-  vramStatus: VramStatus;
+  vramStatus?: VramStatus;
   recentActivity: RecentActivity[];
   onNavigate: (section: string) => void;
+  role?: 'admin' | 'principal';
 }) {
+  // Derive school-wide reading health for Principal
+  const indCount = recentActivity.filter((a) => a.phil_iri_level === 'independent').length;
+  const instCount = recentActivity.filter((a) => a.phil_iri_level === 'instructional').length;
+  const frustCount = recentActivity.filter((a) => a.phil_iri_level === 'frustration').length;
+  const totalAssessed = indCount + instCount + frustCount || (recentActivity.length > 0 ? recentActivity.length : 1);
+  const masteryPct = Math.round(((indCount + instCount) / totalAssessed) * 100);
+
   return (
     <div>
       <SectionHeader
-        title="Institutional System Overview"
-        subtitle="Saint Michael College of Caraga (SMCC) ReadBuddy Administrative Telemetry."
-        accent={ADMIN_ACCENT}
+        title={role === 'principal' ? "Executive Reading Overview" : "Institutional System Overview"}
+        subtitle={
+          role === 'principal'
+            ? "Saint Michael College of Caraga (SMCC) Basic Education Reading Comprehension Oversight."
+            : "Saint Michael College of Caraga (SMCC) ReadBuddy Administrative Telemetry."
+        }
+        accent={role === 'principal' ? PRINCIPAL_ACCENT : ADMIN_ACCENT}
       />
 
       {pendingTeacherCount > 0 && (
@@ -82,15 +96,17 @@ export function AdminOverview({
 
       {/* Metrics Row */}
       <div className="flex flex-wrap gap-4 mb-6">
-        <StatCard label="Active Educators" value={teacherCount} accent={ADMIN_ACCENT} onClick={() => onNavigate('teachers')} />
+        <StatCard label="Active Educators" value={teacherCount} accent={role === 'principal' ? PRINCIPAL_ACCENT : ADMIN_ACCENT} onClick={() => onNavigate('teachers')} />
         <StatCard label="Enrolled Students" value={studentCount} accent="#1F4D3A" onClick={() => onNavigate('students')} />
-        <StatCard label="Published Passages" value={passageCount} accent="#3D6B8A" onClick={() => onNavigate('content')} />
-        <StatCard label="Active Tests" value={testCount} accent="#E8873A" onClick={() => onNavigate('content')} />
+        <StatCard label="Published Passages" value={passageCount} accent="#3D6B8A" onClick={() => onNavigate(role === 'principal' ? 'students' : 'content')} />
+        <StatCard label="Active Tests" value={testCount} accent="#E8873A" onClick={() => onNavigate(role === 'principal' ? 'students' : 'content')} />
       </div>
 
       {/* Quick Actions Panel (Tactile Soft-Neobrutalism) */}
       <div id="tour-admin-fast-actions" className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-[#FFFDF8] border-2 border-[#DED2B4] shadow-[3px_3px_0px_rgba(31,77,58,0.08)] flex-wrap">
-        <span className="text-xs font-bold font-serif text-[#1F4D3A] mr-1">Admin Fast Actions:</span>
+        <span className="text-xs font-bold font-serif text-[#1F4D3A] mr-1">
+          {role === 'principal' ? 'Executive Actions:' : 'Admin Fast Actions:'}
+        </span>
         <button
           onClick={() => onNavigate('teachers')}
           className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
@@ -110,59 +126,131 @@ export function AdminOverview({
           className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
         >
           <ShieldCheck className="w-3.5 h-3.5 text-[#2B2621]" strokeWidth={2.25} />
-          <span>Auth & SSO Logs</span>
+          <span>School Activity Logs</span>
         </button>
-        <button
-          onClick={() => onNavigate('settings')}
-          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
-        >
-          <Settings className="w-3.5 h-3.5 text-[#2B2621]" strokeWidth={2.25} />
-          <span>System Settings</span>
-        </button>
+        {role === 'principal' ? (
+          <button
+            onClick={() => onNavigate('students')}
+            className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-[#4A3D6B]" strokeWidth={2.25} />
+            <span>Student Reading Progress</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => onNavigate('settings')}
+            className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold bg-[#FFFDF8] border-2 border-[#DED2B4] text-[#2B2621] shadow-[2px_2px_0px_#DED2B4] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <Settings className="w-3.5 h-3.5 text-[#2B2621]" strokeWidth={2.25} />
+            <span>System Settings</span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* VRAM / Model State Card */}
-        <div id="tour-admin-vram">
-          <Card className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: TAN_BORDER }}>
-            <h3 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
-              <Cpu className="w-4 h-4 text-emerald-700" strokeWidth={2.25} />
-              <span>GPU VRAM Telemetry</span>
-            </h3>
-            <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold border border-[#DED2B4] bg-[#FFFDF8] text-gray-600">
-              RTX 2070 · 8GB GDDR6
-            </span>
-          </div>
+        {/* Left Card: GPU VRAM Telemetry (Admin Only) OR School Literacy & Phil-IRI Overview (Principal) */}
+        {role === 'principal' ? (
+          <div id="tour-principal-phil-iri">
+            <Card className="flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: TAN_BORDER }}>
+                <h3 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: PRINCIPAL_ACCENT }}>
+                  <BookOpen className="w-4 h-4 text-[#4A3D6B]" strokeWidth={2.25} />
+                  <span>School Reading & Phil-IRI Overview</span>
+                </h3>
+                <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold border border-[#D5C7EA] bg-[#F6F2FC] text-[#4A3D6B]">
+                  SMCC Basic Education
+                </span>
+              </div>
 
-          <div className="flex items-center gap-6 my-2">
-            <ProgressRing
-              value={Math.round((vramStatus.usedMb / vramStatus.budgetMb) * 100)}
-              max={100}
-              size={88}
-              strokeWidth={8}
-              color={ADMIN_ACCENT}
-            />
-            <div className="flex flex-col gap-1">
-              <div className="text-2xl font-bold font-mono text-[#1F4D3A]">
-                {(vramStatus.usedMb / 1024).toFixed(1)} GB
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 my-2">
+                <ProgressRing
+                  value={masteryPct}
+                  max={100}
+                  size={88}
+                  strokeWidth={8}
+                  color={PRINCIPAL_ACCENT}
+                />
+                <div className="flex flex-col gap-1">
+                  <div className="text-2xl font-bold font-mono text-[#1F4D3A]">
+                    {masteryPct}%
+                  </div>
+                  <div className="text-xs font-semibold text-gray-500 font-sans">
+                    Independent & Instructional Mastery
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold mt-1 text-[#2E7D4F]">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#2E7D4F]" />
+                    <span>Phil-IRI Assessment Active</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-xs font-semibold text-gray-500 font-sans">
-                of {(vramStatus.budgetMb / 1024).toFixed(0)} GB VRAM Allocated
+
+              {/* Tier Distribution Pills */}
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <div className="p-2 rounded-xl bg-[#E6F4EA] border border-[#BFE0CC] text-center">
+                  <div className="text-[10px] uppercase font-bold text-[#2E7D4F] font-mono">Independent</div>
+                  <div className="text-sm font-bold font-mono text-[#1F4D3A]">{indCount}</div>
+                </div>
+                <div className="p-2 rounded-xl bg-[#EBF3F8] border border-[#A8C5DA] text-center">
+                  <div className="text-[10px] uppercase font-bold text-[#3D6B8A] font-mono">Instructional</div>
+                  <div className="text-sm font-bold font-mono text-[#2B4C63]">{instCount}</div>
+                </div>
+                <div className="p-2 rounded-xl bg-[#FDF2E9] border border-[#F0C99A] text-center">
+                  <div className="text-[10px] uppercase font-bold text-[#B4602E] font-mono">Intervention</div>
+                  <div className="text-sm font-bold font-mono text-[#8A451A]">{frustCount}</div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-bold mt-1 text-[#2E7D4F]">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#2E7D4F] animate-pulse" />
-                <span>{PHASE_LABEL[vramStatus.activePhase]}</span>
+
+              <div className="text-xs pt-3 border-t flex flex-wrap items-center justify-between gap-2 font-sans" style={{ borderColor: TAN_BORDER, color: MUTED }}>
+                <span>Official DepEd Phil-IRI Framework</span>
+                <span className="font-mono text-[11px] text-[#4A3D6B] font-bold">Standard Met</span>
               </div>
+            </Card>
+          </div>
+        ) : (
+          /* VRAM / Model State Card (Admin Only) */
+          vramStatus && (
+            <div id="tour-admin-vram">
+              <Card className="flex flex-col gap-4">
+                <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: TAN_BORDER }}>
+                  <h3 className="text-base font-bold flex items-center gap-2" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
+                    <Cpu className="w-4 h-4 text-emerald-700" strokeWidth={2.25} />
+                    <span>GPU VRAM Telemetry</span>
+                  </h3>
+                  <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold border border-[#DED2B4] bg-[#FFFDF8] text-gray-600">
+                    RTX 2070 · 8GB GDDR6
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 my-2">
+                  <ProgressRing
+                    value={Math.round((vramStatus.usedMb / vramStatus.budgetMb) * 100)}
+                    max={100}
+                    size={88}
+                    strokeWidth={8}
+                    color={ADMIN_ACCENT}
+                  />
+                  <div className="flex flex-col gap-1">
+                    <div className="text-2xl font-bold font-mono text-[#1F4D3A]">
+                      {(vramStatus.usedMb / 1024).toFixed(1)} GB
+                    </div>
+                    <div className="text-xs font-semibold text-gray-500 font-sans">
+                      of {(vramStatus.budgetMb / 1024).toFixed(0)} GB VRAM Allocated
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs font-bold mt-1 text-[#2E7D4F]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#2E7D4F] animate-pulse" />
+                      <span>{PHASE_LABEL[vramStatus.activePhase]}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-xs pt-3 border-t flex flex-wrap items-center justify-between gap-2 font-sans" style={{ borderColor: TAN_BORDER, color: MUTED }}>
+                  <span>Dual-Pipeline Model Cache (Wav2Vec2 + Gemma 2B)</span>
+                  <span className="font-mono text-[11px] text-[#2E7D4F] font-bold">Optimal</span>
+                </div>
+              </Card>
             </div>
-          </div>
-
-          <div className="text-xs pt-3 border-t flex items-center justify-between font-sans" style={{ borderColor: TAN_BORDER, color: MUTED }}>
-            <span>Dual-Pipeline Model Cache (Wav2Vec2 + Gemma 2B)</span>
-            <span className="font-mono text-[11px] text-[#2E7D4F] font-bold">Optimal</span>
-          </div>
-        </Card>
-        </div>
+          )
+        )}
 
         {/* Activity Card */}
         <Card className="flex flex-col gap-3">

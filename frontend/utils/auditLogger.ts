@@ -5,7 +5,7 @@ export interface AuthLogEntry {
   timestamp?: string;
   identifier: string;
   display_name: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'principal';
   method: 'Local Password' | 'SMCC Google SSO' | 'Microsoft 365 SAML' | 'Session Token' | 'SMS 2FA Verified';
   status: 'SUCCESS' | 'FAILED' | 'PASSWORD_RESET' | 'APPROVED' | 'REVOKED' | 'CREATED' | 'UPDATED' | 'DELETED';
   ip_address?: string;
@@ -16,7 +16,7 @@ export interface ActivityEntry {
   id?: string;
   timestamp?: string;
   user_name: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'teacher' | 'admin' | 'principal';
   action: string;
   details: string;
   badge?: string;

@@ -14,6 +14,35 @@ interface CreateAccountModalProps {
   onSuccess: (schoolId?: string) => void;
 }
 
+const DEFAULT_SECTIONS_BY_GRADE: Record<string, string[]> = {
+  '1': ['St. Therese', 'St. Agnes', 'St. Joseph'],
+  '2': ['St. Anne', 'St. Joachim', 'St. Jude'],
+  '3': ['St. Anthony', 'St. Martin', 'St. Benedict'],
+  '4': ['St. Aloysius', 'St. Dominic', 'St. Francis'],
+  '5': ['St. Ignatius', 'St. Xavier', 'St. Lawrence'],
+  '6': ['St. Michael', 'St. Gabriel', 'St. Raphael'],
+  '7': ['St. John', 'St. Mark', 'St. Luke', 'St. Matthew'],
+  '8': ['St. Peter', 'St. Paul', 'St. Francis', 'St. Dominic'],
+  '9': ['St. Thomas', 'St. Augustine', 'St. Ignatius', 'St. Benedict'],
+  '10': ['St. Teresa', 'St. Claire', 'St. Vincent', 'St. Lorenzo Ruiz'],
+  '11': ['St. Thomas Aquinas', 'St. Bede', 'St. Isidore'],
+  '12': ['St. Albert', 'St. Augustine', 'St. John Paul II'],
+};
+
+function getAvailableSectionsForGrade(grade: string): string[] {
+  const defaultList = DEFAULT_SECTIONS_BY_GRADE[grade] || ['Section A', 'Section B'];
+  if (typeof window === 'undefined') return defaultList;
+  try {
+    const savedClasses = JSON.parse(localStorage.getItem('readbuddy_teacher_classes') || '[]');
+    const teacherClassNames = savedClasses
+      .filter((c: any) => !c.grade_level || String(c.grade_level) === grade)
+      .map((c: any) => c.name);
+    return Array.from(new Set([...defaultList, ...teacherClassNames]));
+  } catch {
+    return defaultList;
+  }
+}
+
 export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountModalProps) {
   const [mounted, setMounted] = useState(false);
   const [selectedRole, setSelectedRole] = useState<RegistrationRole>('student');
@@ -26,6 +55,8 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
   const [studentPassword, setStudentPassword] = useState('');
   const [showStudentPassword, setShowStudentPassword] = useState(false);
   const [gradeLevel, setGradeLevel] = useState('7');
+  const [studentSection, setStudentSection] = useState('St. John');
+  const [studentCustomSection, setStudentCustomSection] = useState('');
   const [preferredLang, setPreferredLang] = useState<'en' | 'tl'>('en');
 
   // Teacher State
@@ -52,6 +83,7 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
     username: string;
     email: string;
     password: string;
+    section: string;
   } | null>(null);
   const [teacherSuccess, setTeacherSuccess] = useState(false);
 
@@ -87,6 +119,8 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
     setStudentPassword('');
     setShowStudentPassword(false);
     setGradeLevel('7');
+    setStudentSection('St. John');
+    setStudentCustomSection('');
     setPreferredLang('en');
 
     setTeacherName('');
@@ -130,6 +164,10 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
       setError('Please enter a valid student email address.');
       return;
     }
+    if (!cleanEmail.toLowerCase().endsWith('@smccnasipit.edu.ph')) {
+      setError('Only official @smccnasipit.edu.ph institutional email addresses are permitted.');
+      return;
+    }
     if (!pwd || pwd.length < 6) {
       setError('Student password must be at least 6 characters.');
       return;
@@ -155,6 +193,10 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
       }
     } catch (e) {}
 
+    const chosenSection = studentSection === '__custom__'
+      ? (studentCustomSection.trim() || 'General')
+      : (studentSection || 'General');
+
     // 2. Post to backend
     try {
       const res = await fetch('/api/auth/student/register', {
@@ -167,6 +209,7 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
           email: cleanEmail,
           password: pwd,
           grade_level: Number(gradeLevel),
+          section_name: chosenSection,
           preferred_language: preferredLang,
         }),
       });
@@ -197,6 +240,8 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
       password: pwd,
       role: 'student',
       grade_level: Number(gradeLevel),
+      section_name: chosenSection,
+      class_name: chosenSection,
       created_at: new Date().toISOString().split('T')[0],
     };
 
@@ -207,6 +252,33 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
       passwordsMap[formalUsername] = pwd;
       passwordsMap[cleanEmail] = pwd;
       localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
+
+      // Check if this matches a teacher's created class
+      const teacherClasses = JSON.parse(localStorage.getItem('readbuddy_teacher_classes') || '[]');
+      const matchingClass = teacherClasses.find((c: any) => c.name?.toLowerCase() === chosenSection.toLowerCase());
+      if (matchingClass) {
+        (accountData as any).teacher_id = matchingClass.teacher_id;
+        (accountData as any).teacher_name = matchingClass.teacher_name;
+
+        const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
+        if (!teacherStudents.some((s: any) => (s.school_id || '').toLowerCase() === lowerId)) {
+          teacherStudents.push({
+            id: `std-${cleanId}`,
+            display_name: cleanName,
+            school_id: cleanId,
+            username: formalUsername,
+            email: cleanEmail,
+            grade_level: Number(gradeLevel),
+            section_name: chosenSection,
+            class_name: chosenSection,
+            teacher_id: matchingClass.teacher_id,
+            teacher_name: matchingClass.teacher_name,
+            preferred_language: preferredLang,
+            sessions_completed: 0,
+          });
+          localStorage.setItem('readbuddy_teacher_students', JSON.stringify(teacherStudents));
+        }
+      }
 
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
       accountsMap[cleanId] = accountData;
@@ -221,6 +293,7 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
 
       window.dispatchEvent(new Event('readbuddy_accounts_updated'));
       window.dispatchEvent(new Event('readbuddy_students_updated'));
+      window.dispatchEvent(new Event('readbuddy_classes_updated'));
 
       recordAuthLog({
         identifier: cleanId,
@@ -228,14 +301,14 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
         role: 'student',
         method: 'Local Password',
         status: 'CREATED',
-        details: `Student registered (Grade ${gradeLevel}, ${cleanEmail})`,
+        details: `Student registered (Grade ${gradeLevel} - ${chosenSection}, ${cleanEmail})`,
       });
 
       recordActivity({
         user_name: cleanName,
         role: 'student',
         action: 'Account Registered',
-        details: `New student account created for ${cleanName} (ID: ${cleanId})`,
+        details: `New student account created for ${cleanName} (ID: ${cleanId}, Section: ${chosenSection})`,
       });
     } catch (e) {}
 
@@ -245,6 +318,7 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
       username: formalUsername,
       email: cleanEmail,
       password: pwd,
+      section: chosenSection,
     });
   }
 
@@ -259,6 +333,11 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
 
     if (!cleanName || !cleanId || !cleanEmail || !teacherPassword) {
       setError('Please fill in all required educator fields.');
+      return;
+    }
+
+    if (!cleanEmail.toLowerCase().endsWith('@smccnasipit.edu.ph')) {
+      setError('Only official @smccnasipit.edu.ph institutional email addresses are permitted.');
       return;
     }
 
@@ -605,7 +684,12 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                     <label className={styles.label}>Grade Level</label>
                     <select
                       value={gradeLevel}
-                      onChange={(e) => setGradeLevel(e.target.value)}
+                      onChange={(e) => {
+                        const newGrade = e.target.value;
+                        setGradeLevel(newGrade);
+                        const sections = getAvailableSectionsForGrade(newGrade);
+                        if (sections.length > 0) setStudentSection(sections[0]);
+                      }}
                       className={styles.input}
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
@@ -615,16 +699,44 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                   </div>
 
                   <div>
-                    <label className={styles.label}>Preferred Language</label>
+                    <label className={styles.label}>Class Section / Name</label>
                     <select
-                      value={preferredLang}
-                      onChange={(e) => setPreferredLang(e.target.value as 'en' | 'tl')}
+                      value={studentSection}
+                      onChange={(e) => setStudentSection(e.target.value)}
                       className={styles.input}
                     >
-                      <option value="en">English</option>
-                      <option value="tl">Tagalog</option>
+                      {getAvailableSectionsForGrade(gradeLevel).map((sec) => (
+                        <option key={sec} value={sec}>Section {sec}</option>
+                      ))}
+                      <option value="__custom__">+ Enter Custom Section...</option>
                     </select>
                   </div>
+                </div>
+
+                {studentSection === '__custom__' && (
+                  <div>
+                    <label className={styles.label}>Custom Section Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. St. Jude or Section Diamond"
+                      value={studentCustomSection}
+                      onChange={(e) => setStudentCustomSection(e.target.value)}
+                      className={styles.input}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className={styles.label}>Preferred Reading Language</label>
+                  <select
+                    value={preferredLang}
+                    onChange={(e) => setPreferredLang(e.target.value as 'en' | 'tl')}
+                    className={styles.input}
+                  >
+                    <option value="en">English</option>
+                    <option value="tl">Tagalog</option>
+                  </select>
                 </div>
 
                 <div className="flex gap-2.5 mt-2">
@@ -967,8 +1079,8 @@ export function CreateAccountModal({ open, onClose, onSuccess }: CreateAccountMo
                 <span className="text-sm font-mono font-bold text-[#E8873A]">{createdStudentCredentials.password}</span>
               </div>
               <div className="flex justify-between items-center border-t pt-2 border-gray-200">
-                <span className="text-xs font-sans text-gray-500 font-medium">Grade Level:</span>
-                <span className="text-xs font-sans font-semibold text-gray-700">Grade {gradeLevel}</span>
+                <span className="text-xs font-sans text-gray-500 font-medium">Grade & Section:</span>
+                <span className="text-xs font-sans font-bold text-[#1F4D3A]">Grade {gradeLevel} &bull; Section {createdStudentCredentials.section}</span>
               </div>
             </div>
 

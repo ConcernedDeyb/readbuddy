@@ -62,7 +62,7 @@ export interface AccountProfile {
   displayName: string;
   email: string;
   username: string;
-  role: 'teacher' | 'admin' | 'student';
+  role: 'teacher' | 'admin' | 'student' | 'principal';
   schoolId?: string;
   gradeLevel?: number;
   teacherName?: string;

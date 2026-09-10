@@ -5,7 +5,7 @@ import { ReadBuddyMascot } from '../brand';
 import { ReadBuddyLogo } from '../brand';
 
 interface LoginLoadingScreenProps {
-  role?: 'student' | 'teacher' | 'admin';
+  role?: 'student' | 'teacher' | 'admin' | 'principal';
   userName?: string;
   onComplete?: () => void;
 }
@@ -63,21 +63,27 @@ export function LoginLoadingScreen({
   const activeStage = STAGES[stageIndex] || STAGES[0];
 
   const roleLabel =
-    role === 'teacher'
+    role === 'principal'
+      ? 'PRINCIPAL ACCESS'
+      : role === 'teacher'
       ? 'FACULTY ACCESS'
       : role === 'admin'
       ? 'ADMINISTRATOR ACCESS'
       : 'STUDENT ACCESS';
 
   const roleBadgeBg =
-    role === 'teacher'
+    role === 'principal'
+      ? '#EBE7F5'
+      : role === 'teacher'
       ? '#E8F0F8'
       : role === 'admin'
       ? '#F3EAF0'
       : '#FCEDDE';
 
   const roleBadgeFg =
-    role === 'teacher'
+    role === 'principal'
+      ? '#4A3D6B'
+      : role === 'teacher'
       ? '#2C4E66'
       : role === 'admin'
       ? '#5C3650'

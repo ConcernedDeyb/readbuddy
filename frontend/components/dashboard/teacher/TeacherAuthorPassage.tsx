@@ -393,11 +393,11 @@ export function TeacherAuthorPassage({ onDone }: { onDone: () => void }) {
       </Card>
 
       {/* Bottom Actions */}
-      <div className="flex gap-3 pt-2">
-        <PrimaryButton accent={TEACHER_ACCENT} onClick={handleSavePassageAndTest} disabled={isSaving}>
+      <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <PrimaryButton accent={TEACHER_ACCENT} onClick={handleSavePassageAndTest} disabled={isSaving} className="w-full sm:w-auto">
           {isSaving ? 'Saving Passage & Test...' : 'Save Passage & Comprehensive Test'}
         </PrimaryButton>
-        <GhostButton onClick={onDone}>Cancel</GhostButton>
+        <GhostButton onClick={onDone} className="w-full sm:w-auto">Cancel</GhostButton>
       </div>
     </div>
   );

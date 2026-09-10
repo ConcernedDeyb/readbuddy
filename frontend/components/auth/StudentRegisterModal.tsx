@@ -11,6 +11,35 @@ interface StudentRegisterModalProps {
   onSuccess: (schoolId: string) => void;
 }
 
+const DEFAULT_SECTIONS_BY_GRADE: Record<string, string[]> = {
+  '1': ['St. Therese', 'St. Agnes', 'St. Joseph'],
+  '2': ['St. Anne', 'St. Joachim', 'St. Jude'],
+  '3': ['St. Anthony', 'St. Martin', 'St. Benedict'],
+  '4': ['St. Aloysius', 'St. Dominic', 'St. Francis'],
+  '5': ['St. Ignatius', 'St. Xavier', 'St. Lawrence'],
+  '6': ['St. Michael', 'St. Gabriel', 'St. Raphael'],
+  '7': ['St. John', 'St. Mark', 'St. Luke', 'St. Matthew'],
+  '8': ['St. Peter', 'St. Paul', 'St. Francis', 'St. Dominic'],
+  '9': ['St. Thomas', 'St. Augustine', 'St. Ignatius', 'St. Benedict'],
+  '10': ['St. Teresa', 'St. Claire', 'St. Vincent', 'St. Lorenzo Ruiz'],
+  '11': ['St. Thomas Aquinas', 'St. Bede', 'St. Isidore'],
+  '12': ['St. Albert', 'St. Augustine', 'St. John Paul II'],
+};
+
+function getAvailableSections(grade: string): string[] {
+  const defaultList = DEFAULT_SECTIONS_BY_GRADE[grade] || ['Section A', 'Section B'];
+  if (typeof window === 'undefined') return defaultList;
+  try {
+    const savedClasses = JSON.parse(localStorage.getItem('readbuddy_teacher_classes') || '[]');
+    const teacherClassNames = savedClasses
+      .filter((c: any) => !c.grade_level || String(c.grade_level) === grade)
+      .map((c: any) => c.name);
+    return Array.from(new Set([...defaultList, ...teacherClassNames]));
+  } catch {
+    return defaultList;
+  }
+}
+
 export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegisterModalProps) {
   const [mounted, setMounted] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -19,6 +48,8 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
   const [phoneNumber, setPhoneNumber] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [gradeLevel, setGradeLevel] = useState('7');
+  const [sectionName, setSectionName] = useState('St. John');
+  const [customSectionName, setCustomSectionName] = useState('');
   const [preferredLang, setPreferredLang] = useState<'en' | 'tl'>('en');
   const [error, setError] = useState('');
   
@@ -28,6 +59,7 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
     username: string;
     email: string;
     password: string;
+    section: string;
   } | null>(null);
 
   useEffect(() => {
@@ -50,6 +82,10 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
     }
     if (!studentEmail.trim() || !studentEmail.includes('@')) {
       setError('Please enter a valid student email address.');
+      return;
+    }
+    if (!studentEmail.trim().toLowerCase().endsWith('@smccnasipit.edu.ph')) {
+      setError('Only official @smccnasipit.edu.ph institutional email addresses are permitted.');
       return;
     }
     if (!passwordInput || passwordInput.trim().length < 6) {
@@ -77,6 +113,10 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
       }
     } catch (e) {}
 
+    const chosenSection = sectionName === '__custom__'
+      ? (customSectionName.trim() || 'General')
+      : (sectionName || 'General');
+
     try {
       const res = await fetch('/api/auth/student/register', {
         method: 'POST',
@@ -88,6 +128,7 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
           email: studentEmail.trim(),
           password: studentPassword,
           grade_level: Number(gradeLevel),
+          section_name: chosenSection,
           preferred_language: preferredLang,
         }),
       });
@@ -116,6 +157,8 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
       password: studentPassword,
       role: 'student',
       grade_level: Number(gradeLevel),
+      section_name: chosenSection,
+      class_name: chosenSection,
       created_at: new Date().toISOString().split('T')[0],
     };
 
@@ -126,6 +169,33 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
       passwordsMap[formalUsername] = studentPassword;
       passwordsMap[studentEmail.trim()] = studentPassword;
       localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
+
+      // Check if this matches a teacher's created class
+      const teacherClasses = JSON.parse(localStorage.getItem('readbuddy_teacher_classes') || '[]');
+      const matchingClass = teacherClasses.find((c: any) => c.name?.toLowerCase() === chosenSection.toLowerCase());
+      if (matchingClass) {
+        (accountData as any).teacher_id = matchingClass.teacher_id;
+        (accountData as any).teacher_name = matchingClass.teacher_name;
+
+        const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
+        if (!teacherStudents.some((s: any) => (s.school_id || '').toLowerCase() === lowerSchoolId)) {
+          teacherStudents.push({
+            id: `std-${trimmedSchoolId}`,
+            display_name: fullName.trim(),
+            school_id: trimmedSchoolId,
+            username: formalUsername,
+            email: studentEmail.trim(),
+            grade_level: Number(gradeLevel),
+            section_name: chosenSection,
+            class_name: chosenSection,
+            teacher_id: matchingClass.teacher_id,
+            teacher_name: matchingClass.teacher_name,
+            preferred_language: preferredLang,
+            sessions_completed: 0,
+          });
+          localStorage.setItem('readbuddy_teacher_students', JSON.stringify(teacherStudents));
+        }
+      }
 
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
       accountsMap[trimmedSchoolId] = accountData;
@@ -141,6 +211,7 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
 
       window.dispatchEvent(new Event('readbuddy_accounts_updated'));
       window.dispatchEvent(new Event('readbuddy_students_updated'));
+      window.dispatchEvent(new Event('readbuddy_classes_updated'));
     } catch (e) {}
 
     setCreatedCredentials({
@@ -148,6 +219,7 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
       username: formalUsername,
       email: studentEmail.trim(),
       password: studentPassword,
+      section: chosenSection,
     });
   }
 
@@ -157,6 +229,8 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
     setStudentEmail('');
     setPasswordInput('');
     setGradeLevel('7');
+    setSectionName('St. John');
+    setCustomSectionName('');
     setPreferredLang('en');
     setError('');
     setCreatedCredentials(null);
@@ -216,8 +290,8 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
                 <span className="text-sm font-mono font-bold text-[#E8873A]">{createdCredentials.password}</span>
               </div>
               <div className="flex justify-between items-center border-t pt-2 border-gray-200">
-                <span className="text-xs font-sans text-gray-500 font-medium">Grade Level:</span>
-                <span className="text-xs font-sans font-semibold text-gray-700">Grade {gradeLevel}</span>
+                <span className="text-xs font-sans text-gray-500 font-medium">Grade & Section:</span>
+                <span className="text-xs font-sans font-bold text-[#1F4D3A]">Grade {gradeLevel} &bull; Section {createdCredentials.section}</span>
               </div>
             </div>
 
@@ -304,7 +378,12 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
                 <label className={styles.label}>Grade Level</label>
                 <select
                   value={gradeLevel}
-                  onChange={(e) => setGradeLevel(e.target.value)}
+                  onChange={(e) => {
+                    const newGrade = e.target.value;
+                    setGradeLevel(newGrade);
+                    const sections = getAvailableSections(newGrade);
+                    if (sections.length > 0) setSectionName(sections[0]);
+                  }}
                   className={styles.input}
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
@@ -314,16 +393,44 @@ export function StudentRegisterModal({ open, onClose, onSuccess }: StudentRegist
               </div>
 
               <div>
-                <label className={styles.label}>Preferred Language</label>
+                <label className={styles.label}>Class Section / Name</label>
                 <select
-                  value={preferredLang}
-                  onChange={(e) => setPreferredLang(e.target.value as 'en' | 'tl')}
+                  value={sectionName}
+                  onChange={(e) => setSectionName(e.target.value)}
                   className={styles.input}
                 >
-                  <option value="en">English</option>
-                  <option value="tl">Tagalog</option>
+                  {getAvailableSections(gradeLevel).map((sec) => (
+                    <option key={sec} value={sec}>Section {sec}</option>
+                  ))}
+                  <option value="__custom__">+ Enter Custom Section...</option>
                 </select>
               </div>
+            </div>
+
+            {sectionName === '__custom__' && (
+              <div>
+                <label className={styles.label}>Custom Section Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. St. Jude or Section Diamond"
+                  value={customSectionName}
+                  onChange={(e) => setCustomSectionName(e.target.value)}
+                  className={styles.input}
+                />
+              </div>
+            )}
+
+            <div>
+              <label className={styles.label}>Preferred Reading Language</label>
+              <select
+                value={preferredLang}
+                onChange={(e) => setPreferredLang(e.target.value as 'en' | 'tl')}
+                className={styles.input}
+              >
+                <option value="en">English</option>
+                <option value="tl">Tagalog</option>
+              </select>
             </div>
 
             <button

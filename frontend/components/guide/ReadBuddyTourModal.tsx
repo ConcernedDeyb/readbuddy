@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ReadBuddyMascot, MascotMood } from '../brand';
 import { Sparkles, Lightbulb, Check, X, ArrowRight, ArrowLeft } from 'lucide-react';
 
-export type TourRole = 'student' | 'teacher' | 'admin';
+export type TourRole = 'student' | 'teacher' | 'admin' | 'principal';
 
 interface TourSlide {
   title: string;
@@ -153,7 +153,7 @@ export function ReadBuddyTourModal({
   const slides =
     role === 'teacher'
       ? TEACHER_SLIDES
-      : role === 'admin'
+      : role === 'admin' || role === 'principal'
       ? ADMIN_SLIDES
       : STUDENT_SLIDES;
 

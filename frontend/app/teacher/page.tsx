@@ -11,6 +11,7 @@ import {
   TeacherTests,
   TeacherNotebook,
   AccountSettings,
+  NotificationsSection,
 } from '@/components/dashboard';
 import { DashboardSkeleton } from '@/components/shared/SkeletonLoaders';
 
@@ -48,7 +49,7 @@ interface SchoolClass {
   created_at?: string;
 }
 
-type TeacherSection = 'overview' | 'classes' | 'students' | 'passages' | 'author' | 'tests' | 'notebook' | 'settings';
+type TeacherSection = 'overview' | 'classes' | 'students' | 'passages' | 'author' | 'tests' | 'notebook' | 'notifications' | 'settings';
 
 export default function TeacherDashboardPage() {
   const [section, setSection] = useState<TeacherSection>('overview');
@@ -89,10 +90,10 @@ export default function TeacherDashboardPage() {
             if (parsed.school_id) setSchoolId(parsed.school_id);
             if (parsed.email) setTeacherEmail(parsed.email);
             else if (parsed.username) setTeacherEmail(`${parsed.username}@smccnasipit.edu.ph`);
-            if (parsed.phone_number) setTeacherPhone(parsed.phone_number);
-            if (parsed.phone_verified !== undefined) setTeacherPhoneVerified(parsed.phone_verified);
-            if (parsed.two_factor_enabled !== undefined) setTeacherTwoFactor(parsed.two_factor_enabled);
-            if (parsed.avatar_url) setTeacherAvatarUrl(parsed.avatar_url);
+            if (parsed.phone_number !== undefined) setTeacherPhone(parsed.phone_number || '');
+            if (parsed.phone_verified !== undefined) setTeacherPhoneVerified(Boolean(parsed.phone_verified));
+            if (parsed.two_factor_enabled !== undefined) setTeacherTwoFactor(Boolean(parsed.two_factor_enabled));
+            if (parsed.avatar_url !== undefined) setTeacherAvatarUrl(parsed.avatar_url || '');
           }
         }
 
@@ -226,6 +227,7 @@ export default function TeacherDashboardPage() {
       activeSection={section}
       onSectionChange={(s) => setSection(s as TeacherSection)}
       userName={teacherName}
+      userId={schoolId || teacherUsername}
       onLogout={() => {
         try { localStorage.removeItem('readbuddy_user'); } catch (e) {}
         window.location.href = '/';
@@ -302,6 +304,16 @@ export default function TeacherDashboardPage() {
         />
       )}
 
+      {section === 'notifications' && (
+        <div className="rb-fade-in-up">
+          <NotificationsSection
+            role="teacher"
+            onNavigate={(s) => setSection(s as TeacherSection)}
+            userId={schoolId || teacherUsername}
+          />
+        </div>
+      )}
+
       {section === 'settings' && (
         <AccountSettings
           profile={{
@@ -316,6 +328,14 @@ export default function TeacherDashboardPage() {
             avatarUrl: teacherAvatarUrl,
           }}
           accent="#3D6B8A"
+          onProfileUpdate={(updated) => {
+            setTeacherName(updated.displayName);
+            setTeacherEmail(updated.email);
+            if (updated.phoneNumber !== undefined) setTeacherPhone(updated.phoneNumber || '');
+            if (updated.isPhoneVerified !== undefined) setTeacherPhoneVerified(Boolean(updated.isPhoneVerified));
+            if (updated.twoFactorEnabled !== undefined) setTeacherTwoFactor(Boolean(updated.twoFactorEnabled));
+            if (updated.avatarUrl !== undefined) setTeacherAvatarUrl(updated.avatarUrl || '');
+          }}
         />
       )}
     </DashboardShell>

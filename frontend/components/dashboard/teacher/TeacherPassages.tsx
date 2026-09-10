@@ -77,9 +77,9 @@ export function TeacherPassages({
 
   return (
     <div>
-      <div id="tour-teacher-passages-header" className="flex items-start justify-between gap-4 mb-6">
+      <div id="tour-teacher-passages-header" className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <SectionHeader title="My Passages" subtitle="Reading passages you've authored for your class." accent={TEACHER_ACCENT} />
-        <PrimaryButton accent={TEACHER_ACCENT} onClick={onAuthorNew}>+ Author New Passage</PrimaryButton>
+        <PrimaryButton accent={TEACHER_ACCENT} onClick={onAuthorNew} className="w-full sm:w-auto shrink-0">+ Author New Passage</PrimaryButton>
       </div>
 
       {passages.length === 0 ? (
@@ -98,13 +98,13 @@ export function TeacherPassages({
                   </Badge>
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-3">
-                <div className="text-xs flex items-center gap-3" style={{ fontFamily: FONT_MONO, color: MUTED }}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3 pt-2 border-t border-gray-100">
+                <div className="text-xs flex flex-wrap items-center gap-3" style={{ fontFamily: FONT_MONO, color: MUTED }}>
                   <span>{LANG_LABEL[p.source_language]}</span>
                   <span>{p.word_count} words</span>
                   <span>{p.created_at}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-end sm:self-auto">
                   <button
                     onClick={() => handleTogglePublish(p.id)}
                     className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors font-sans text-gray-700 cursor-pointer"

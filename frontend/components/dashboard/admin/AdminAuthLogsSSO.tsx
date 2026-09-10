@@ -29,7 +29,7 @@ export interface ActivityItem {
   badge?: string;
 }
 
-export function AdminAuthLogsSSO() {
+export function AdminAuthLogsSSO({ hideSsoConfig = false }: { hideSsoConfig?: boolean } = {}) {
   const [activeTab, setActiveTab] = useState<'logs' | 'activity' | 'sso'>('logs');
   const [authLogs, setAuthLogs] = useState<AuthLog[]>([]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -252,8 +252,12 @@ export function AdminAuthLogsSSO() {
     <div>
       <div id="tour-admin-logs-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <SectionHeader
-          title="Activity, Auth Logs & SSO"
-          subtitle="Audit authentication attempts, user activity timestamps, and manage institutional Single Sign-On (SSO)."
+          title={hideSsoConfig ? "School Activity & Auth Logs" : "Activity, Auth Logs & SSO"}
+          subtitle={
+            hideSsoConfig
+              ? "Audit authentication attempts and user activity timestamps across SMCC Basic Education."
+              : "Audit authentication attempts, user activity timestamps, and manage institutional Single Sign-On (SSO)."
+          }
           accent={ADMIN_ACCENT}
         />
 
@@ -333,23 +337,25 @@ export function AdminAuthLogsSSO() {
           <span>User Activity Stream ({activities.length})</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('sso')}
-          className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border-2 select-none"
-          style={{
-            background: activeTab === 'sso' ? ADMIN_ACCENT : '#FFFDF8',
-            color: activeTab === 'sso' ? '#FFFFFF' : '#2B2621',
-            borderColor: activeTab === 'sso' ? '#1F4D3A' : '#DED2B4',
-            boxShadow: activeTab === 'sso' ? '3px 3px 0px #1F4D3A' : '2px 2px 0px rgba(31,77,58,0.06)',
-            transform: activeTab === 'sso' ? 'translate(-1px, -1px)' : 'none',
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
-          <span>Institutional SSO Configuration</span>
-        </button>
+        {!hideSsoConfig && (
+          <button
+            onClick={() => setActiveTab('sso')}
+            className="px-3.5 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border-2 select-none"
+            style={{
+              background: activeTab === 'sso' ? ADMIN_ACCENT : '#FFFDF8',
+              color: activeTab === 'sso' ? '#FFFFFF' : '#2B2621',
+              borderColor: activeTab === 'sso' ? '#1F4D3A' : '#DED2B4',
+              boxShadow: activeTab === 'sso' ? '3px 3px 0px #1F4D3A' : '2px 2px 0px rgba(31,77,58,0.06)',
+              transform: activeTab === 'sso' ? 'translate(-1px, -1px)' : 'none',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <span>Institutional SSO Configuration</span>
+          </button>
+        )}
       </div>
 
       {/* ─── TAB 1: AUTHENTICATION LOGS ─── */}
@@ -357,7 +363,7 @@ export function AdminAuthLogsSSO() {
         <div className="flex flex-col gap-4 rb-fade-in-up">
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#FFFDF8] border border-[#DED2B4]">
-            <div className="relative flex-1 max-w-sm">
+            <div className="relative flex-1 w-full sm:max-w-sm">
               <input
                 type="text"
                 placeholder="Search by ID, name, IP, or details..."
@@ -367,11 +373,11 @@ export function AdminAuthLogsSSO() {
               />
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value as any)}
-                className="rb-input text-xs py-1 px-2.5"
+                className="rb-input text-xs py-1 px-2.5 w-full sm:w-auto"
               >
                 <option value="all">All Roles</option>
                 <option value="student">Students</option>
@@ -483,13 +489,13 @@ export function AdminAuthLogsSSO() {
             <EmptyState message="No user activity events recorded yet." />
           ) : (
             activities.map((act) => (
-              <Card key={act.id} hoverable className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3.5">
+              <Card key={act.id} hoverable className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
+                <div className="flex items-start gap-3.5 min-w-0 flex-1">
                   <Avatar
                     name={act.user_name}
                     accent={act.role === 'teacher' ? '#3D6B8A' : act.role === 'admin' ? '#7A4A6B' : '#E8873A'}
                   />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-bold font-serif text-[#1F4D3A]">{act.user_name}</span>
                       <span className="text-xs font-semibold text-gray-800 font-sans">• {act.action}</span>
@@ -503,7 +509,7 @@ export function AdminAuthLogsSSO() {
                   </div>
                 </div>
 
-                <div className="text-right shrink-0">
+                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 shrink-0">
                   <div className="text-[11px] font-mono font-medium text-gray-500">
                     {new Date(act.timestamp).toLocaleDateString()}
                   </div>
@@ -518,7 +524,7 @@ export function AdminAuthLogsSSO() {
       )}
 
       {/* ─── TAB 3: INSTITUTIONAL SSO CONFIGURATION ─── */}
-      {activeTab === 'sso' && (
+      {!hideSsoConfig && activeTab === 'sso' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 rb-fade-in-up">
           <Card className="flex flex-col gap-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#DED2B4]">

@@ -18,10 +18,22 @@ import {
   MUTED,
   CHALK_GREEN,
 } from '../_shared';
-import { Check, X } from 'lucide-react';
+import { Check, X, Users, Languages, BookOpen, Search, UserPlus } from 'lucide-react';
+import StudentProgressChart from '../student/StudentProgressChart';
+import DailyReadingHeatmap from '../student/DailyReadingHeatmap';
 
 const TEACHER_ACCENT = '#3D6B8A';
 const DEFAULT_STUDENT_PASSWORD = 'smcc2026';
+
+interface StudentSessionLog {
+  id: string;
+  date: string;
+  passage_title: string;
+  source_language: string;
+  word_recognition_score: number;
+  comprehension_score: number;
+  phil_iri_level: PhilIRILevel;
+}
 
 interface Student {
   id: string;
@@ -41,6 +53,9 @@ interface Student {
   avatar_url?: string;
   sessions_completed?: number;
   latest_level?: PhilIRILevel;
+  avg_word_recognition?: number;
+  avg_comprehension?: number;
+  session_history?: StudentSessionLog[];
 }
 
 interface SchoolClass {
@@ -52,11 +67,11 @@ interface SchoolClass {
 }
 
 function formatStudentEmail(displayName: string, username?: string, customEmail?: string): string {
-  if (customEmail && customEmail.trim() && customEmail.includes('@')) {
-    return customEmail.trim();
+  if (customEmail && customEmail.trim() && customEmail.includes('@') && customEmail.trim().toLowerCase().endsWith('@smccnasipit.edu.ph')) {
+    return customEmail.trim().toLowerCase();
   }
-  const cleanId = (username || displayName || 'student').trim().toLowerCase();
-  return `${cleanId}@student.smccnasipit.edu.ph`;
+  const cleanId = (username || displayName || 'student').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+  return `${cleanId}@smccnasipit.edu.ph`;
 }
 
 export function TeacherStudents({
@@ -73,17 +88,18 @@ export function TeacherStudents({
   const [availableClasses, setAvailableClasses] = useState<SchoolClass[]>([]);
   const [allRegisteredStudents, setAllRegisteredStudents] = useState<Student[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [addMode, setAddMode] = useState<'select_database' | 'single' | 'bulk'>('select_database');
+  const [addMode, setAddMode] = useState<'select_database' | 'single'>('select_database');
   const [search, setSearch] = useState('');
   const [selectedClassFilter, setSelectedClassFilter] = useState<string>(initialSectionFilter || 'all');
   const [notification, setNotification] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [selectedStudentProgress, setSelectedStudentProgress] = useState<Student | null>(null);
 
   // ─── Modal Selection Mode State ───
   const [dbTargetSection, setDbTargetSection] = useState('');
-  const [dbCustomSection, setDbCustomSection] = useState('');
   const [dbTargetGrade, setDbTargetGrade] = useState('7');
   const [dbBrowseGradeFilter, setDbBrowseGradeFilter] = useState<string>('all'); // 'all' or '1'..'12'
+  const [dbBrowseSectionFilter, setDbBrowseSectionFilter] = useState<string>('all'); // 'all', 'Unassigned', or specific section
   const [dbStudentSearch, setDbStudentSearch] = useState('');
   const [selectedDbStudentIds, setSelectedDbStudentIds] = useState<Set<string>>(new Set());
 
@@ -94,15 +110,8 @@ export function TeacherStudents({
     phone_number: '',
     grade_level: '7',
     section_name: '',
-    custom_section_name: '',
     preferred_language: 'en' as 'en' | 'tl',
   });
-
-  // Bulk add draft
-  const [bulkText, setBulkText] = useState('');
-  const [bulkGrade, setBulkGrade] = useState('7');
-  const [bulkSection, setBulkSection] = useState('');
-  const [bulkCustomSection, setBulkCustomSection] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -141,22 +150,16 @@ export function TeacherStudents({
                 grade_level: String(myClasses[0].grade_level || d.grade_level),
               }));
             }
-            if (!bulkSection || !myClasses.some((c) => c.name === bulkSection)) {
-              setBulkSection(myClasses[0].name);
-              setBulkGrade(String(myClasses[0].grade_level || '7'));
-            }
           } else {
-            if (!dbTargetSection) setDbTargetSection('__custom__');
-            if (!draft.section_name) setDraft((d) => ({ ...d, section_name: '__custom__' }));
-            if (!bulkSection) setBulkSection('__custom__');
+            if (!dbTargetSection) setDbTargetSection('');
+            if (!draft.section_name) setDraft((d) => ({ ...d, section_name: '' }));
           }
           return;
         }
       }
       setAvailableClasses([]);
-      if (!dbTargetSection) setDbTargetSection('__custom__');
-      if (!draft.section_name) setDraft((d) => ({ ...d, section_name: '__custom__' }));
-      if (!bulkSection) setBulkSection('__custom__');
+      if (!dbTargetSection) setDbTargetSection('');
+      if (!draft.section_name) setDraft((d) => ({ ...d, section_name: '' }));
     } catch (e) {}
   }
 
@@ -292,7 +295,83 @@ export function TeacherStudents({
         }
       });
 
-      const allRegistered = Array.from(globalStudentsMap.values());
+      // Compute comprehensive reading progress & Phil-IRI diagnostics for each student
+      const teacherTests = JSON.parse(localStorage.getItem('readbuddy_teacher_tests') || '[]');
+
+      function computeStudentReadingStats(schoolId?: string, username?: string, displayName?: string) {
+        const sid = (schoolId || '').toLowerCase().trim();
+        const un = (username || '').toLowerCase().trim();
+        const dn = (displayName || '').toLowerCase().trim();
+
+        // 1. Matches from readbuddy_student_sessions
+        const sessionMatches: StudentSessionLog[] = savedSessions
+          .filter((ses: any) => {
+            const sName = (ses.student_name || '').toLowerCase().trim();
+            const sId = (ses.student_id || '').toLowerCase().trim();
+            return (
+              (sid && (sId === sid || sName === sid)) ||
+              (un && (sId === un || sName === un)) ||
+              (dn && (sName === dn || sId === dn))
+            );
+          })
+          .map((ses: any, idx: number) => ({
+            id: ses.id || `ses-${idx}`,
+            date: ses.date || 'Recent',
+            passage_title: ses.passage_preview || 'Reading Passage Practice',
+            source_language: ses.source_language || 'en',
+            word_recognition_score: Number(ses.word_recognition_score) || 90,
+            comprehension_score: Number(ses.comprehension_score) || 80,
+            phil_iri_level: (ses.phil_iri_level || 'independent') as PhilIRILevel,
+          }));
+
+        // 2. Matches from readbuddy_teacher_tests (assigned tests completed by student)
+        const testMatches: StudentSessionLog[] = [];
+        teacherTests.forEach((t: any) => {
+          (t.assignments || []).forEach((a: any, aIdx: number) => {
+            if (a.status === 'completed' || a.phil_iri_level) {
+              const aId = (a.student_id || '').toLowerCase().trim();
+              const aName = (a.student_name || '').toLowerCase().trim();
+              if (
+                (sid && (aId === sid || aName === sid)) ||
+                (un && (aId === un || aName === un)) ||
+                (dn && (aName === dn || aId === dn))
+              ) {
+                testMatches.push({
+                  id: a.id || `test-${aIdx}`,
+                  date: a.completed_at ? a.completed_at.split('T')[0] : (t.created_at || 'Recent'),
+                  passage_title: t.passage_preview || t.title || 'Assigned Reading Assessment',
+                  source_language: t.source_language || 'en',
+                  word_recognition_score: Number(a.word_recognition_score) || 92,
+                  comprehension_score: Number(a.comprehension_score) || 80,
+                  phil_iri_level: (a.phil_iri_level || 'independent') as PhilIRILevel,
+                });
+              }
+            }
+          });
+        });
+
+        const allLogs = [...sessionMatches, ...testMatches].sort((a, b) => b.date.localeCompare(a.date));
+        const count = allLogs.length;
+        const avgWord = count > 0 ? Math.round(allLogs.reduce((sum, s) => sum + s.word_recognition_score, 0) / count) : undefined;
+        const avgComp = count > 0 ? Math.round(allLogs.reduce((sum, s) => sum + s.comprehension_score, 0) / count) : undefined;
+        const latestLvl = count > 0 ? allLogs[0].phil_iri_level : undefined;
+
+        return {
+          sessions_completed: count,
+          latest_level: latestLvl,
+          avg_word_recognition: avgWord,
+          avg_comprehension: avgComp,
+          session_history: allLogs,
+        };
+      }
+
+      const allRegistered = Array.from(globalStudentsMap.values()).map((st) => {
+        const stats = computeStudentReadingStats(st.school_id, st.username, st.display_name);
+        return {
+          ...st,
+          ...stats,
+        };
+      });
       setAllRegisteredStudents(allRegistered);
 
       // ─── ONLY ENROLLED STUDENTS IN THIS TEACHER'S SECTIONS APPEAR IN ACTIVE ROSTER ───
@@ -357,23 +436,14 @@ export function TeacherStudents({
     }));
   }
 
-  function handleBulkSectionChange(newSection: string) {
-    const foundClass = availableClasses.find((c) => c.name.toLowerCase() === newSection.toLowerCase());
-    setBulkSection(newSection);
-    if (foundClass) {
-      setBulkGrade(String(foundClass.grade_level));
-    }
-  }
+
 
   // ─── HANDLER: Add Selected Database Students into Class Section ───
   async function handleAddSelectedDbStudents(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
 
-    const chosenSection = dbTargetSection === '__custom__'
-      ? (dbCustomSection.trim() || 'General')
-      : (dbTargetSection || 'General');
-
+    const chosenSection = dbTargetSection || (sectionOptions.length > 0 ? sectionOptions[0] : 'General');
     const chosenGrade = Number(dbTargetGrade) || 7;
 
     if (selectedDbStudentIds.size === 0) {
@@ -526,10 +596,7 @@ export function TeacherStudents({
       return;
     }
 
-    const chosenSection = draft.section_name === '__custom__'
-      ? (draft.custom_section_name.trim() || 'General')
-      : (draft.section_name || 'General');
-
+    const chosenSection = draft.section_name || (sectionOptions.length > 0 ? sectionOptions[0] : 'General');
     const chosenGrade = Number(draft.grade_level) || 7;
     const formalUsername = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
@@ -641,7 +708,6 @@ export function TeacherStudents({
       phone_number: '',
       grade_level: '7',
       section_name: availableClasses[0]?.name || '',
-      custom_section_name: '',
       preferred_language: 'en',
     });
     setNotification(`Successfully registered "${cleanName}" (ID: ${cleanId}) into Section ${chosenSection}!`);
@@ -650,230 +716,106 @@ export function TeacherStudents({
     loadRoster();
   }
 
-  async function handleBulkImport(e: React.FormEvent) {
-    e.preventDefault();
-    setFormError(null);
 
-    const chosenSection = bulkSection === '__custom__'
-      ? (bulkCustomSection.trim() || 'General')
-      : (bulkSection || 'General');
-
-    const chosenGrade = Number(bulkGrade) || 7;
-
-    const lines = bulkText
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean);
-
-    if (lines.length === 0) {
-      setFormError('Please enter at least one student line.');
-      return;
-    }
-
-    const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
-    const passwordsMap = JSON.parse(localStorage.getItem('readbuddy_passwords') || '{}');
-
-    const newEntries: Student[] = [];
-    let addedCount = 0;
-    const seenBatchIds = new Map<string, string>();
-
-    for (let index = 0; index < lines.length; index++) {
-      const line = lines[index];
-      let idPart = '';
-      let namePart = '';
-
-      if (line.includes(',') || line.includes('\t') || line.includes(' - ') || line.includes(';')) {
-        const separator = line.includes(',') ? ',' : line.includes('\t') ? '\t' : line.includes(';') ? ';' : ' - ';
-        const parts = line.split(separator).map((p) => p.trim());
-        if (parts.length >= 2) {
-          if (/\d/.test(parts[0]) && !/\d/.test(parts[1])) {
-            idPart = parts[0];
-            namePart = parts[1];
-          } else if (/\d/.test(parts[1]) && !/\d/.test(parts[0])) {
-            namePart = parts[0];
-            idPart = parts[1];
-          } else {
-            idPart = parts[0];
-            namePart = parts[1];
-          }
-        }
-      } else {
-        const match = line.match(/^(\d+)\s+(.+)$/);
-        if (match) {
-          idPart = match[1];
-          namePart = match[2];
-        } else {
-          namePart = line;
-          idPart = `2026${1000 + allRegisteredStudents.length + index}`;
-        }
-      }
-
-      if (!namePart) continue;
-      if (!idPart) idPart = `2026${1000 + allRegisteredStudents.length + index}`;
-
-      const lowerId = idPart.toLowerCase();
-      if (seenBatchIds.has(lowerId)) {
-        setFormError(`Duplicate School ID "${idPart}" found in roster text for "${namePart}". Every student must have a unique School ID Number.`);
-        return;
-      }
-      seenBatchIds.set(lowerId, namePart);
-
-      const existingAcc = accountsMap[idPart] || accountsMap[lowerId];
-      const existingStudent = allRegisteredStudents.find((s) => s.school_id?.toLowerCase() === lowerId);
-      if (existingStudent || (existingAcc && existingAcc.display_name?.toLowerCase() !== namePart.toLowerCase())) {
-        const conflict = existingStudent?.display_name || existingAcc?.display_name || 'another account';
-        setFormError(`School ID "${idPart}" is already assigned to "${conflict}". Every student must have a unique School ID Number.`);
-        return;
-      }
-
-      const formalUsername = namePart.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-      const studentEmail = existingAcc?.email || `${idPart}@smccnasipit.edu.ph`;
-      const studentPassword = existingAcc?.password || DEFAULT_STUDENT_PASSWORD;
-
-      const studentObj: Student = {
-        id: `std-${idPart}`,
-        display_name: namePart,
-        username: formalUsername,
-        school_id: idPart,
-        email: studentEmail,
-        password: studentPassword,
-        grade_level: chosenGrade,
-        class_name: chosenSection,
-        section_name: chosenSection,
-        teacher_name: teacherName,
-        preferred_language: 'en',
-        sessions_completed: 0,
-      };
-
-      newEntries.push(studentObj);
-
-      const accountData = {
-        display_name: namePart,
-        username: formalUsername,
-        school_id: idPart,
-        email: studentEmail,
-        password: studentPassword,
-        role: 'student',
-        grade_level: chosenGrade,
-        section_name: chosenSection,
-        class_name: chosenSection,
-        teacher_name: teacherName,
-        created_at: new Date().toISOString().split('T')[0],
-      };
-
-      accountsMap[idPart] = accountData;
-      accountsMap[idPart.toLowerCase()] = accountData;
-      accountsMap[formalUsername] = accountData;
-      accountsMap[studentEmail] = accountData;
-      accountsMap[studentEmail.toLowerCase()] = accountData;
-
-      passwordsMap[idPart] = studentPassword;
-      passwordsMap[idPart.toLowerCase()] = studentPassword;
-      passwordsMap[formalUsername] = studentPassword;
-      passwordsMap[studentEmail] = studentPassword;
-      passwordsMap[studentEmail.toLowerCase()] = studentPassword;
-
-      // Record student to PostgreSQL Database
-      try {
-        fetch('/api/auth/student/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            display_name: namePart,
-            school_id: idPart,
-            username: formalUsername,
-            email: studentEmail,
-            password: studentPassword,
-            grade_level: chosenGrade,
-            section_name: chosenSection,
-            preferred_language: 'en',
-          }),
-        });
-      } catch (e) {}
-
-      addedCount++;
-    }
-
-    if (addedCount === 0) return;
-
-    try {
-      const savedTeacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
-      const newSchoolIds = new Set(newEntries.map((ne) => ne.school_id?.toLowerCase()));
-      const updatedTeacherRoster = [...newEntries, ...savedTeacherStudents.filter((s: any) => !newSchoolIds.has((s.school_id || s.username)?.toLowerCase()))];
-      
-      localStorage.setItem('readbuddy_teacher_students', JSON.stringify(updatedTeacherRoster));
-      localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
-      localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
-
-      // Ensure class exists
-      const savedClasses = JSON.parse(localStorage.getItem('readbuddy_teacher_classes') || '[]');
-      const classExists = savedClasses.some((c: any) => c.name.toLowerCase() === chosenSection.toLowerCase());
-      if (!classExists) {
-        const updatedClasses = [
-          ...savedClasses,
-          {
-            id: `cls-${Date.now()}`,
-            name: chosenSection,
-            grade_level: chosenGrade,
-            class_code: `SMCC-G${chosenGrade}-${chosenSection.toUpperCase().replace(/\s+/g, '')}`,
-            student_count: addedCount,
-          }
-        ];
-        localStorage.setItem('readbuddy_teacher_classes', JSON.stringify(updatedClasses));
-      }
-
-      setSelectedClassFilter('all');
-      setSearch('');
-
-      window.dispatchEvent(new Event('readbuddy_accounts_updated'));
-      window.dispatchEvent(new Event('readbuddy_students_updated'));
-      window.dispatchEvent(new Event('readbuddy_classes_updated'));
-    } catch (e) {}
-
-    setNotification(`Successfully imported ${addedCount} student(s) into Section ${chosenSection} (Grade ${chosenGrade})!`);
-    setTimeout(() => setNotification(null), 7000);
-
-    setBulkText('');
-    setShowModal(false);
-    loadRoster();
-  }
-
-  // ─── ACTION 1: Unenroll Student from Section (Status -> Unassigned) ───
+  // ─── ACTION: Remove Student from Class Section (Status -> Unassigned) ───
   async function handleUnenrollFromSection(studentId: string, studentName: string) {
-    if (!window.confirm(`Unenroll "${studentName}" from this class section? The student will be removed from your active roster and marked as Unassigned in the database.`)) return;
+    if (!window.confirm(`Remove "${studentName}" from this class section?\n\nThe student will be unassigned from your class roster and can be re-enrolled into another section. Their student account and Phil-IRI diagnostic history will remain intact.`)) return;
 
     const studentObj = allRegisteredStudents.find((s) => s.id === studentId || s.school_id === studentId || s.username === studentId);
     const schoolId = studentObj?.school_id || studentObj?.username || studentId;
-    const lowerSid = schoolId.toLowerCase();
+    const lowerSid = (schoolId || '').toLowerCase().trim();
+    const lowerUn = (studentObj?.username || '').toLowerCase().trim();
+    const lowerEmail = (studentObj?.email || '').toLowerCase().trim();
+    const lowerId = (studentId || '').toLowerCase().trim();
+    const objId = (studentObj?.id || '').toLowerCase().trim();
 
     // 1. Instantly remove from active teacher roster view
-    setStudents((prev) => prev.filter((s) => s.id !== studentId && s.school_id !== studentId && s.username !== studentId));
+    setStudents((prev) => prev.filter((s) => {
+      const sId = (s.id || '').toLowerCase().trim();
+      const sSid = (s.school_id || '').toLowerCase().trim();
+      const sUn = (s.username || '').toLowerCase().trim();
+      const sEmail = (s.email || '').toLowerCase().trim();
+
+      if (lowerId && sId === lowerId) return false;
+      if (objId && sId === objId) return false;
+      if (lowerSid && (sSid === lowerSid || sUn === lowerSid)) return false;
+      if (lowerUn && (sUn === lowerUn || sSid === lowerUn)) return false;
+      if (lowerEmail && sEmail === lowerEmail) return false;
+      return true;
+    }));
+
+    // 2. Mark as Unassigned in allRegisteredStudents local state
+    setAllRegisteredStudents((prev) => prev.map((s) => {
+      const sId = (s.id || '').toLowerCase().trim();
+      const sSid = (s.school_id || '').toLowerCase().trim();
+      const sUn = (s.username || '').toLowerCase().trim();
+      const sEmail = (s.email || '').toLowerCase().trim();
+
+      const matches =
+        (lowerId && sId === lowerId) ||
+        (objId && sId === objId) ||
+        (lowerSid && (sSid === lowerSid || sUn === lowerSid)) ||
+        (lowerUn && (sUn === lowerUn || sSid === lowerUn)) ||
+        (lowerEmail && sEmail === lowerEmail);
+
+      if (matches) {
+        return {
+          ...s,
+          section_name: 'Unassigned',
+          class_name: 'Unassigned',
+          teacher_name: undefined,
+        };
+      }
+      return s;
+    }));
 
     try {
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
-      if (accountsMap[schoolId]) {
-        accountsMap[schoolId] = {
-          ...accountsMap[schoolId],
-          section_name: 'Unassigned',
-          class_name: 'Unassigned',
-          teacher_name: undefined,
-        };
-      }
-      if (accountsMap[lowerSid]) {
-        accountsMap[lowerSid] = {
-          ...accountsMap[lowerSid],
-          section_name: 'Unassigned',
-          class_name: 'Unassigned',
-          teacher_name: undefined,
-        };
-      }
+      
+      // Update ALL aliases in accountsMap matching this student
+      Object.keys(accountsMap).forEach((key) => {
+        const acc = accountsMap[key];
+        if (!acc) return;
+        const kLower = key.toLowerCase().trim();
+        const accSid = (acc.school_id || '').toLowerCase().trim();
+        const accUn = (acc.username || '').toLowerCase().trim();
+        const accEmail = (acc.email || '').toLowerCase().trim();
+        const accId = (acc.id || '').toLowerCase().trim();
+
+        const matches =
+          (lowerSid && (accSid === lowerSid || kLower === lowerSid)) ||
+          (lowerUn && (accUn === lowerUn || kLower === lowerUn)) ||
+          (lowerEmail && (accEmail === lowerEmail || kLower === lowerEmail)) ||
+          (lowerId && (accId === lowerId || kLower === lowerId)) ||
+          (objId && accId === objId);
+
+        if (matches) {
+          accountsMap[key] = {
+            ...acc,
+            section_name: 'Unassigned',
+            class_name: 'Unassigned',
+            teacher_name: undefined,
+            teacher_id: undefined,
+          };
+        }
+      });
       localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
 
-      // Remove from teacher students roster
+      // Remove from teacher students roster in localStorage
       const savedTeacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
-      const filteredTeacherStudents = savedTeacherStudents.filter(
-        (s: any) => (s.school_id || s.username)?.toLowerCase() !== lowerSid && s.id !== studentId
-      );
+      const filteredTeacherStudents = savedTeacherStudents.filter((s: any) => {
+        const sSid = (s.school_id || '').toLowerCase().trim();
+        const sUn = (s.username || '').toLowerCase().trim();
+        const sEmail = (s.email || '').toLowerCase().trim();
+        const sId = (s.id || '').toLowerCase().trim();
+
+        if (lowerSid && (sSid === lowerSid || sUn === lowerSid)) return false;
+        if (lowerUn && (sUn === lowerUn || sSid === lowerUn)) return false;
+        if (lowerEmail && sEmail === lowerEmail) return false;
+        if (lowerId && sId === lowerId) return false;
+        if (objId && sId === objId) return false;
+        return true;
+      });
       localStorage.setItem('readbuddy_teacher_students', JSON.stringify(filteredTeacherStudents));
 
       // Live sync with PostgreSQL database backend
@@ -881,7 +823,7 @@ export function TeacherStudents({
         await fetch('/api/auth/students/unassign', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ student_id: schoolId }),
+          body: JSON.stringify({ student_id: schoolId || studentId }),
         });
       } catch (err) {}
 
@@ -895,73 +837,6 @@ export function TeacherStudents({
     loadRoster();
   }
 
-  // ─── ACTION 2: Permanently Delete Student Account from System & Database ───
-  async function handlePermanentDeleteStudent(studentId: string, studentName: string) {
-    if (!window.confirm(`PERMANENT DELETION:\nAre you sure you want to completely delete the student account for "${studentName}"?\n\nThis will permanently delete their account from the PostgreSQL database and all class rosters.`)) return;
-
-    const studentObj = allRegisteredStudents.find((s) => s.id === studentId || s.school_id === studentId || s.username === studentId);
-    const schoolId = studentObj?.school_id || studentObj?.username || studentId;
-    const lowerSid = schoolId.toLowerCase();
-
-    // Remove from UI immediately
-    setStudents((prev) => prev.filter((s) => s.id !== studentId && s.school_id !== studentId && s.username !== studentId));
-    setAllRegisteredStudents((prev) => prev.filter((s) => s.id !== studentId && s.school_id !== studentId && s.username !== studentId));
-
-    try {
-      const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
-      const passwordsMap = JSON.parse(localStorage.getItem('readbuddy_passwords') || '{}');
-      
-      delete accountsMap[schoolId];
-      delete accountsMap[lowerSid];
-      if (studentObj?.username) {
-        delete accountsMap[studentObj.username];
-        delete accountsMap[studentObj.username.toLowerCase()];
-      }
-      if (studentObj?.email) {
-        delete accountsMap[studentObj.email];
-        delete accountsMap[studentObj.email.toLowerCase()];
-      }
-
-      delete passwordsMap[schoolId];
-      delete passwordsMap[lowerSid];
-      if (studentObj?.username) {
-        delete passwordsMap[studentObj.username];
-        delete passwordsMap[studentObj.username.toLowerCase()];
-      }
-      if (studentObj?.email) {
-        delete passwordsMap[studentObj.email];
-        delete passwordsMap[studentObj.email.toLowerCase()];
-      }
-
-      localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
-      localStorage.setItem('readbuddy_passwords', JSON.stringify(passwordsMap));
-
-      // Remove from teacher students roster
-      const savedTeacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
-      const filteredTeacherStudents = savedTeacherStudents.filter(
-        (s: any) => (s.school_id || s.username)?.toLowerCase() !== lowerSid && s.id !== studentId
-      );
-      localStorage.setItem('readbuddy_teacher_students', JSON.stringify(filteredTeacherStudents));
-
-      // Delete from PostgreSQL database backend
-      try {
-        await fetch('/api/auth/students/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ student_id: schoolId }),
-        });
-      } catch (err) {}
-
-      window.dispatchEvent(new Event('readbuddy_accounts_updated'));
-      window.dispatchEvent(new Event('readbuddy_students_updated'));
-      window.dispatchEvent(new Event('readbuddy_classes_updated'));
-    } catch (e) {}
-
-    setNotification(`Student account "${studentName}" has been permanently deleted.`);
-    setTimeout(() => setNotification(null), 5000);
-    loadRoster();
-  }
-
   const sectionOptions = Array.from(
     new Set([
       ...availableClasses.map((c) => c.name),
@@ -971,9 +846,27 @@ export function TeacherStudents({
     ])
   );
 
+  const allRegisteredSections = Array.from(
+    new Set(
+      allRegisteredStudents
+        .map((s) => (s.section_name || s.class_name || '').trim())
+        .filter((sec) => sec && sec.toLowerCase() !== 'unassigned' && sec.toLowerCase() !== 'general')
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
   // ─── Filter registered students shown in Database Search & Browse Mode ───
   const filteredDbStudents = allRegisteredStudents.filter((s) => {
     const matchesGrade = dbBrowseGradeFilter === 'all' || Number(s.grade_level) === Number(dbBrowseGradeFilter);
+
+    const studentSec = (s.section_name || s.class_name || 'Unassigned').trim();
+    const isUnassigned = !studentSec || studentSec.toLowerCase() === 'unassigned' || studentSec.toLowerCase() === 'general';
+    let matchesSection = true;
+    if (dbBrowseSectionFilter === 'unassigned') {
+      matchesSection = isUnassigned;
+    } else if (dbBrowseSectionFilter !== 'all') {
+      matchesSection = studentSec.toLowerCase() === dbBrowseSectionFilter.toLowerCase();
+    }
+
     const query = dbStudentSearch.trim().toLowerCase();
     const matchesSearch =
       !query ||
@@ -981,8 +874,10 @@ export function TeacherStudents({
       (s.school_id && s.school_id.toLowerCase().includes(query)) ||
       (s.username && s.username.toLowerCase().includes(query)) ||
       (s.email && s.email.toLowerCase().includes(query)) ||
-      (s.section_name && s.section_name.toLowerCase().includes(query));
-    return matchesGrade && matchesSearch;
+      (s.section_name && s.section_name.toLowerCase().includes(query)) ||
+      (s.class_name && s.class_name.toLowerCase().includes(query));
+
+    return matchesGrade && matchesSection && matchesSearch;
   });
 
   // Toggle single database student checkbox
@@ -1041,7 +936,7 @@ export function TeacherStudents({
           subtitle="Manage enrolled students across your class sections."
           accent={TEACHER_ACCENT}
         />
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           <PrimaryButton
             accent={TEACHER_ACCENT}
             onClick={() => {
@@ -1049,21 +944,17 @@ export function TeacherStudents({
               setAddMode('select_database');
               setDbStudentSearch('');
               setDbBrowseGradeFilter('all');
+              setDbBrowseSectionFilter('all');
               loadRoster();
               setShowModal(true);
             }}
+            className="w-full sm:w-auto"
           >
-            <span className="flex items-center gap-1.5">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <span>+ Add / Enroll Students</span>
+            <span className="flex items-center justify-center gap-1.5">
+              <UserPlus className="w-4 h-4" strokeWidth={2.25} />
+              <span>+ Add Students</span>
             </span>
           </PrimaryButton>
-          <GhostButton onClick={() => { setFormError(null); setAddMode('single'); setShowModal(true); }}>
-            + Register New Student
-          </GhostButton>
         </div>
       </div>
 
@@ -1099,14 +990,14 @@ export function TeacherStudents({
         </div>
 
         {/* Section Filter Dropdown */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <label className="text-xs font-bold text-gray-600 font-sans shrink-0">
             Filter Section:
           </label>
           <select
             value={selectedClassFilter}
             onChange={(e) => { setSelectedClassFilter(e.target.value); setSearch(''); }}
-            className="rb-input py-1.5 px-3 text-xs font-bold bg-white text-gray-800 border border-[#DED2B4] rounded-xl cursor-pointer min-w-[180px]"
+            className="rb-input py-1.5 px-3 text-xs font-bold bg-white text-gray-800 border border-[#DED2B4] rounded-xl cursor-pointer w-full sm:min-w-[180px]"
           >
             <option value="all">All Sections ({students.length})</option>
             {sectionOptions.map((sec) => {
@@ -1146,13 +1037,13 @@ export function TeacherStudents({
           <table className="w-full text-left text-xs font-sans">
             <thead className="bg-[#FAF7F2] border-b border-[#DED2B4] text-gray-600 font-semibold uppercase tracking-wider text-[11px]">
               <tr>
-                <th className="py-3 px-4">Student</th>
-                <th className="py-3 px-4">School ID</th>
-                <th className="py-3 px-4">Grade & Section</th>
-                <th className="py-3 px-4">Language</th>
-                <th className="py-3 px-4">Sessions Completed</th>
-                <th className="py-3 px-4">Phil-IRI Level</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3 px-4 whitespace-nowrap">Student</th>
+                <th className="py-3 px-4 whitespace-nowrap">School ID</th>
+                <th className="py-3 px-4 whitespace-nowrap">Grade & Section</th>
+                <th className="py-3 px-4 whitespace-nowrap">Language</th>
+                <th className="py-3 px-4 whitespace-nowrap">Reading Progress & Phil-IRI</th>
+                <th className="py-3 px-4 whitespace-nowrap">Sessions</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -1167,33 +1058,75 @@ export function TeacherStudents({
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4 font-mono font-semibold text-gray-700">
+                  <td className="py-3 px-4 font-mono font-semibold text-gray-700 whitespace-nowrap">
                     {s.school_id || s.username}
                   </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-bold text-gray-800">Grade {s.grade_level}</span>
-                      <span className="text-gray-400">·</span>
-                      <span className="px-2 py-0.5 rounded-full font-semibold text-[10px] border bg-[#EBF3F8] text-[#3D6B8A] border-[#A8C5DA]">
-                        Section: {s.class_name || s.section_name}
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className="text-xs font-bold text-gray-900 font-sans tracking-tight">
+                        Grade {s.grade_level}
                       </span>
+                      {s.class_name && s.class_name !== 'Unassigned' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold bg-[#EBF3F8] text-[#3D6B8A] border border-[#BBD5E8] shadow-2xs">
+                          <Users className="w-3 h-3 text-[#3D6B8A] shrink-0" strokeWidth={2.25} />
+                          <span>{s.class_name || s.section_name}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                          Unassigned
+                        </span>
+                      )}
                     </div>
                   </td>
-                  <td className="py-3 px-4 uppercase font-mono text-[10px] text-gray-600">
-                    {s.preferred_language === 'tl' ? 'Tagalog' : 'English'}
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold bg-[#FAF7F2] text-gray-700 border border-[#DED2B4] shadow-2xs uppercase tracking-wide">
+                      <Languages className="w-3 h-3 text-[#1F4D3A] shrink-0" strokeWidth={2.25} />
+                      <span>{s.preferred_language === 'tl' ? 'Tagalog' : 'English'}</span>
+                    </span>
                   </td>
-                  <td className="py-3 px-4 font-mono font-medium text-gray-700">
-                    {s.sessions_completed || 0} session{(s.sessions_completed || 0) === 1 ? '' : 's'}
-                  </td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 whitespace-nowrap">
                     {s.latest_level ? (
-                      <PhilIRIBadge level={s.latest_level} />
+                      <div className="flex flex-col gap-1 items-start">
+                        <PhilIRIBadge level={s.latest_level} />
+                        <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold">
+                          {s.avg_word_recognition !== undefined && (
+                            <span className="px-1.5 py-0.5 rounded bg-[#EBF7EE] text-[#2E7D4F] border border-[#A3D9B1] whitespace-nowrap shadow-2xs">
+                              {s.avg_word_recognition}% Word
+                            </span>
+                          )}
+                          {s.avg_comprehension !== undefined && (
+                            <span className="px-1.5 py-0.5 rounded bg-[#EBF3F8] text-[#3D6B8A] border border-[#BBD5E8] whitespace-nowrap shadow-2xs">
+                              {s.avg_comprehension}% Comp
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     ) : (
-                      <span className="text-gray-400 italic text-[11px]">Not Assessed</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-mono text-gray-400 bg-gray-50 border border-gray-200 italic">
+                        Not Assessed
+                      </span>
                     )}
+                  </td>
+                  <td className="py-3 px-4 whitespace-nowrap font-mono font-medium text-gray-700">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-[#FAF7F2] text-gray-800 border border-[#DED2B4] shadow-2xs whitespace-nowrap">
+                      <BookOpen className="w-3.5 h-3.5 text-[#1F4D3A] shrink-0" strokeWidth={2.25} />
+                      <span>{s.sessions_completed || 0} {(s.sessions_completed || 0) === 1 ? 'session' : 'sessions'}</span>
+                    </span>
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStudentProgress(s)}
+                        className="px-2.5 py-1 rounded bg-[#EBF3F8] hover:bg-[#D9EAF5] text-[#3D6B8A] text-[11px] font-bold cursor-pointer transition-colors border border-[#A8C5DA] flex items-center gap-1"
+                        title="View comprehensive reading progress, Phil-IRI diagnostic history, and session logs"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <span>View Progress</span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleUnenrollFromSection(s.id || s.school_id || s.username, s.display_name)}
@@ -1201,14 +1134,6 @@ export function TeacherStudents({
                         title="Remove from this class section (Student remains in system as Unassigned)"
                       >
                         Remove from Class
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handlePermanentDeleteStudent(s.id || s.school_id || s.username, s.display_name)}
-                        className="px-2 py-1 rounded hover:bg-red-50 text-red-600 text-[11px] font-semibold cursor-pointer transition-colors"
-                        title="Permanently delete student account from database"
-                      >
-                        Delete
                       </button>
                     </div>
                   </td>
@@ -1219,10 +1144,192 @@ export function TeacherStudents({
         </div>
       )}
 
+      {/* ─── STUDENT READING PROGRESS & DIAGNOSTICS MODAL DIALOG ─── */}
+      {selectedStudentProgress && mounted && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto rb-fade-in-up">
+          <div className="w-full max-w-3xl bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-4 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[92vh] overflow-y-auto flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-[#DED2B4]">
+              <div className="flex items-center gap-3">
+                <Avatar name={selectedStudentProgress.display_name} accent={TEACHER_ACCENT} size={42} />
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-lg font-serif font-bold text-gray-900">
+                      {selectedStudentProgress.display_name}
+                    </h3>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold bg-white text-[#1F4D3A] border border-[#DED2B4] shadow-2xs">
+                        Grade {selectedStudentProgress.grade_level}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold bg-[#EBF3F8] text-[#3D6B8A] border border-[#BBD5E8] shadow-2xs whitespace-nowrap">
+                        <Users className="w-3 h-3 text-[#3D6B8A] shrink-0" strokeWidth={2.25} />
+                        <span>{selectedStudentProgress.class_name || selectedStudentProgress.section_name || 'Unassigned'}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 font-mono mt-0.5">
+                    School ID: {selectedStudentProgress.school_id || selectedStudentProgress.username} &bull; {selectedStudentProgress.email}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedStudentProgress(null)}
+                className="text-gray-400 hover:text-gray-600 hover:bg-black/5 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                title="Close progress record"
+              >
+                <X className="w-4 h-4" strokeWidth={2.25} />
+              </button>
+            </div>
+
+            {/* Diagnostic KPI Metrics Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-5">
+              <div className="p-3.5 rounded-xl bg-white border border-[#DED2B4] shadow-2xs">
+                <div className="text-[10px] uppercase font-bold text-gray-400 font-mono tracking-wider">
+                  Phil-IRI Tier
+                </div>
+                <div className="mt-1">
+                  {selectedStudentProgress.latest_level ? (
+                    <PhilIRIBadge level={selectedStudentProgress.latest_level} />
+                  ) : (
+                    <span className="text-xs text-gray-400 italic">Not Assessed</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white border border-[#DED2B4] shadow-2xs">
+                <div className="text-[10px] uppercase font-bold text-gray-400 font-mono tracking-wider">
+                  Total Sessions
+                </div>
+                <div className="text-lg font-bold text-gray-900 font-mono mt-0.5">
+                  {selectedStudentProgress.sessions_completed || 0}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white border border-[#DED2B4] shadow-2xs">
+                <div className="text-[10px] uppercase font-bold text-gray-400 font-mono tracking-wider">
+                  Oral Accuracy
+                </div>
+                <div className="text-lg font-bold text-[#1F4D3A] font-mono mt-0.5">
+                  {selectedStudentProgress.avg_word_recognition !== undefined ? `${selectedStudentProgress.avg_word_recognition}%` : '—'}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white border border-[#DED2B4] shadow-2xs">
+                <div className="text-[10px] uppercase font-bold text-gray-400 font-mono tracking-wider">
+                  Comprehension
+                </div>
+                <div className="text-lg font-bold text-[#3D6B8A] font-mono mt-0.5">
+                  {selectedStudentProgress.avg_comprehension !== undefined ? `${selectedStudentProgress.avg_comprehension}%` : '—'}
+                </div>
+              </div>
+            </div>
+
+            {/* Phil-IRI Diagnostic Standard Notice */}
+            <div className="p-3 mb-4 rounded-xl bg-[#FAF7F2] border border-[#EADBCE] text-[11px] text-gray-600 flex items-center gap-2">
+              <span className="font-bold text-[#1F4D3A] font-mono shrink-0">Phil-IRI Rubric:</span>
+              <span>Independent: 97–100% Word & 80–100% Comp &bull; Instructional: 90–96% Word & 59–79% Comp &bull; Frustration: &lt;90% Word or &lt;58% Comp</span>
+            </div>
+
+            {/* Visual Phil-IRI Score Trend & Longitudinal Trajectory */}
+            <div className="mb-4">
+              <StudentProgressChart
+                sessions={selectedStudentProgress.session_history || []}
+                title="Phil-IRI Reading Trajectory & Score Trend"
+                subtitle={`Longitudinal oral accuracy and comprehension tracking for ${selectedStudentProgress.display_name}`}
+                accentColor={TEACHER_ACCENT}
+              />
+            </div>
+
+            {/* GitHub-Style Daily Reading Activity Heatmap */}
+            <div className="mb-4">
+              <DailyReadingHeatmap
+                sessions={(selectedStudentProgress.session_history || []) as any}
+                title="Daily Reading Activity & Consistency"
+                subtitle={`Day-by-day practice frequency, streaks, and inactivity telemetry for ${selectedStudentProgress.display_name}`}
+                studentName={selectedStudentProgress.display_name}
+                accentColor={TEACHER_ACCENT}
+              />
+            </div>
+
+            {/* Session History Table Header */}
+            <div className="flex items-center justify-between mb-2.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700 font-mono">
+                Completed Session Records ({(selectedStudentProgress.session_history || []).length})
+              </h4>
+            </div>
+
+            {(!selectedStudentProgress.session_history || selectedStudentProgress.session_history.length === 0) ? (
+              <div className="p-8 text-center bg-white border border-[#DED2B4] rounded-xl my-2">
+                <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-2 font-bold text-sm">
+                  0
+                </div>
+                <p className="text-xs font-semibold text-gray-700">No reading sessions completed yet</p>
+                <p className="text-[11px] text-gray-400 mt-1 max-w-sm mx-auto">
+                  When {selectedStudentProgress.display_name} practices oral reading aloud or submits assigned teacher tests, detailed Phil-IRI diagnostics and word pronunciation history will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-[#DED2B4] rounded-xl bg-white shadow-2xs">
+                <table className="w-full text-left text-xs font-sans">
+                  <thead className="bg-[#FAF7F2] border-b border-[#DED2B4] text-gray-500 font-semibold uppercase text-[10px]">
+                    <tr>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Date</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Passage</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Language</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Word Accuracy</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Comprehension</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Phil-IRI Tier</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {selectedStudentProgress.session_history.map((ses, idx) => (
+                      <tr key={ses.id || idx} className="hover:bg-gray-50/80">
+                        <td className="py-2.5 px-3 font-mono text-[11px] text-gray-600 whitespace-nowrap">{ses.date}</td>
+                        <td className="py-2.5 px-3 font-medium text-gray-800 max-w-[200px] truncate" title={ses.passage_title}>
+                          {ses.passage_title}
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-mono font-bold bg-[#FAF7F2] text-gray-700 border border-[#DED2B4] shadow-2xs uppercase">
+                            <Languages className="w-2.5 h-2.5 text-[#1F4D3A] shrink-0" strokeWidth={2.25} />
+                            <span>{ses.source_language === 'tl' ? 'Tagalog' : 'English'}</span>
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#1F4D3A] whitespace-nowrap">
+                          {ses.word_recognition_score}%
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#3D6B8A] whitespace-nowrap">
+                          {ses.comprehension_score}%
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">
+                          <PhilIRIBadge level={ses.phil_iri_level} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div className="mt-5 pt-3 border-t border-[#DED2B4] flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedStudentProgress(null)}
+                className="px-5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold cursor-pointer transition-colors"
+              >
+                Close Record
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* ─── DEDICATED ADD / ENROLL STUDENT MODAL DIALOG ─── */}
       {showModal && mounted && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto rb-fade-in-up">
-          <div className="w-full max-w-3xl bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-6 sm:p-8 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto rb-fade-in-up">
+          <div className="w-full max-w-3xl bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-4 sm:p-8 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#DED2B4]">
               <div className="flex items-center gap-2.5">
@@ -1259,33 +1366,18 @@ export function TeacherStudents({
                   addMode === 'select_database' ? 'bg-[#3D6B8A] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <span>Search & Select System Students</span>
+                <Search className="w-3.5 h-3.5" strokeWidth={2.5} />
+                <span>Search & Enroll Students</span>
               </button>
               <button
                 type="button"
                 onClick={() => { setFormError(null); setAddMode('single'); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   addMode === 'single' ? 'bg-[#3D6B8A] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                + Register New Student
-              </button>
-              <button
-                type="button"
-                onClick={() => { setFormError(null); setAddMode('bulk'); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  addMode === 'bulk' ? 'bg-[#3D6B8A] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-                <span>Paste Roster (Bulk)</span>
+                <UserPlus className="w-3.5 h-3.5" strokeWidth={2.5} />
+                <span>Register New Student</span>
               </button>
             </div>
 
@@ -1311,30 +1403,19 @@ export function TeacherStudents({
                       value={dbTargetSection}
                       onChange={(e) => handleDbSectionChange(e.target.value)}
                       className="rb-input font-medium text-xs"
+                      required
                     >
-                      {sectionOptions.map((sec) => (
-                        <option key={sec} value={sec}>
-                          Section {sec}
-                        </option>
-                      ))}
-                      <option value="__custom__">+ Enter Custom Section...</option>
+                      {sectionOptions.length === 0 ? (
+                        <option value="">No classes created yet (Please add a class first)</option>
+                      ) : (
+                        sectionOptions.map((sec) => (
+                          <option key={sec} value={sec}>
+                            Section {sec}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </label>
-
-                  {dbTargetSection === '__custom__' && (
-                    <label className="flex flex-col gap-1 sm:col-span-2">
-                      <span className="text-xs font-bold font-sans text-gray-700">
-                        New Custom Section Name
-                      </span>
-                      <input
-                        required
-                        value={dbCustomSection}
-                        onChange={(e) => setDbCustomSection(e.target.value)}
-                        className="rb-input text-xs"
-                        placeholder="e.g. St. Mark"
-                      />
-                    </label>
-                  )}
 
                   <label className="flex flex-col gap-1">
                     <span className="text-xs font-bold font-sans text-gray-700">
@@ -1387,6 +1468,20 @@ export function TeacherStudents({
                       ))}
                     </select>
 
+                    <select
+                      value={dbBrowseSectionFilter}
+                      onChange={(e) => setDbBrowseSectionFilter(e.target.value)}
+                      className="rb-input py-1 px-2.5 text-xs font-bold"
+                    >
+                      <option value="all">All Sections</option>
+                      <option value="unassigned">Unassigned Only</option>
+                      {allRegisteredSections.map((sec) => (
+                        <option key={sec} value={sec}>
+                          Section {sec}
+                        </option>
+                      ))}
+                    </select>
+
                     {filteredDbStudents.length > 0 && (
                       <button
                         type="button"
@@ -1417,7 +1512,7 @@ export function TeacherStudents({
                       const studentId = s.school_id || s.username || s.id;
                       const isChecked = selectedDbStudentIds.has(studentId);
                       const currentSection = s.section_name || s.class_name || 'Unassigned';
-                      const targetSecClean = (dbTargetSection === '__custom__' ? dbCustomSection.trim() : dbTargetSection).toLowerCase();
+                      const targetSecClean = dbTargetSection.trim().toLowerCase();
                       const isAlreadyInTarget = currentSection.toLowerCase() === targetSecClean && targetSecClean !== '' && targetSecClean !== 'unassigned';
 
                       return (
@@ -1481,7 +1576,7 @@ export function TeacherStudents({
                       <span className="flex items-center gap-1.5">
                         <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                         <span>
-                          Enroll {selectedDbStudentIds.size > 0 ? selectedDbStudentIds.size : ''} Student{selectedDbStudentIds.size === 1 ? '' : 's'} to Section {dbTargetSection === '__custom__' ? (dbCustomSection || 'Custom') : dbTargetSection}
+                          Enroll {selectedDbStudentIds.size > 0 ? selectedDbStudentIds.size : ''} Student{selectedDbStudentIds.size === 1 ? '' : 's'} to Section {dbTargetSection || 'Section'}
                         </span>
                       </span>
                     </PrimaryButton>
@@ -1544,30 +1639,19 @@ export function TeacherStudents({
                       value={draft.section_name}
                       onChange={(e) => handleSectionChange(e.target.value)}
                       className="rb-input"
+                      required
                     >
-                      {sectionOptions.map((sec) => (
-                        <option key={sec} value={sec}>
-                          Section {sec}
-                        </option>
-                      ))}
-                      <option value="__custom__">+ Enter Custom Section...</option>
+                      {sectionOptions.length === 0 ? (
+                        <option value="">No classes created yet (Please add a class first)</option>
+                      ) : (
+                        sectionOptions.map((sec) => (
+                          <option key={sec} value={sec}>
+                            Section {sec}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </label>
-
-                  {draft.section_name === '__custom__' && (
-                    <label className="flex flex-col gap-1.5 sm:col-span-2">
-                      <span className="text-xs font-medium font-sans" style={{ color: MUTED }}>
-                        Custom Section Name
-                      </span>
-                      <input
-                        required
-                        placeholder="e.g. St. Mark"
-                        value={draft.custom_section_name}
-                        onChange={(e) => setDraft((d) => ({ ...d, custom_section_name: e.target.value }))}
-                        className="rb-input"
-                      />
-                    </label>
-                  )}
 
                   <label className="flex flex-col gap-1.5">
                     <span className="text-xs font-medium font-sans" style={{ color: MUTED }}>
@@ -1610,85 +1694,6 @@ export function TeacherStudents({
               </form>
             )}
 
-            {/* ─── MODE 3: BULK IMPORT ─── */}
-            {addMode === 'bulk' && (
-              <form onSubmit={handleBulkImport} className="flex flex-col gap-3.5">
-                <div className="grid sm:grid-cols-2 gap-3.5">
-                  <label className="flex flex-col gap-1.5">
-                    <span className="text-xs font-medium font-sans" style={{ color: MUTED }}>
-                      Target Class / Section <span className="text-red-500">*</span>
-                    </span>
-                    <select
-                      value={bulkSection}
-                      onChange={(e) => handleBulkSectionChange(e.target.value)}
-                      className="rb-input"
-                    >
-                      {sectionOptions.map((sec) => (
-                        <option key={sec} value={sec}>
-                          Section {sec}
-                        </option>
-                      ))}
-                      <option value="__custom__">+ Enter Custom Section...</option>
-                    </select>
-                  </label>
-
-                  {bulkSection === '__custom__' && (
-                    <label className="flex flex-col gap-1.5 sm:col-span-2">
-                      <span className="text-xs font-medium font-sans" style={{ color: MUTED }}>
-                        Custom Section Name
-                      </span>
-                      <input
-                        required
-                        placeholder="e.g. St. Mark"
-                        value={bulkCustomSection}
-                        onChange={(e) => setBulkCustomSection(e.target.value)}
-                        className="rb-input"
-                      />
-                    </label>
-                  )}
-
-                  <label className="flex flex-col gap-1.5">
-                    <span className="text-xs font-medium font-sans" style={{ color: MUTED }}>
-                      Grade Level
-                    </span>
-                    <select
-                      value={bulkGrade}
-                      onChange={(e) => setBulkGrade(e.target.value)}
-                      className="rb-input"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
-                        <option key={g} value={g}>
-                          Grade {g}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-xs font-medium font-sans" style={{ color: MUTED }}>
-                    Paste Roster List (One student per line)
-                  </span>
-                  <textarea
-                    rows={6}
-                    placeholder={`20261001, Juan dela Cruz\n20261002, Maria Clara\n20261003, Crisostomo Ibarra`}
-                    value={bulkText}
-                    onChange={(e) => setBulkText(e.target.value)}
-                    className="rb-input font-mono text-xs"
-                  />
-                  <span className="text-[11px] text-gray-500 font-sans">
-                    Supported formats: <code>ID, Full Name</code> or <code>ID - Full Name</code> or <code>ID   Full Name</code>.
-                  </span>
-                </label>
-
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#DED2B4]">
-                  <GhostButton onClick={() => setShowModal(false)}>Cancel</GhostButton>
-                  <PrimaryButton type="submit" accent={TEACHER_ACCENT}>
-                    Import All Students
-                  </PrimaryButton>
-                </div>
-              </form>
-            )}
           </div>
         </div>,
         document.body

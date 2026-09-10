@@ -20,7 +20,11 @@ export { default as TeacherNotebook } from './teacher/TeacherNotebook';
 
 export { default as StudentDashboard } from './student/StudentDashboard';
 export { default as StudentProgressChart } from './student/StudentProgressChart';
+export { default as DailyReadingHeatmap } from './student/DailyReadingHeatmap';
 export { default as StudentNotebook } from './student/StudentNotebook';
 export { default as NotebookAIChat } from './student/NotebookAIChat';
+
+export { NotificationNav, NotificationsSection } from './notifications';
+export * from './notifications';
 
 

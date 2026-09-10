@@ -51,6 +51,31 @@ async def init_database():
             existing_admin.password_hash = hash_password("smcc2026")
             session.add(existing_admin)
 
+        # 3. Check if Principal account exists
+        existing_principal = await session.scalar(
+            select(Admin).where(
+                or_(
+                    Admin.username == "readbuddyprincipal",
+                    Admin.username == "principal",
+                    Admin.email == "principal@smccnasipit.edu.ph"
+                )
+            )
+        )
+        if not existing_principal:
+            principal = Admin(
+                display_name="Dr. Maria Elena Santos",
+                username="readbuddyprincipal",
+                email="principal@smccnasipit.edu.ph",
+                password_hash=hash_password("smcc2026"),
+                role="principal",
+            )
+            session.add(principal)
+        else:
+            existing_principal.username = "readbuddyprincipal"
+            existing_principal.password_hash = hash_password("smcc2026")
+            existing_principal.role = "principal"
+            session.add(existing_principal)
+
         await session.commit()
         print("[DB Init] PostgreSQL Database initialized cleanly with dynamic schema!")
 

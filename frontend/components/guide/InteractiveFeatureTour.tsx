@@ -13,7 +13,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-export type TourRole = 'student' | 'teacher' | 'admin';
+export type TourRole = 'student' | 'teacher' | 'admin' | 'principal';
 
 export interface TourStep {
   id: string;
@@ -284,7 +284,7 @@ export function InteractiveFeatureTour({
   onSectionChange,
   onClose,
 }: InteractiveFeatureTourProps) {
-  const steps = role === 'teacher' ? TEACHER_STEPS : role === 'admin' ? ADMIN_STEPS : STUDENT_STEPS;
+  const steps = role === 'teacher' ? TEACHER_STEPS : (role === 'admin' || role === 'principal') ? ADMIN_STEPS : STUDENT_STEPS;
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<ElementRect | null>(null);
   const [targetFound, setTargetFound] = useState(false);

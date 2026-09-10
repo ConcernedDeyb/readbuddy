@@ -42,11 +42,26 @@ export function ProfileTab({
     avatarUrl?: string;
   }) => void;
 }) {
-  const [displayName, setDisplayName] = useState(profile.displayName);
-  const [email, setEmail] = useState(profile.email);
-  const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber || '');
-  const [isPhoneVerified, setIsPhoneVerified] = useState(profile.isPhoneVerified || false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatarUrl || null);
+  const getInitialUser = () => {
+    try {
+      const saved = localStorage.getItem('readbuddy_user');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return null;
+  };
+
+  const initialUser = getInitialUser();
+  const [displayName, setDisplayName] = useState(initialUser?.display_name || profile.displayName || '');
+  const [email, setEmail] = useState(initialUser?.email || profile.email || '');
+  const [phoneNumber, setPhoneNumber] = useState(
+    initialUser?.phone_number !== undefined ? (initialUser.phone_number || '') : (profile.phoneNumber || '')
+  );
+  const [isPhoneVerified, setIsPhoneVerified] = useState(
+    initialUser?.phone_verified !== undefined ? Boolean(initialUser.phone_verified) : Boolean(profile.isPhoneVerified)
+  );
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    initialUser?.avatar_url !== undefined ? initialUser.avatar_url : (profile.avatarUrl || null)
+  );
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
 
@@ -55,28 +70,28 @@ export function ProfileTab({
   const [sendingVerification, setSendingVerification] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
-  // Sync state from profile or localStorage
+  // Sync state when readbuddy_user_updated is triggered from external modifications
   useEffect(() => {
-    setDisplayName(profile.displayName);
-    setEmail(profile.email);
-    if (profile.phoneNumber) setPhoneNumber(profile.phoneNumber);
-    if (profile.isPhoneVerified !== undefined) setIsPhoneVerified(profile.isPhoneVerified);
-    if (profile.avatarUrl !== undefined) setAvatarUrl(profile.avatarUrl || null);
-
-    try {
-      const savedUser = localStorage.getItem('readbuddy_user');
-      if (savedUser) {
-        const u = JSON.parse(savedUser);
-        if (u.phone_number && !profile.phoneNumber) setPhoneNumber(u.phone_number);
-        if (u.phone_verified !== undefined && profile.isPhoneVerified === undefined) setIsPhoneVerified(u.phone_verified);
-        if (u.avatar_url && !profile.avatarUrl) setAvatarUrl(u.avatar_url);
-      }
-    } catch (e) {}
-  }, [profile]);
+    function syncFromSession() {
+      try {
+        const savedUser = localStorage.getItem('readbuddy_user');
+        if (savedUser) {
+          const u = JSON.parse(savedUser);
+          if (u.display_name) setDisplayName(u.display_name);
+          if (u.email) setEmail(u.email);
+          if (u.phone_number !== undefined) setPhoneNumber(u.phone_number || '');
+          if (u.phone_verified !== undefined) setIsPhoneVerified(Boolean(u.phone_verified));
+          if (u.avatar_url !== undefined) setAvatarUrl(u.avatar_url || null);
+        }
+      } catch (e) {}
+    }
+    window.addEventListener('readbuddy_user_updated', syncFromSession);
+    return () => window.removeEventListener('readbuddy_user_updated', syncFromSession);
+  }, []);
 
   function handleEmailChange(newEmail: string) {
     setEmail(newEmail);
-    if (newEmail.trim() !== profile.email.trim()) {
+    if (newEmail.trim() !== (profile.email || '').trim()) {
       setIsEmailVerified(false);
       setVerificationSent(false);
     } else {
@@ -106,10 +121,10 @@ export function ProfileTab({
     }, 1000);
   }
 
-  function handleSaveAvatar(croppedUrl: string) {
+  async function handleSaveAvatar(croppedUrl: string) {
     setAvatarUrl(croppedUrl);
 
-    // Immediate persistence
+    // 1. Persist to localStorage ('readbuddy_user')
     try {
       const savedUser = localStorage.getItem('readbuddy_user');
       let userObj = savedUser ? JSON.parse(savedUser) : {};
@@ -117,14 +132,56 @@ export function ProfileTab({
       localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
 
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
-      if (profile.username && accountsMap[profile.username]) accountsMap[profile.username].avatar_url = croppedUrl;
-      if (profile.schoolId && accountsMap[profile.schoolId]) accountsMap[profile.schoolId].avatar_url = croppedUrl;
-      if (profile.email && accountsMap[profile.email]) accountsMap[profile.email].avatar_url = croppedUrl;
+      const keysToUpdate = [
+        profile.username,
+        profile.username?.toLowerCase(),
+        profile.schoolId,
+        profile.schoolId?.toLowerCase(),
+        profile.email,
+        profile.email?.toLowerCase(),
+        email.trim(),
+        email.trim().toLowerCase(),
+      ].filter(Boolean) as string[];
+
+      keysToUpdate.forEach((k) => {
+        if (accountsMap[k]) {
+          accountsMap[k].avatar_url = croppedUrl;
+        }
+      });
       localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
 
-      window.dispatchEvent(new Event('readbuddy_user_updated'));
+      if (profile.role === 'student') {
+        const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
+        const updatedList = teacherStudents.map((st: any) => {
+          const isMatch =
+            (profile.schoolId && (st.school_id === profile.schoolId || st.school_id?.toLowerCase() === profile.schoolId?.toLowerCase())) ||
+            (profile.username && (st.username === profile.username || st.username?.toLowerCase() === profile.username?.toLowerCase()));
+          if (isMatch) {
+            return { ...st, avatar_url: croppedUrl };
+          }
+          return st;
+        });
+        localStorage.setItem('readbuddy_teacher_students', JSON.stringify(updatedList));
+      }
     } catch (e) {}
 
+    // 2. Post to backend FastAPI server
+    try {
+      fetch('/api/auth/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          school_id: profile.schoolId || profile.username,
+          username: profile.username || profile.schoolId,
+          email: email.trim() || profile.email,
+          avatar_url: croppedUrl,
+          role: profile.role,
+        }),
+      });
+    } catch (e) {}
+
+    // 3. Notify parent
     if (onProfileUpdate) {
       onProfileUpdate({
         displayName: displayName.trim(),
@@ -134,26 +191,71 @@ export function ProfileTab({
         avatarUrl: croppedUrl,
       });
     }
+
+    window.dispatchEvent(new Event('readbuddy_user_updated'));
+    window.dispatchEvent(new Event('readbuddy_accounts_updated'));
+    window.dispatchEvent(new Event('readbuddy_students_updated'));
+
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 3000);
   }
 
-  function handleRemoveAvatar() {
+  async function handleRemoveAvatar() {
     setAvatarUrl(null);
 
     try {
       const savedUser = localStorage.getItem('readbuddy_user');
       let userObj = savedUser ? JSON.parse(savedUser) : {};
-      delete userObj.avatar_url;
+      userObj.avatar_url = null;
       localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
 
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
-      if (profile.username && accountsMap[profile.username]) delete accountsMap[profile.username].avatar_url;
-      if (profile.schoolId && accountsMap[profile.schoolId]) delete accountsMap[profile.schoolId].avatar_url;
-      if (profile.email && accountsMap[profile.email]) delete accountsMap[profile.email].avatar_url;
+      const keysToUpdate = [
+        profile.username,
+        profile.username?.toLowerCase(),
+        profile.schoolId,
+        profile.schoolId?.toLowerCase(),
+        profile.email,
+        profile.email?.toLowerCase(),
+        email.trim(),
+        email.trim().toLowerCase(),
+      ].filter(Boolean) as string[];
+
+      keysToUpdate.forEach((k) => {
+        if (accountsMap[k]) {
+          accountsMap[k].avatar_url = null;
+        }
+      });
       localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
 
-      window.dispatchEvent(new Event('readbuddy_user_updated'));
+      if (profile.role === 'student') {
+        const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
+        const updatedList = teacherStudents.map((st: any) => {
+          const isMatch =
+            (profile.schoolId && (st.school_id === profile.schoolId || st.school_id?.toLowerCase() === profile.schoolId?.toLowerCase())) ||
+            (profile.username && (st.username === profile.username || st.username?.toLowerCase() === profile.username?.toLowerCase()));
+          if (isMatch) {
+            return { ...st, avatar_url: null };
+          }
+          return st;
+        });
+        localStorage.setItem('readbuddy_teacher_students', JSON.stringify(updatedList));
+      }
+    } catch (e) {}
+
+    try {
+      fetch('/api/auth/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          school_id: profile.schoolId || profile.username,
+          username: profile.username || profile.schoolId,
+          email: email.trim() || profile.email,
+          avatar_url: '',
+          role: profile.role,
+        }),
+      });
     } catch (e) {}
 
     if (onProfileUpdate) {
@@ -165,6 +267,10 @@ export function ProfileTab({
         avatarUrl: undefined,
       });
     }
+
+    window.dispatchEvent(new Event('readbuddy_user_updated'));
+    window.dispatchEvent(new Event('readbuddy_accounts_updated'));
+    window.dispatchEvent(new Event('readbuddy_students_updated'));
   }
 
   function handlePhoneVerified() {
@@ -178,21 +284,54 @@ export function ProfileTab({
       localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
 
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
-      if (profile.username && accountsMap[profile.username]) {
-        accountsMap[profile.username].phone_number = phoneNumber.trim();
-        accountsMap[profile.username].phone_verified = true;
-      }
-      if (profile.schoolId && accountsMap[profile.schoolId]) {
-        accountsMap[profile.schoolId].phone_number = phoneNumber.trim();
-        accountsMap[profile.schoolId].phone_verified = true;
-      }
-      if (profile.email && accountsMap[profile.email]) {
-        accountsMap[profile.email].phone_number = phoneNumber.trim();
-        accountsMap[profile.email].phone_verified = true;
-      }
+      const keysToUpdate = [
+        profile.username,
+        profile.username?.toLowerCase(),
+        profile.schoolId,
+        profile.schoolId?.toLowerCase(),
+        profile.email,
+        profile.email?.toLowerCase(),
+        email.trim(),
+        email.trim().toLowerCase(),
+      ].filter(Boolean) as string[];
+
+      keysToUpdate.forEach((k) => {
+        if (accountsMap[k]) {
+          accountsMap[k].phone_number = phoneNumber.trim();
+          accountsMap[k].phone_verified = true;
+        }
+      });
       localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
 
-      window.dispatchEvent(new Event('readbuddy_user_updated'));
+      if (profile.role === 'student') {
+        const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
+        const updatedList = teacherStudents.map((st: any) => {
+          const isMatch =
+            (profile.schoolId && (st.school_id === profile.schoolId || st.school_id?.toLowerCase() === profile.schoolId?.toLowerCase())) ||
+            (profile.username && (st.username === profile.username || st.username?.toLowerCase() === profile.username?.toLowerCase()));
+          if (isMatch) {
+            return { ...st, phone_number: phoneNumber.trim(), phone_verified: true };
+          }
+          return st;
+        });
+        localStorage.setItem('readbuddy_teacher_students', JSON.stringify(updatedList));
+      }
+    } catch (e) {}
+
+    try {
+      fetch('/api/auth/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          school_id: profile.schoolId || profile.username,
+          username: profile.username || profile.schoolId,
+          email: email.trim() || profile.email,
+          phone_number: phoneNumber.trim(),
+          phone_verified: true,
+          role: profile.role,
+        }),
+      });
     } catch (e) {}
 
     if (onProfileUpdate) {
@@ -204,19 +343,28 @@ export function ProfileTab({
         avatarUrl: avatarUrl || undefined,
       });
     }
+
+    window.dispatchEvent(new Event('readbuddy_user_updated'));
+    window.dispatchEvent(new Event('readbuddy_accounts_updated'));
+    window.dispatchEvent(new Event('readbuddy_students_updated'));
+
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 3000);
   }
 
-  function handleProfileSave() {
-    if (!displayName.trim() || !email.trim()) return;
+  async function handleProfileSave() {
+    const cleanName = displayName.trim();
+    const cleanEmail = email.trim();
+    const cleanPhone = phoneNumber.trim();
+
+    if (!cleanName || !cleanEmail) return;
 
     // 1. Notify parent component
     if (onProfileUpdate) {
       onProfileUpdate({
-        displayName: displayName.trim(),
-        email: email.trim(),
-        phoneNumber: phoneNumber.trim(),
+        displayName: cleanName,
+        email: cleanEmail,
+        phoneNumber: cleanPhone,
         isPhoneVerified,
         avatarUrl: avatarUrl || undefined,
       });
@@ -226,43 +374,106 @@ export function ProfileTab({
     try {
       const savedUser = localStorage.getItem('readbuddy_user');
       let userObj = savedUser ? JSON.parse(savedUser) : {};
-      userObj.display_name = displayName.trim();
-      userObj.email = email.trim();
-      userObj.phone_number = phoneNumber.trim();
+      userObj.display_name = cleanName;
+      userObj.email = cleanEmail;
+      userObj.phone_number = cleanPhone;
       userObj.phone_verified = isPhoneVerified;
-      userObj.avatar_url = avatarUrl;
+      if (avatarUrl !== undefined) userObj.avatar_url = avatarUrl;
       localStorage.setItem('readbuddy_user', JSON.stringify(userObj));
 
-      // Update in accounts map
+      // Update in accounts map across all case variations
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
-      if (profile.username && accountsMap[profile.username]) {
-        accountsMap[profile.username].display_name = displayName.trim();
-        accountsMap[profile.username].email = email.trim();
-        accountsMap[profile.username].phone_number = phoneNumber.trim();
-        accountsMap[profile.username].phone_verified = isPhoneVerified;
-        accountsMap[profile.username].avatar_url = avatarUrl;
-      }
-      if (profile.schoolId && accountsMap[profile.schoolId]) {
-        accountsMap[profile.schoolId].display_name = displayName.trim();
-        accountsMap[profile.schoolId].email = email.trim();
-        accountsMap[profile.schoolId].phone_number = phoneNumber.trim();
-        accountsMap[profile.schoolId].phone_verified = isPhoneVerified;
-        accountsMap[profile.schoolId].avatar_url = avatarUrl;
-      }
-      accountsMap[email.trim()] = {
+      const keysToUpdate = [
+        profile.username,
+        profile.username?.toLowerCase(),
+        profile.schoolId,
+        profile.schoolId?.toLowerCase(),
+        profile.email,
+        profile.email?.toLowerCase(),
+        cleanEmail,
+        cleanEmail.toLowerCase(),
+      ].filter(Boolean) as string[];
+
+      keysToUpdate.forEach((k) => {
+        if (accountsMap[k]) {
+          accountsMap[k].display_name = cleanName;
+          accountsMap[k].email = cleanEmail;
+          accountsMap[k].phone_number = cleanPhone;
+          accountsMap[k].phone_verified = isPhoneVerified;
+          accountsMap[k].avatar_url = avatarUrl;
+        }
+      });
+
+      accountsMap[cleanEmail] = {
         ...userObj,
-        display_name: displayName.trim(),
-        email: email.trim(),
-        phone_number: phoneNumber.trim(),
+        display_name: cleanName,
+        email: cleanEmail,
+        phone_number: cleanPhone,
         phone_verified: isPhoneVerified,
         avatar_url: avatarUrl,
       };
       localStorage.setItem('readbuddy_accounts', JSON.stringify(accountsMap));
+
+      // If student: also update teacher roster
+      if (profile.role === 'student') {
+        const teacherStudents = JSON.parse(localStorage.getItem('readbuddy_teacher_students') || '[]');
+        const updatedList = teacherStudents.map((st: any) => {
+          const isMatch =
+            (profile.schoolId && (st.school_id === profile.schoolId || st.school_id?.toLowerCase() === profile.schoolId?.toLowerCase())) ||
+            (profile.username && (st.username === profile.username || st.username?.toLowerCase() === profile.username?.toLowerCase()));
+          if (isMatch) {
+            return {
+              ...st,
+              display_name: cleanName,
+              email: cleanEmail,
+              phone_number: cleanPhone,
+              phone_verified: isPhoneVerified,
+              avatar_url: avatarUrl,
+            };
+          }
+          return st;
+        });
+        localStorage.setItem('readbuddy_teacher_students', JSON.stringify(updatedList));
+      }
+
+      // If teacher: also update teacher classes and teacher rosters
+      if (profile.role === 'teacher') {
+        const teacherClasses = JSON.parse(localStorage.getItem('readbuddy_teacher_classes') || '[]');
+        const updatedClasses = teacherClasses.map((cls: any) => {
+          if (cls.teacher_id === profile.schoolId || cls.teacher_name === profile.displayName) {
+            return { ...cls, teacher_name: cleanName, teacher_email: cleanEmail };
+          }
+          return cls;
+        });
+        localStorage.setItem('readbuddy_teacher_classes', JSON.stringify(updatedClasses));
+      }
     } catch (e) {}
 
-    // 3. Trigger global window update event
+    // 3. Post to backend FastAPI server
+    try {
+      await fetch('/api/auth/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          school_id: profile.schoolId || profile.username,
+          username: profile.username || profile.schoolId,
+          email: cleanEmail,
+          display_name: cleanName,
+          phone_number: cleanPhone,
+          phone_verified: isPhoneVerified,
+          avatar_url: avatarUrl || '',
+          role: profile.role,
+        }),
+      });
+    } catch (e) {}
+
+    // 4. Trigger global window update events
     try {
       window.dispatchEvent(new Event('readbuddy_user_updated'));
+      window.dispatchEvent(new Event('readbuddy_accounts_updated'));
+      window.dispatchEvent(new Event('readbuddy_students_updated'));
+      window.dispatchEvent(new Event('readbuddy_classes_updated'));
     } catch (e) {}
 
     setProfileSaved(true);
@@ -341,7 +552,8 @@ export function ProfileTab({
             {/* Email Verification Status Badge / Button Next to Email Input */}
             {isEmailVerified ? (
               <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#E6F4EA] text-[#2E7D4F] border border-[#BFE0CC] shrink-0 font-mono">
-                ✓ Verified
+                <Check className="w-3.5 h-3.5" />
+                Verified
               </span>
             ) : (
               <button
@@ -491,7 +703,7 @@ export function PreferencesTab({ profile, accent }: { profile: AccountProfile; a
     <Card>
       <div className="mb-4 pb-3 border-b" style={{ borderColor: TAN_BORDER }}>
         <h3 className="text-base font-semibold" style={{ fontFamily: FONT_SERIF, color: CHALK_GREEN }}>
-          {profile.role === 'student' ? 'Reading & Speech Preferences' : 'Class & Test Options'}
+          Reading & Speech Preferences
         </h3>
         <p className="text-xs" style={{ fontFamily: FONT_SANS, color: MUTED }}>Customize default reading languages, speech speed, and visual hints.</p>
       </div>
@@ -509,15 +721,6 @@ export function PreferencesTab({ profile, accent }: { profile: AccountProfile; a
           <span className="text-xs font-medium" style={{ fontFamily: FONT_SANS, color: showPhonicsHint ? INK : MUTED }}>{showPhonicsHint ? 'Enabled' : 'Disabled'}</span>
         </div>
       </SettingFieldRow>
-
-      {profile.role === 'teacher' && (
-        <SettingFieldRow label="Auto-Scoring Recommendation" hint="Automatically compute Phil-IRI tier before manual teacher grading.">
-          <div className="flex items-center gap-3">
-            <ToggleSwitch checked={autoGrading} onChange={setAutoGrading} accent={accent} />
-            <span className="text-xs font-medium" style={{ fontFamily: FONT_SANS, color: autoGrading ? INK : MUTED }}>{autoGrading ? 'Enabled' : 'Disabled'}</span>
-          </div>
-        </SettingFieldRow>
-      )}
 
       <div className="flex items-center gap-3 pt-5 mt-2">
         <PrimaryButton accent={accent} onClick={handlePrefSave}>Save Preference Settings</PrimaryButton>

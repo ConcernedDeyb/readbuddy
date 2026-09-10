@@ -131,6 +131,11 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
       return;
     }
 
+    if (!cleanEmail.endsWith('@smccnasipit.edu.ph')) {
+      alert('Only official @smccnasipit.edu.ph institutional email addresses are permitted.');
+      return;
+    }
+
     try {
       const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
       const passwordsMap = JSON.parse(localStorage.getItem('readbuddy_passwords') || '{}');
@@ -676,7 +681,7 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap pt-2 md:pt-0 border-t md:border-t-0 border-gray-100 w-full md:w-auto justify-end">
                   {!isApproved ? (
                     <button
                       onClick={() => handleApproveTeacher(t.school_id || t.email)}
@@ -717,8 +722,8 @@ export function AdminTeachers({ teachers: initialTeachers = [] }: { teachers?: T
 
       {/* ─── ADD / EDIT TEACHER MODAL ─── */}
       {isAddModalOpen && mounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-md bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-6 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col rb-fade-in-up">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-md bg-[#FFFDF8] border border-[#DED2B4] rounded-2xl p-4 sm:p-7 shadow-2xl relative font-sans my-auto max-h-[90vh] overflow-y-auto flex flex-col rb-fade-in-up">
             <button
               type="button"
               onClick={() => setIsAddModalOpen(false)}

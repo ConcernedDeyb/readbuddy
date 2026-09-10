@@ -114,16 +114,16 @@ export function AdminSettings({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start min-h-[480px]">
-        <div className="md:col-span-1 shrink-0">
-          <div className="flex flex-col gap-1 p-2 rounded-2xl border" style={{ background: CREAM, borderColor: TAN_BORDER }}>
-            <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500" style={{ fontFamily: FONT_MONO }}>
+        <div className="md:col-span-1 shrink-0 w-full">
+          <div className="flex flex-row md:flex-col gap-1 p-2 rounded-2xl border overflow-x-auto no-scrollbar" style={{ background: CREAM, borderColor: TAN_BORDER }}>
+            <span className="hidden md:block px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500" style={{ fontFamily: FONT_MONO }}>
               System Settings
             </span>
             {TABS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveSubTab(tab.id)}
-                className="px-3.5 h-10 rounded-xl text-xs font-semibold text-left transition-colors cursor-pointer border"
+                className="px-3.5 h-10 rounded-xl text-xs font-semibold text-left whitespace-nowrap transition-colors cursor-pointer border shrink-0 md:shrink"
                 style={{
                   fontFamily: FONT_SANS,
                   background: activeSubTab === tab.id ? '#FFFFFF' : 'transparent',
@@ -209,7 +209,7 @@ export function AdminSettings({
                 />
               </div>
 
-              <PrimaryButton accent={ADMIN_ACCENT} onClick={handleSave}>
+              <PrimaryButton accent={ADMIN_ACCENT} onClick={handleSave} className="w-full sm:w-auto">
                 {saved ? '✓ VRAM Limits Saved' : 'Update VRAM Limits'}
               </PrimaryButton>
             </Card>
@@ -309,7 +309,7 @@ export function AdminSettings({
                 </button>
               </div>
 
-              <PrimaryButton accent={ADMIN_ACCENT} onClick={handleSave}>
+              <PrimaryButton accent={ADMIN_ACCENT} onClick={handleSave} className="w-full sm:w-auto">
                 {saved ? '✓ Security Limits Saved' : 'Save Quota & Security Settings'}
               </PrimaryButton>
             </Card>

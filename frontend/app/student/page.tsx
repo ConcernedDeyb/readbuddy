@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DashboardShell, StudentDashboard, StudentNotebook, AccountSettings } from '@/components/dashboard';
+import { DashboardShell, StudentDashboard, StudentNotebook, AccountSettings, NotificationsSection } from '@/components/dashboard';
 import { DashboardSkeleton } from '@/components/shared/SkeletonLoaders';
 import {
   SectionHeader,
@@ -48,7 +48,7 @@ interface PendingTest {
   instructions?: string;
 }
 
-type StudentSection = 'overview' | 'tests' | 'history' | 'notebook' | 'settings';
+type StudentSection = 'overview' | 'tests' | 'history' | 'notebook' | 'notifications' | 'settings';
 
 function scoreColor(pct: number): string {
   if (pct >= 90) return '#2E7D4F';
@@ -69,6 +69,10 @@ export default function StudentDashboardPage() {
     sectionName: 'Unassigned',
     teacherName: '',
     schoolName: "St. Michael's College of Caraga",
+    phoneNumber: '',
+    isPhoneVerified: false,
+    twoFactorEnabled: false,
+    avatarUrl: null as string | null,
   });
 
   const [studentEmail, setStudentEmail] = useState('');
@@ -87,24 +91,22 @@ export default function StudentDashboardPage() {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed.role === 'student') {
-            if (parsed.display_name) {
-              currentDisplayName = parsed.display_name;
-              setStudent((prev) => ({
-                ...prev,
-                name: parsed.display_name,
-                username: parsed.username || prev.username,
-                schoolId: parsed.school_id || prev.schoolId || parsed.username,
-                gradeLevel: parsed.grade_level || prev.gradeLevel,
-              }));
-            }
-            if (parsed.school_id) {
-              currentSchoolId = parsed.school_id;
-              setStudent((prev) => ({ ...prev, schoolId: parsed.school_id }));
-            }
-            if (parsed.username) {
-              currentUsername = parsed.username;
-              if (!currentSchoolId) currentSchoolId = parsed.username;
-            }
+            currentDisplayName = parsed.display_name || '';
+            currentSchoolId = parsed.school_id || '';
+            currentUsername = parsed.username || '';
+
+            setStudent((prev) => ({
+              ...prev,
+              name: parsed.display_name || prev.name,
+              username: parsed.username || prev.username,
+              schoolId: parsed.school_id || prev.schoolId || parsed.username || '',
+              gradeLevel: parsed.grade_level || prev.gradeLevel,
+              phoneNumber: parsed.phone_number !== undefined ? (parsed.phone_number || '') : prev.phoneNumber,
+              isPhoneVerified: parsed.phone_verified !== undefined ? Boolean(parsed.phone_verified) : prev.isPhoneVerified,
+              twoFactorEnabled: parsed.two_factor_enabled !== undefined ? Boolean(parsed.two_factor_enabled) : prev.twoFactorEnabled,
+              avatarUrl: parsed.avatar_url !== undefined ? parsed.avatar_url : prev.avatarUrl,
+            }));
+
             if (parsed.email) {
               setStudentEmail(parsed.email);
             } else if (parsed.username) {
@@ -113,15 +115,20 @@ export default function StudentDashboardPage() {
           }
         }
 
-        // Also check if account record was updated by teacher
+        // Also check if account record was updated
         const accountsMap = JSON.parse(localStorage.getItem('readbuddy_accounts') || '{}');
         const liveAccount = accountsMap[currentSchoolId] || accountsMap[currentUsername] || accountsMap[currentDisplayName.toLowerCase()];
         if (liveAccount) {
           setStudent((prev) => ({
             ...prev,
+            name: liveAccount.display_name || prev.name,
             gradeLevel: liveAccount.grade_level || prev.gradeLevel,
             teacherName: liveAccount.teacher_name || prev.teacherName,
             sectionName: liveAccount.section_name || prev.sectionName,
+            phoneNumber: liveAccount.phone_number !== undefined ? (liveAccount.phone_number || '') : prev.phoneNumber,
+            isPhoneVerified: liveAccount.phone_verified !== undefined ? Boolean(liveAccount.phone_verified) : prev.isPhoneVerified,
+            twoFactorEnabled: liveAccount.two_factor_enabled !== undefined ? Boolean(liveAccount.two_factor_enabled) : prev.twoFactorEnabled,
+            avatarUrl: liveAccount.avatar_url !== undefined ? liveAccount.avatar_url : prev.avatarUrl,
           }));
         }
 
@@ -209,6 +216,7 @@ export default function StudentDashboardPage() {
       activeSection={section}
       onSectionChange={(s) => setSection(s as StudentSection)}
       userName={student.name}
+      userId={student.schoolId || student.username}
       onLogout={() => {
         try { localStorage.removeItem('readbuddy_user'); } catch (e) {}
         window.location.href = '/';
@@ -366,6 +374,17 @@ export default function StudentDashboardPage() {
         </div>
       )}
 
+      {/* ─── Notifications Section ─── */}
+      {section === 'notifications' && (
+        <div className="rb-fade-in-up">
+          <NotificationsSection
+            role="student"
+            onNavigate={(s) => setSection(s as StudentSection)}
+            userId={student.schoolId || student.username}
+          />
+        </div>
+      )}
+
       {/* ─── Settings Section ─── */}
       {section === 'settings' && (
         <div className="rb-fade-in-up">
@@ -378,12 +397,23 @@ export default function StudentDashboardPage() {
               role: 'student',
               gradeLevel: student.gradeLevel,
               teacherName: student.teacherName,
-              phoneNumber: (student as any).phoneNumber || (student as any).phone_number || '',
-              isPhoneVerified: (student as any).isPhoneVerified || (student as any).phone_verified || false,
-              twoFactorEnabled: (student as any).twoFactorEnabled || (student as any).two_factor_enabled || false,
-              avatarUrl: (student as any).avatarUrl || (student as any).avatar_url || '',
+              phoneNumber: student.phoneNumber || '',
+              isPhoneVerified: student.isPhoneVerified,
+              twoFactorEnabled: student.twoFactorEnabled,
+              avatarUrl: student.avatarUrl || undefined,
             }}
             accent={STUDENT_ACCENT}
+            onProfileUpdate={(updated) => {
+              setStudent((prev) => ({
+                ...prev,
+                name: updated.displayName,
+                phoneNumber: updated.phoneNumber || '',
+                isPhoneVerified: Boolean(updated.isPhoneVerified),
+                twoFactorEnabled: Boolean(updated.twoFactorEnabled),
+                avatarUrl: updated.avatarUrl || null,
+              }));
+              setStudentEmail(updated.email);
+            }}
           />
         </div>
       )}

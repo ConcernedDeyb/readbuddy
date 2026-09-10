@@ -212,7 +212,7 @@ export function DetailPanel({
       <div className="rb-panel-overlay" onClick={onClose} />
       <div className="rb-detail-panel">
         <div
-          className="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
+          className="flex items-center justify-between px-4 sm:px-6 py-4 sticky top-0 z-10"
           style={{ background: 'rgba(255,253,248,0.95)', backdropFilter: 'blur(8px)', borderBottom: `2px solid ${TAN_BORDER}` }}
         >
           <h2 className="text-lg" style={{ fontFamily: FONT_SERIF, fontWeight: 700, color: '#1F4D3A' }}>
@@ -229,7 +229,7 @@ export function DetailPanel({
             </svg>
           </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-4 sm:px-6 py-4 sm:py-5">{children}</div>
       </div>
     </>,
     document.body
